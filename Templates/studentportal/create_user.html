@@ -1,0 +1,55 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+{% load std_portal %}
+
+<br>
+<b> Create Account </b>
+
+<!-- Error messages from messages framework -->
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<form id="" method="post">
+    {% csrf_token %}
+
+    {{ form.non_field_errors }}
+
+    <div class="row g-8 align-items-center center">
+
+        <div class="col-auto">
+            {{ form.email.errors }}
+            <label for="{{ form.email.id_for_label }}" class="form-label"> Email: </label>
+            {{ form.email|addclass:"form-control"}} <!-- Input Field -->
+            <div id="emailHelp" class="form-text"> Enter your email </div>
+        </div>
+
+        <div class="col-auto">
+            {{ form.display_name.errors }}
+            <label for="{{ form.display_name.id_for_label }}" class="form-label"> Username: </label>
+            {{ form.display_name|addclass:"form-control"}} <!-- Input Field -->
+        </div>
+
+        <div class="col-auto">
+            {{ form.password.errors }}
+            <label for="{{ form.password.id_for_label }}" class="form-label"> Password: </label>
+            {{ form.password|addclass:"form-control" }} <!-- Input Field -->
+        </div>
+
+        <div class="col-auto">
+            {{ form.confirmpassword.errors }}
+            <label for="{{ form.confirmpassword.id_for_label }}" class="form-label"> Confirm Password: </label>
+            {{ form.confirmpassword|addclass:"form-control" }} <!-- Input Field -->
+        </div>
+
+    </div>
+
+    <input type="submit" value="Create" class="btn btn-primary">
+
+</form>
+
+{% endblock content %}
