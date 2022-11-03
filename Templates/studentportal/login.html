@@ -2,37 +2,45 @@
 {% block content %}
 {% load std_portal %}
 
-<p> Login your Account </p>
-
+<!-- Message from messages framework / views.py -->
 {% if messages %}
-<ul class="messages">
-    {% for message in messages %}
-    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
-    {% endfor %}
-</ul>
+<div class="container col-md-3">
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
+        {% endfor %}
+    </ul>
+</div>
 {% endif %}
 
 <form id="" method="post">
     {% csrf_token %}
+
+    <!-- List of errors from forms.py -->
     {{ form.non_field_errors }}
 
-    <div class="row g-8 align-items-center center">
-        <div class="col-auto">
+    <div class="container col-md-3">
+        <h4> Login your Account </h4>
+        <div class="form-outline mb-4">
             {{ form.email.errors }}
             <label for="{{ form.email.id_for_label }}" class="form-label"> Email: </label>
             {{ form.email|addclass:"form-control"}} <!-- Input Field -->
             <div id="emailHelp" class="form-text"> Enter your email </div>
         </div>
 
-        <div class="col-auto">
+        <div class="form-outline mb-4">
             {{ form.password.errors }}
             <label for="{{ form.password.id_for_label }}" class="form-label"> Password: </label>
             {{ form.password|addclass:"form-control" }} <!-- Input Field -->
         </div>
 
-    </div>
+        <input type="submit" value="Login" class="btn btn-primary btn-block mb-4">
 
-    <input type="submit" value="Login" class="btn btn-primary">
+        <div class="text">
+            <p>Not a member? <a href="{% url 'studentportal:createaccount' %}">Register</a></p>
+        </div>
+
+    </div>
 </form>
 
 <!-- Email: admin@gmail.com Password: admin  -->
