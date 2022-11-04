@@ -51,3 +51,8 @@ class createaccountForm(forms.Form):
         label="Password", widget=forms.PasswordInput, strip=True)
     confirmpassword = forms.CharField(
         label="Confirm Password", widget=forms.PasswordInput, strip=True)
+
+
+class resetaccountForm(forms.Form):
+    email = forms.EmailField(
+        label="Email", max_length=50, validators=[validate_email_chars])
