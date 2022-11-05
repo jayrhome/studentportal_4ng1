@@ -11,4 +11,7 @@ urlpatterns = [
     path("create/", create_useraccount.as_view(), name="createaccount"),
     path("Activate_account/<uidb64>/<token>",
          views.activate_account, name="activate_account"),
+    path("Password_reset/", password_reset.as_view(), name="password_reset"),
+    path("Password_reset_form/<uidb64>/<token>",
+         password_reset_form.as_view(), name="password_reset_form"),
 ]

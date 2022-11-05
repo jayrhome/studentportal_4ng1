@@ -7,6 +7,10 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 
-@method_decorator(login_required(login_url="studentportal:login"), name="dispatch")
+def teachers_only(user):
+    return user.is_teacher
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(teachers_only, login_url="studentportal:index")], name="dispatch")
 class index(TemplateView):
     template_name = "teachersportal/index.html"

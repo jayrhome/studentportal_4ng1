@@ -35,6 +35,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_teacher = models.BooleanField(default=False)
     is_student = models.BooleanField(default=True)
     is_superuser = models.BooleanField(default=False)
+    last_password_changed_date = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['display_name']

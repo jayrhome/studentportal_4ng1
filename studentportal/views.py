@@ -11,7 +11,7 @@ from django.views.generic.edit import FormView, CreateView
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.db import IntegrityError
-from . forms import loginForm, createaccountForm, resetaccountForm
+from . forms import loginForm, createaccountForm, resetaccountForm, resetpasswordForm
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.mail import EmailMessage
@@ -29,6 +29,14 @@ def not_authenticated_user(user):
     return not user.is_authenticated
 
 
+def student_and_anonymous(user):
+    if user.is_authenticated:
+        return user.is_student
+    else:
+        return True
+
+
+@method_decorator(user_passes_test(student_and_anonymous, login_url="adminportal:index"), name="dispatch")
 class index(TemplateView):
     template_name = "studentportal/index.html"
 
@@ -37,16 +45,6 @@ class index(TemplateView):
         context["title"] = "Home"
 
         return context
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            if request.user.is_superuser:
-                return HttpResponseRedirect(reverse("adminportal:index"))
-            elif request.user.is_teacher:
-                return HttpResponseRedirect(reverse("teachersportal:index"))
-            else:
-                return super().dispatch(request, *args, **kwargs)
-        return super().dispatch(request, *args, **kwargs)
 
 
 @login_required(login_url="studentportal:login")
@@ -126,7 +124,6 @@ class create_useraccount(FormView):
                 )
                 send_activation_link(self.request, user, email)
                 return super().form_valid(form)
-
             else:
                 messages.warning(
                     self.request, "Password and Confirm Password did not match.")
@@ -136,7 +133,7 @@ class create_useraccount(FormView):
         except:
             messages.warning(
                 self.request, "An error occurred while submitting your data. Try again.")
-            return super().form_invalid(form)
+            return self.form_invalid(form)
 
     def form_invalid(self, form):
         return super().form_invalid(form)
@@ -166,18 +163,14 @@ def send_activation_link(request, user, email):
             request, f"Your activation link is not sent to {user.email}!")
 
 
+# When user click the activation link from email message
+@user_passes_test(not_authenticated_user, login_url="studentportal:index")
 def activate_account(request, uidb64, token):
-
-    if request.user.is_authenticated:
-        auth_logout(request)
-
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except(TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
-        messages.error(request, "Activation link is no longer valid.")
-        return HttpResponseRedirect(reverse("studentportal:login"))
 
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
@@ -190,7 +183,7 @@ def activate_account(request, uidb64, token):
     return HttpResponseRedirect(reverse("studentportal:login"))
 
 
-@method_decorator(user_passes_test(not_authenticated_user, login_url="studentportal:index"), name="dispatch")
+@method_decorator([user_passes_test(not_authenticated_user, login_url="studentportal:index"), ratelimit(key='ip', rate='0/s')], name="dispatch")
 class password_reset(FormView):
     template_name = "studentportal/password_reset.html"
     form_class = resetaccountForm
@@ -201,16 +194,16 @@ class password_reset(FormView):
         try:
             if User.objects.filter(email=email).exists():
                 user = User.objects.get(email=email)
-                send_password_reset_link(self.request, email, user)
+                send_password_reset_link(self.request, user, email)
                 return super().form_valid(form)
             else:
                 messages.warning(
                     self.request, "Email does not exist. Try again.")
-                return super().form_invalid(form)
+                return self.form_invalid(form)
         except:
-            messages.warning(
+            messages.error(
                 self.request, "An error occurred while submitting your data. Please try again.")
-            return super().form_invalid(form)
+            return self.form_invalid(form)
 
     def form_invalid(self, form):
         return super().form_invalid(form)
@@ -221,7 +214,7 @@ class password_reset(FormView):
         return context
 
 
-def send_password_reset_link(request, email, user):
+def send_password_reset_link(request, user, email):
     mail_subject = "Password Reset"
     message = render_to_string("studentportal/password_reset_email_template.html", {
         "user": user.display_name,
@@ -237,8 +230,57 @@ def send_password_reset_link(request, email, user):
             request, f"A password reset link is sent to {user.email}. You can click the link to reset your account password.")
     else:
         messages.error(
-            request, f"Your password reset link is not sent to {user.email}!")
+            request, f"Your password reset link is not sent to {user.email}! Try again.")
 
 
+# When user click the password reset link
+@method_decorator([user_passes_test(not_authenticated_user, login_url="studentportal:index"), ratelimit(key='ip', rate='0/s')], name="dispatch")
 class password_reset_form(FormView):
     template_name = "studentportal/password_reset_form.html"
+    form_class = resetpasswordForm
+    success_url = "/login/"
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            uid = force_str(urlsafe_base64_decode(self.kwargs['uidb64']))
+            user = User.objects.get(pk=uid)
+            self.user_obj = user
+        except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is not None and password_reset_token.check_token(user, self.kwargs['token']):
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            messages.error(
+                self.request, "Password reset link is no longer valid!")
+            return HttpResponseRedirect(reverse("studentportal:login"))
+
+    def form_valid(self, form):
+        password = form.cleaned_data["password"]
+        confirmpassword = form.cleaned_data["confirmpassword"]
+
+        try:
+            if password == confirmpassword:
+                if User.objects.filter(pk=self.user_obj.id).exists():
+                    user = User.objects.get(pk=self.user_obj.id)
+                    user.set_password(password)
+                    user.save()
+                    messages.success(
+                        self.request, "Password changed successfully.")
+                    return super().form_valid(form)
+                else:
+                    messages.error(self.request, "User no longer exists.")
+                    return super().form_valid(form)
+            else:
+                messages.warning(
+                    self.request, "Password and Confirm Password did not match.")
+                return self.form_invalid(form)
+        except:
+            self.user_obj.refresh_from_db()
+            if password_reset_token.check_token(self.user_obj, self.kwargs['token']):
+                messages.error(
+                    self.request, "An error occurred while submitting your date. Please try again.")
+                return self.form_invalid(form)
+            else:
+                messages.error(self.request, "Reset token is no longer valid.")
+                return super().form_valid(form)
