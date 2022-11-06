@@ -57,6 +57,7 @@ def logout_user(request):
 class login(FormView):
     template_name = "studentportal/login.html"
     form_class = loginForm
+    success_url = "/"
 
     def form_valid(self, form):
         email = form.cleaned_data['email']
@@ -72,9 +73,7 @@ class login(FormView):
             try:
                 user_details = User.objects.get(email=email, is_active=False)
                 if user_details.check_password(password):
-                    # Send authentication email for is_active=False account.
                     return self.activate_account_request(self.request, user_details.display_name, email)
-
                 messages.warning(
                     self.request, "Email or Password is incorrect. Try again.")
                 return self.form_invalid(form)
@@ -93,9 +92,6 @@ class login(FormView):
 
     def activate_account_request(self, request, name, email):
         return render(request, "studentportal/activate_account_request.html", {"name": name, "email": email})
-
-    def get_success_url(self):
-        return "/School_admin/" if self.request.user.is_superuser else "/"
 
 
 @method_decorator([user_passes_test(not_authenticated_user, login_url="studentportal:index"), ratelimit(key='ip', rate='0/s')], name="dispatch")
@@ -160,7 +156,7 @@ def send_activation_link(request, user, email):
             request, f"Hi {user.display_name}, we sent a confirmation link to {user.email}. You can click the link to activate your account.")
     else:
         messages.error(
-            request, f"Your activation link is not sent to {user.email}!")
+            request, f"Your activation link is not sent to {user.email}! Try again.")
 
 
 # When user click the activation link from email message
@@ -192,8 +188,10 @@ class password_reset(FormView):
     def form_valid(self, form):
         email = form.cleaned_data["email"]
         try:
-            if User.objects.filter(email=email).exists():
+            if User.objects.filter(email=email, is_active=True).exists():
                 user = User.objects.get(email=email)
+                user.save()
+                user.refresh_from_db()
                 send_password_reset_link(self.request, user, email)
                 return super().form_valid(form)
             else:
@@ -214,6 +212,7 @@ class password_reset(FormView):
         return context
 
 
+# This function will create the reset link
 def send_password_reset_link(request, user, email):
     mail_subject = "Password Reset"
     message = render_to_string("studentportal/password_reset_email_template.html", {

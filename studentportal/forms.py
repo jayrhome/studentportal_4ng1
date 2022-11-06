@@ -15,12 +15,12 @@ def validate_email(email):
 
 
 def validate_email_chars(email):
-    regex_email = re.compile(r"""^([a-z0-9_\.]+)
+    regex_email = re.compile(r"""^([a-zA-Z0-9_\.]+)
                             @
                             (gmail)
                             \.
                             (com)$
-                            """, re.VERBOSE | re.IGNORECASE)
+                            """, re.VERBOSE)
     res = regex_email.fullmatch(email)
     if not res:
         raise ValidationError("Invalid email address. Try again.")
@@ -39,18 +39,18 @@ def validate_username(name):
 class loginForm(forms.Form):
     email = forms.EmailField(label="Email", max_length=50)
     password = forms.CharField(
-        label="Password", widget=forms.PasswordInput, strip=True)
+        label="Password", widget=forms.PasswordInput)
 
 
 class createaccountForm(forms.Form):
     email = forms.EmailField(
         label="Email", max_length=50, validators=[validate_email_chars, validate_email])
     display_name = forms.CharField(
-        label="Username", max_length=25, strip=True, validators=[validate_username])
+        label="Username", max_length=25, validators=[validate_username])
     password = forms.CharField(
-        label="Password", widget=forms.PasswordInput, strip=True)
+        label="Password", widget=forms.PasswordInput)
     confirmpassword = forms.CharField(
-        label="Confirm Password", widget=forms.PasswordInput, strip=True)
+        label="Confirm Password", widget=forms.PasswordInput)
 
 
 class resetaccountForm(forms.Form):
@@ -60,6 +60,6 @@ class resetaccountForm(forms.Form):
 
 class resetpasswordForm(forms.Form):
     password = forms.CharField(
-        label="Password", widget=forms.PasswordInput, strip=True)
+        label="Password", widget=forms.PasswordInput)
     confirmpassword = forms.CharField(
-        label="Confirm Password", widget=forms.PasswordInput, strip=True)
+        label="Confirm Password", widget=forms.PasswordInput)
