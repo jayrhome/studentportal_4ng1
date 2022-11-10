@@ -1,0 +1,23 @@
+{% extends 'adminportal/courses_base.html' %}
+{% block content %}
+{% load std_portal %}
+
+<!-- Message from messages framework / views.py -->
+{% if messages %}
+<div class="container col-md-3">
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% for item in courses %}
+    <p> {{item.track_name}} - {{item.open_strands__strand_name}} </p>
+{% empty %}
+    <p> No courses found. </p>
+    <a href="{% url 'adminportal:add_track' %}"> Create Now </a>
+{% endfor %}
+
+{% endblock content %}

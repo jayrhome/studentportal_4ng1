@@ -27,7 +27,7 @@
     <div class="container p-3">
         {% if user.is_authenticated %}
         <a href="{% url 'studentportal:logout' %}" class="btn btn-primary"> Logout </a> &nbsp;
-        <a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary"> Courses </a> &nbsp;
+        <a href="{% url 'adminportal:add_track' %}" class="btn btn-primary"> Add Track </a> &nbsp;
         {% endif %}
     </div>
 
