@@ -83,6 +83,16 @@ class shs_strand(models.Model):
     def __str__(self):
         return self.strand_name
 
+    def serialize1(self):
+        return {
+            "track": self.track.track_name,
+            "strand_name": self.strand_name,
+            "definition": self.definition,
+            "date_added": self.date_added,
+            "date_modified": self.date_modified,
+            "is_deleted": self.is_deleted,
+        }
+
 
 class student_admission_details(models.Model):
 

@@ -11,7 +11,7 @@ from . forms import add_shs_track
 from . models import *
 from django.db import IntegrityError
 from django.contrib import messages
-from django.db.models import Q, FilteredRelation
+from django.db.models import Q, FilteredRelation, Prefetch
 
 
 def superuser_only(user):
@@ -37,9 +37,9 @@ class shs_courses(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Courses"
-        context["courses"] = shs_track.objects.filter(is_deleted=False).annotate(open_strands=FilteredRelation(
-            'track_strand', condition=Q(track_strand__is_deleted=False)
-        )).values('track_name', 'open_strands__strand_name')
+        context["courses"] = shs_track.objects.filter(is_deleted=False).prefetch_related(Prefetch(
+            "track_strand", queryset=shs_strand.objects.filter(is_deleted=False), to_attr="strands"))
+
         return context
 
 

@@ -13,11 +13,24 @@
 </div>
 {% endif %}
 
-{% for item in courses %}
-    <p> {{item.track_name}} - {{item.open_strands__strand_name}} </p>
+{% for track in courses %}
+
+    <hr><br>
+    <h3> {{track.track_name}} </h3>
+    <p> {{track.definition}} </p>
+
+    {% for strand in track.strands %}
+        <h6> {{strand.strand_name}} </h6>
+        <p> {{strand.definition}} </p>
+        <hr>
+    {% empty %}
+    <p> {{track.track_name}} has no strand. <a href="#" class="btn btn-primary"> Create Strand </a> </p>
+    
+    {% endfor %}
+
 {% empty %}
-    <p> No courses found. </p>
-    <a href="{% url 'adminportal:add_track' %}"> Create Now </a>
+    <p> No courses found. <a href="{% url 'adminportal:add_track' %}" class="btn btn-primary"> Create Now </a> </p>
 {% endfor %}
+
 
 {% endblock content %}
