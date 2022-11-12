@@ -364,3 +364,34 @@ class edit_strand(FormView):
         else:
             # if strand_id exist or deleted
             return strand_dispatch_func(request, strand_id)
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class delete_strand(TemplateView):
+    template_name = "adminportal/delete_strand.html"
+
+    def post(self, request, *args, **kwargs):
+        obj = shs_strand.objects.filter(id=self.kwargs["pk"]).first()
+        obj.is_deleted = True
+        obj.save()
+
+        messages.success(request, "%s is deleted successfully." %
+                         obj.strand_name)
+        return HttpResponseRedirect(reverse("adminportal:view_courses"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = shs_strand.objects.get(id=self.kwargs["pk"])
+        context["track"] = obj.track.track_name
+        context["strand_name"] = obj.strand_name
+        context["definition"] = obj.definition
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        strand_id = self.kwargs["pk"]
+
+        if shs_strand.objects.filter(id=strand_id, is_deleted=False).exists():
+            # if strand_id exist and not deleted
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return strand_dispatch_func(request, strand_id)

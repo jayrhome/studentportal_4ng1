@@ -31,7 +31,7 @@
                 <h6> {{strand.strand_name}} </h6>
                 <p> {{strand.definition}} </p>
                 <a href="{% url 'adminportal:edit_strand' strand_id=strand.id %}" class="btn btn-primary"> Edit </a>
-                <a href="#" class="btn btn-danger"> Delete </a>
+                <a href="{% url 'adminportal:delete_strand' pk=strand.id %}" class="btn btn-danger"> Delete </a>
                 <hr>
             {% empty %}
             <p> {{track.track_name}} has no strand. </p>
