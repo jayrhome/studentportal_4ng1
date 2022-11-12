@@ -55,31 +55,37 @@ class add_shs_track_cbv(FormView):
         name = form.cleaned_data["name"]
         details = form.cleaned_data["details"]
 
-        try:
-            if shs_track.objects.filter(track_name=name, is_deleted=False).exists():
-                messages.warning(self.request, "%s already exist." % name)
+        if name and details:
+            try:
+                if shs_track.objects.filter(track_name=name, is_deleted=False).exists():
+                    messages.warning(
+                        self.request, "%s already exist." % name)
+                    return self.form_invalid(form)
+                elif shs_track.objects.filter(track_name=name, is_deleted=True).exists():
+                    shs_track.objects.filter(track_name=name, is_deleted=True).update(
+                        track_name=name,
+                        definition=details,
+                        is_deleted=False
+                    )
+                    messages.success(
+                        self.request, "%s is added successfully." % name)
+                    return super().form_valid(form)
+                else:
+                    shs_track.objects.create(
+                        track_name=name, definition=details)
+                    messages.success(
+                        self.request, "%s is added successfully." % name)
+                    return super().form_valid(form)
+            except IntegrityError:
+                messages.error(
+                    self.request, "%s already exist. Duplicate is not allowed." % name)
                 return self.form_invalid(form)
-            elif shs_track.objects.filter(track_name=name, is_deleted=True).exists():
-                shs_track.objects.filter(track_name=name, is_deleted=True).update(
-                    track_name=name,
-                    definition=details,
-                    is_deleted=False
-                )
-                messages.success(
-                    self.request, "%s is added successfully." % name)
-                return super().form_valid(form)
-            else:
-                shs_track.objects.create(track_name=name, definition=details)
-                messages.success(
-                    self.request, "%s is added successfully." % name)
-                return super().form_valid(form)
-        except IntegrityError:
-            messages.error(
-                self.request, "%s already exist. Duplicate is not allowed." % name)
-            return self.form_invalid(form)
-        except Exception as e:
-            messages.error(
-                self.request, e)
+            except Exception as e:
+                messages.error(
+                    self.request, e)
+                return self.form_invalid(form)
+        else:
+            messages.warning(self.request, "Fill all fields.")
             return self.form_invalid(form)
 
     def get_context_data(self, **kwargs):
@@ -110,38 +116,41 @@ class edit_track(FormView):
         name = form.cleaned_data["name"]
         details = form.cleaned_data["details"]
 
-        try:
-            if name and details:
-                obj = shs_track.objects.filter(
-                    id=self.kwargs["track_id"]).first()
-                if obj:
-                    if obj.is_deleted == True:
+        if form.has_changed():
+            try:
+                if name and details:
+                    obj = shs_track.objects.filter(
+                        id=self.kwargs["track_id"]).first()
+                    if obj:
+                        if obj.is_deleted == True:
+                            messages.warning(
+                                self.request, "%s no longer exist." % name)
+                            return super().form_valid(form)
+                        else:
+                            shs_track.objects.filter(id=self.kwargs["track_id"]).update(
+                                track_name=name,
+                                definition=details
+                            )
+                            messages.success(
+                                self.request, "%s is updated successfully." % name)
+                            return super().form_valid(form)
+                    else:
                         messages.warning(
                             self.request, "%s no longer exist." % name)
                         return super().form_valid(form)
-                    else:
-                        shs_track.objects.filter(id=self.kwargs["track_id"]).update(
-                            track_name=name,
-                            definition=details
-                        )
-                        messages.success(
-                            self.request, "%s is updated successfully." % name)
-                        return super().form_valid(form)
                 else:
-                    messages.warning(
-                        self.request, "%s no longer exist." % name)
-                    return super().form_valid(form)
-            else:
-                messages.warning(self.request, "Fill all fields.")
+                    messages.warning(self.request, "Fill all fields.")
+                    return self.form_invalid(form)
+            except IntegrityError:
+                messages.error(
+                    self.request, "%s already exist. Duplicate is not allowed." % name)
                 return self.form_invalid(form)
-        except IntegrityError:
-            messages.error(
-                self.request, "%s already exist. Duplicate is not allowed." % name)
-            return self.form_invalid(form)
-        except Exception as e:
-            messages.error(
-                self.request, e)
-            return self.form_valid(form)
+            except Exception as e:
+                messages.error(
+                    self.request, e)
+                return self.form_valid(form)
+        else:
+            return super().form_valid(form)
 
     def dispatch(self, request, *args, **kwargs):
         if shs_track.objects.filter(id=self.kwargs["track_id"], is_deleted=True).exists():
@@ -207,51 +216,55 @@ class add_strand(FormView):
         strand_name = form.cleaned_data["strand_name"]
         strand_details = form.cleaned_data["strand_details"]
 
-        if strand_name and strand_details:
-            # if not empty
-            try:
-                obj1 = shs_strand.objects.filter(
-                    strand_name=strand_name).first()
-                foreign_obj = shs_track.objects.get(id=self.kwargs["track_id"])
-                if obj1:
-                    # if strand name already exist
-                    if obj1.is_deleted == False:
-                        # if the existing strand name is not deleted
-                        messages.warning(
-                            self.request, "%s already exist." % strand_name)
-                        return self.form_invalid(form)
+        if form.has_changed():
+            if strand_name and strand_details:
+                # if not empty
+                try:
+                    obj1 = shs_strand.objects.filter(
+                        strand_name=strand_name).first()
+                    foreign_obj = shs_track.objects.get(
+                        id=self.kwargs["track_id"])
+                    if obj1:
+                        # if strand name already exist
+                        if obj1.is_deleted == False:
+                            # if the existing strand name is not deleted
+                            messages.warning(
+                                self.request, "%s already exist." % strand_name)
+                            return self.form_invalid(form)
+                        else:
+                            # if the existing strand is deleted=True
+                            obj_update = shs_strand.objects.filter(strand_name=strand_name).update(
+                                track=foreign_obj,
+                                strand_name=strand_name,
+                                definition=strand_details,
+                                is_deleted=False
+                            )
+                            messages.success(self.request, "%s is added to %s" % (
+                                strand_name, foreign_obj.track_name))
+                            return super().form_valid(form)
                     else:
-                        # if the existing strand is deleted=True
-                        obj_update = shs_strand.objects.filter(strand_name=strand_name).update(
+                        # If strand name is unique, then, Create new strand
+                        shs_strand.objects.create(
                             track=foreign_obj,
                             strand_name=strand_name,
                             definition=strand_details,
-                            is_deleted=False
                         )
                         messages.success(self.request, "%s is added to %s" % (
                             strand_name, foreign_obj.track_name))
                         return super().form_valid(form)
-                else:
-                    # If strand name is unique, then, Create new strand
-                    shs_strand.objects.create(
-                        track=foreign_obj,
-                        strand_name=strand_name,
-                        definition=strand_details,
-                    )
-                    messages.success(self.request, "%s is added to %s" % (
-                        strand_name, foreign_obj.track_name))
-                    return super().form_valid(form)
-            except IntegrityError:
-                messages.warning(
-                    self.request, "%s already exist." % strand_name)
+                except IntegrityError:
+                    messages.warning(
+                        self.request, "%s already exist." % strand_name)
+                    return self.form_invalid(form)
+                except Exception as e:
+                    messages.error(self.request, e)
+                    return self.form_valid(form)
+            else:
+                # if empty fields
+                messages.warning(self.request, "Fill all fields")
                 return self.form_invalid(form)
-            except Exception as e:
-                messages.error(self.request, e)
-                return self.form_valid(form)
         else:
-            # if empty fields
-            messages.warning(self.request, "Fill all fields")
-            return self.form_invalid(form)
+            return super().form_valid(form)
 
     def get_initial(self):
         initial = super().get_initial()
@@ -283,22 +296,15 @@ class add_strand(FormView):
             return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
 
-def strand_dispatch_func(request, track_id, strand_id):
-    # When if statement returns False
-    if shs_track.objects.filter(id=track_id, is_deleted=False).exists() and shs_strand.objects.filter(id=strand_id, is_deleted=True).exists():
-        # if track_id is not deleted, but strand_id is deleted, both still exists.
-        messages.warning(
-            request, "Strand id no. %s no longer exist." % strand_id)
-        return HttpResponseRedirect(reverse("adminportal:view_courses"))
-    elif shs_track.objects.filter(id=track_id, is_deleted=True).exists() and shs_strand.objects.filter(id=strand_id, is_deleted=False).exists():
-        # if track_id is deleted, but strand_id is not deleted, both still exists.
-        messages.warning(
-            request, "Track id no. %s no longer exist." % track_id)
-        return HttpResponseRedirect(reverse("adminportal:view_courses"))
+def strand_dispatch_func(request, strand_id):
+    obj = shs_strand.objects.filter(id=strand_id).first()
+    if obj:
+        if obj.is_deleted == True:
+            messages.warning(
+                request, "Strand id no. %s no longer exist." % strand_id)
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
     else:
-        # if track_id and strand_id does not exist.
-        messages.error(request, "Track id no. %s and Strand id no. %s does not exist." % (
-            track_id, strand_id))
+        messages.error(request, "Strand id no. %s does not exist." % strand_id)
         return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
 
@@ -307,6 +313,34 @@ class edit_strand(FormView):
     template_name = "adminportal/edit_strand.html"
     form_class = edit_strand_form
     success_url = "/School_admin/Courses/"
+
+    def form_valid(self, form):
+        strand_name = form.cleaned_data["strand_name"]
+        strand_details = form.cleaned_data["strand_details"]
+        strand_id = self.kwargs["strand_id"]
+
+        strand_obj = shs_strand.objects.filter(id=strand_id).first()
+        if form.has_changed():
+            if strand_name and strand_details:
+                try:
+                    strand_obj.strand_name = strand_name
+                    strand_obj.definition = strand_details
+                    strand_obj.save()
+                    messages.success(
+                        self.request, "%s is updated successfully." % strand_name)
+                    return super().form_valid(form)
+                except IntegrityError:
+                    messages.warning(
+                        self.request, "%s already exist." % strand_name)
+                    return self.form_invalid(form)
+                except Exception as e:
+                    messages.error(self.request, e)
+                    return self.form_invalid(form)
+            else:
+                messages.warning(self.request, "Fill all fields.")
+                return self.form_invalid(form)
+        else:
+            return super().form_valid(form)
 
     def get_initial(self):
         initial = super().get_initial()
@@ -322,12 +356,11 @@ class edit_strand(FormView):
         return context
 
     def dispatch(self, request, *args, **kwargs):
-        track_id = self.kwargs["track_id"]
         strand_id = self.kwargs["strand_id"]
 
-        if shs_track.objects.filter(id=track_id, is_deleted=False).exists() and shs_strand.objects.filter(id=strand_id, is_deleted=False).exists():
-            # if track_id is not deleted and strand_id is not deleted, both exists.
+        if shs_strand.objects.filter(id=strand_id, is_deleted=False).exists():
+            # if strand_id exist and not deleted
             return super().dispatch(request, *args, **kwargs)
         else:
-            # When if statement returns False
-            return strand_dispatch_func(request, track_id, strand_id)
+            # if strand_id exist or deleted
+            return strand_dispatch_func(request, strand_id)

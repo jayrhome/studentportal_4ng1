@@ -30,7 +30,7 @@
             {% for strand in track.strands %}
                 <h6> {{strand.strand_name}} </h6>
                 <p> {{strand.definition}} </p>
-                <a href="{% url 'adminportal:edit_strand' track_id=track.id strand_id=strand.id %}" class="btn btn-primary"> Edit </a>
+                <a href="{% url 'adminportal:edit_strand' strand_id=strand.id %}" class="btn btn-primary"> Edit </a>
                 <a href="#" class="btn btn-danger"> Delete </a>
                 <hr>
             {% empty %}

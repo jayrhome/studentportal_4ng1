@@ -14,7 +14,7 @@ urlpatterns = [
         path("Delete_track/<pk>/", delete_track.as_view(), name="delete_track"),
         path("Add_strand/<track_id>/",
              add_strand.as_view(), name="add_strand"),
-        path("Edit_strand/<track_id>/<strand_id>",
+        path("Edit_strand/<strand_id>/",
              edit_strand.as_view(), name="edit_strand"),
     ]))
 ]
