@@ -12,6 +12,42 @@
     </ul>
 </div>
 {% endif %}
-    
+
+<form id="AddStrands" method="post">
+    {% csrf_token %}
+    <!-- List of errors from forms.py -->
+    {{ form.non_field_errors }}
+
+    <div class="container col-md-3">
+        <h4> Add Strand </h4>
+
+        <div class="form-outline mb-4">
+            {{ form.track.errors }} <!-- Field errors -->
+            <label for="{{ form.track.id_for_label }}" class="form-label"> Track: </label>
+            {{ form.track|addclass:"form-control"}} <!-- Choice Field -->
+        </div>
+
+        <div class="form-outline mb-4">
+            {{ form.strand_name.errors }} <!-- Field errors -->
+            <label for="{{ form.strand_name.id_for_label }}" class="form-label"> Strand: </label>
+            {{ form.strand_name|addclass:"form-control"}} <!-- Input Field -->
+        </div>
+
+        <div class="form-outline mb-4">
+            {{ form.strand_details.errors }} <!-- Field errors -->
+            <label for="{{ form.strand_details.id_for_label }}" class="form-label"> Strand Details: </label>
+            {{ form.strand_details|addclass:"form-control"}} <!-- Input Field -->
+        </div>
+
+        <input type="submit" value="Add" class="btn btn-primary btn-block mb-4">
+    </div>
+
+</form>
+<a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary" > Back </a>
+<script>
+    $('#AddStrands').one('submit', function() {
+        $(this).find('input[type="submit"]').attr('disabled','disabled');
+    }); 
+</script>
 
 {% endblock content %}

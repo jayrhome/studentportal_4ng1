@@ -37,7 +37,7 @@
     </div>
 
 </form>
-
+<a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary" > Back </a>
 <script>
     $('#add_track_form').one('submit', function() {
         $(this).find('input[type="submit"]').attr('disabled','disabled');

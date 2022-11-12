@@ -19,19 +19,18 @@
         <div class="p-3 mb-2 bg-light text-dark">
             <br>
             <a href="{% url 'adminportal:edit_track' track_id=track.id %}" class="btn btn-primary"> Edit </a>
-            {% if track.strands %}
             <a href="{% url 'adminportal:delete_track' pk=track.id %}" class="btn btn-danger"> Delete </a>
-            {% endif %}
             
             <h3> {{track.track_name}} </h3>
             <p> {{track.definition}} </p>
             
-            <a href="#" class="btn btn-primary"><i class="bi bi-person-plus"></i> Add Strand </a>
+            <a href="{% url 'adminportal:add_strand' track_id=track.id %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Add Strand </a>
+            
             <br><br>
             {% for strand in track.strands %}
                 <h6> {{strand.strand_name}} </h6>
                 <p> {{strand.definition}} </p>
-                <a href="#" class="btn btn-primary"> Edit </a>
+                <a href="{% url 'adminportal:edit_strand' track_id=track.id strand_id=strand.id %}" class="btn btn-primary"> Edit </a>
                 <a href="#" class="btn btn-danger"> Delete </a>
                 <hr>
             {% empty %}
