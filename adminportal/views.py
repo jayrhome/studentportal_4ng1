@@ -145,6 +145,12 @@ class edit_track(FormView):
 
     def dispatch(self, request, *args, **kwargs):
         if shs_track.objects.filter(id=self.kwargs["track_id"], is_deleted=True).exists():
+            messages.warning(
+                request, "Course Track with id no. %s no longer exist." % self.kwargs["track_id"])
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
+        elif not shs_track.objects.filter(id=self.kwargs["track_id"]).exists():
+            messages.warning(
+                request, "Course Track with id no. %s does not exist." % self.kwargs["track_id"])
             return HttpResponseRedirect(reverse("adminportal:view_courses"))
         else:
             return super().dispatch(request, *args, **kwargs)
@@ -170,6 +176,12 @@ class delete_track(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         if shs_track.objects.filter(id=self.kwargs["pk"], is_deleted=True).exists():
+            messages.warning(
+                request, "Course Track with id no. %s no longer exist." % self.kwargs["pk"])
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
+        elif not shs_track.objects.filter(id=self.kwargs["pk"]).exists():
+            messages.warning(
+                request, "Course Track with id no. %s does not exist." % self.kwargs["pk"])
             return HttpResponseRedirect(reverse("adminportal:view_courses"))
         else:
             return super().dispatch(request, *args, **kwargs)

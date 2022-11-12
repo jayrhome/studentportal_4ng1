@@ -13,5 +13,4 @@ urlpatterns = [
              edit_track.as_view(), name="edit_track"),
         path("Delete_track/<pk>/", delete_track.as_view(), name="delete_track"),
     ]))
-
 ]
