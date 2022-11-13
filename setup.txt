@@ -1,0 +1,10 @@
+Step 1: Create a root directory in your local folder.
+Step 2: Open cmd and cd to the root directory.
+Step 3: Install virtualenv using these lines "virtualenv --python C:\Users\Administrator\AppData\Local\Programs\Python\Python310\python.exe ."
+	Note: python version=3.10.3
+Step 4: Activate the virtual environment from the root directory. To activate: enter Scripts\activate
+Step 5: Clone the repo to the root directory using git command:
+	git clone <repo_link>
+Step 6: copy and paste the requirements.txt to the root directory.
+Step 7: Enter pip install -r requirements.txt on cmd.
+Step 8: Open source code using vs code.
