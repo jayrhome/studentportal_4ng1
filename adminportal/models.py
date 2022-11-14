@@ -142,6 +142,9 @@ class student_admission_details(models.Model):
     second_chosen_strand = models.ForeignKey(
         shs_strand, on_delete=models.SET_NULL, null=True, related_name="second_strand")
 
+    is_late = models.BooleanField(default=False)
+    is_transferee = models.BooleanField(default=False)
+
     is_deleted = models.BooleanField(default=False)
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
@@ -193,6 +196,9 @@ class student_enrollment_details(models.Model):
     is_passed = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
 
+    is_late = models.BooleanField(default=False)
+    is_repeater = models.BooleanField(default=False)
+
     enrolled_schoolyear = models.ForeignKey(
         school_year, on_delete=models.SET_NULL, null=True, related_name="sy_enrolled")
 
@@ -201,3 +207,15 @@ class student_enrollment_details(models.Model):
 
     def __str__(self):
         return self.full_name
+
+
+class enrollment_admission_setup(models.Model):
+    ea_setup_sy = models.OneToOneField(
+        school_year, on_delete=models.SET_NULL, null=True, related_name="setup_sy")
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_visible = models.BooleanField(default=False)
+    still_accepting = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.ea_setup_sy
