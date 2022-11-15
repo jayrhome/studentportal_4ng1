@@ -23,6 +23,7 @@ urlpatterns = [
     path("Admission_and_enrollment/", include([
         path("", admission_and_enrollment.as_view(),
              name="admission_and_enrollment"),
+
     ])),
 
 ]

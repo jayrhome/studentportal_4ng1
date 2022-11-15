@@ -13,12 +13,21 @@
 </div>
 {% endif %}
 
+<!-- Option to open the enrollment and admission for new school year -->
 <!-- if enrollment is ongoing, display the count of enrollment requests -->
 <!-- if admission is ongoing, display the count of admission requests -->
 
 <!-- Option to halt and continue the enrollment and admission -->
 <!-- Option to end the enrollment and admission -->
 
-<!-- Option to open the enrollment and admission for new school year -->
+    {% if enrollment_status == "new" %}
+    <a href="#"> Open enrollment </a>
+    {% elif enrollment_status == "continue" %}
+    <a href="#"> Halt Enrollment </a>
+    {% elif enrollment_status == "pending" %}
+    <a href="#"> Continue Enrollment </a>
+    {% else %}
+    <p> Force create </p>
+    {% endif %}
 
 {% endblock content %}

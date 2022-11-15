@@ -400,3 +400,28 @@ class delete_strand(TemplateView):
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class admission_and_enrollment(TemplateView):
     template_name = "adminportal/AdmissionAndEnrollment/index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        date_now = date.today()
+        add_year = add_school_year(date_now, 1)
+        sy = " ".join(
+            map(str, [date_now.strftime("%Y"), "-", add_year.strftime("%Y")]))
+
+        context["enrollment_status"] = self.setup_verification(sy)
+
+        return context
+
+    def setup_verification(self, sy):
+        if not enrollment_admission_setup.objects.filter(ea_setup_sy__sy=sy).exists():
+            return "new"
+        else:
+            enrollment_obj = enrollment_admission_setup.objects.filter(
+                ea_setup_sy__sy=sy)
+            if enrollment_obj.is_visible and enrollment_obj.still_accepting:
+                return "continue"
+            elif not enrollment_obj.is_visible and enrollment_obj.still_accepting:
+                return "pending"
+            else:
+                return "stop"
