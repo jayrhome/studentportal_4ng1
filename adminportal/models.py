@@ -53,7 +53,7 @@ def current_school_year():
 
 
 class school_year(models.Model):
-    sy = models.CharField(max_length=11, primary_key=True)
+    sy = models.CharField(max_length=11, unique=True)
     date_created = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -92,6 +92,44 @@ class shs_strand(models.Model):
             "date_modified": self.date_modified,
             "is_deleted": self.is_deleted,
         }
+
+
+class student_address(models.Model):
+    permanent_home_address = models.CharField(max_length=50)
+    date_created = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.permanent_home_address
+
+
+class student_contact_number(models.Model):
+    cp_number_regex = RegexValidator(regex=r"^(09)([0-9]{9})$")
+    cellphone_number = models.CharField(
+        max_length=11, unique=True, validators=[cp_number_regex])
+    date_created = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.cellphone_number
+
+
+class student_report_card(models.Model):
+    report_card = models.ImageField(upload_to="Report_cards/%Y/")
+    date_created = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.card_image.url
+
+
+class student_profile_image(models.Model):
+    user_image = models.ImageField(upload_to="User_profiles/")
+    date_created = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user_image.url
 
 
 class student_admission_details(models.Model):
@@ -183,15 +221,17 @@ class student_enrollment_details(models.Model):
     selected_strand = models.ForeignKey(
         shs_strand, on_delete=models.SET_NULL, null=True, related_name="chosen_strand")
     full_name = models.CharField(max_length=35)
-    permanent_home_address = models.CharField(max_length=50)
-    cp_number_regex = RegexValidator(regex=r"^(09)([0-9]{9})$")
-    cellphone_number = models.CharField(
-        max_length=11, unique=True, validators=[cp_number_regex])
+    home_address = models.ForeignKey(
+        student_address, on_delete=models.SET_NULL, null=True, related_name="student_address")
     age_validator = RegexValidator(regex=r"([0-9])")
     age = models.CharField(max_length=3, validators=[age_validator])
+    contact_number = models.ForeignKey(
+        student_contact_number, on_delete=models.SET_NULL, null=True, related_name="cp_number")
 
-    report_card = models.ImageField(upload_to="Report_cards/%Y/")
-    profile_image = models.ImageField(upload_to="User_profiles/")
+    card = models.ForeignKey(
+        student_report_card, on_delete=models.SET_NULL, null=True, related_name="enrollment_report_card")
+    profile_image = models.ForeignKey(
+        student_profile_image, on_delete=models.SET_NULL, null=True, related_name="enrollment_profile_image")
 
     is_passed = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)

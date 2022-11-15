@@ -7,8 +7,8 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from datetime import date
-from . forms import add_shs_track, add_strand_form, edit_strand_form
+from datetime import date, datetime
+from . forms import add_shs_track, add_strand_form, edit_strand_form, ea_setup_form
 from . models import *
 from django.db import IntegrityError
 from django.contrib import messages
@@ -395,3 +395,8 @@ class delete_strand(TemplateView):
             return super().dispatch(request, *args, **kwargs)
         else:
             return strand_dispatch_func(request, strand_id)
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class admission_and_enrollment(TemplateView):
+    template_name = "adminportal/AdmissionAndEnrollment/index.html"

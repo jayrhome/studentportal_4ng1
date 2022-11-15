@@ -2,6 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from . models import shs_strand, shs_track
+from datetime import date, datetime
 
 User = get_user_model()
 
@@ -23,6 +24,12 @@ def validate_newStrand(strand):
             raise ValidationError("%s already exist." % strand)
 
 
+def setup_form_DateValidation(date):
+    if date < date.today():
+        raise ValidationError(
+            "Invalid Date! Do not select the previous or current date.")
+
+
 class add_shs_track(forms.Form):
     name = forms.CharField(label="Track Name", max_length=50)
     details = forms.CharField(label="Track Details", widget=forms.Textarea)
@@ -42,3 +49,10 @@ class edit_strand_form(forms.Form):
         label="Strand", max_length=100)
     strand_details = forms.CharField(
         label="Strand Details", widget=forms.Textarea)
+
+
+class ea_setup_form(forms.Form):
+    start_date = forms.DateField(label="Start Date", validators=[
+                                 setup_form_DateValidation])
+    end_date = forms.DateField(label="End Date", validators=[
+                               setup_form_DateValidation])

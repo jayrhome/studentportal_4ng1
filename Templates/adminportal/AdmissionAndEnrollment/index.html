@@ -1,0 +1,24 @@
+{% extends 'adminportal/AdmissionAndEnrollment/base1.html' %}
+{% block content %}
+{% load std_portal %}
+
+<!-- Message from messages framework / views.py -->
+{% if messages %}
+<div class="container col-md-3">
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- if enrollment is ongoing, display the count of enrollment requests -->
+<!-- if admission is ongoing, display the count of admission requests -->
+
+<!-- Option to halt and continue the enrollment and admission -->
+<!-- Option to end the enrollment and admission -->
+
+<!-- Option to open the enrollment and admission for new school year -->
+
+{% endblock content %}
