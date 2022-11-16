@@ -26,6 +26,14 @@ def add_school_year(start_year, year):
         return start_year.replace(year=start_year.year + year, day=28)
 
 
+def compute_schoolyear(year):
+    date_now = date.today()
+    future_date = add_school_year(date_now, year)
+    sy = " ".join(
+        map(str, [date_now.strftime("%Y"), "-", future_date.strftime("%Y")]))
+    return sy
+
+
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class index(TemplateView):
     template_name = "adminportal/dashboard.html"
@@ -397,6 +405,17 @@ class delete_strand(TemplateView):
             return strand_dispatch_func(request, strand_id)
 
 
+# validate the latest school year
+def validate_enrollmentSetup(request, sy):
+    dt1 = date.today()
+    dt2 = sy.date_created.date()
+    dt3 = dt1 - dt2
+
+    if dt3.days < 209:
+        return True
+    return False
+
+
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class admission_and_enrollment(TemplateView):
     template_name = "adminportal/AdmissionAndEnrollment/index.html"
@@ -410,13 +429,13 @@ class admission_and_enrollment(TemplateView):
                 context["sy"] = sy.sy
 
                 enrolled_count = Count(
-                    "sy_enrolled", filter=Q(sy_enrolled__is_passed=True))
+                    "sy_enrolled", filter=Q(sy_enrolled__is_passed=True, sy_enrolled__is_deleted=False))
                 pending_enrollment_count = Count(
-                    "sy_enrolled", filter=Q(sy_enrolled__is_passed=False))
+                    "sy_enrolled", filter=Q(sy_enrolled__is_passed=False, sy_enrolled__is_deleted=False))
                 admission_count = Count("sy_admitted", filter=Q(
-                    sy_admitted__is_validated=True))
+                    sy_admitted__is_validated=True, sy_admitted__is_deleted=False))
                 pending_admission_count = Count(
-                    "sy_admitted", filter=Q(sy_admitted__is_validated=False))
+                    "sy_admitted", filter=Q(sy_admitted__is_validated=False, sy_admitted__is_deleted=False))
                 context["count_sy_details"] = school_year.objects.filter(id=sy.id).annotate(
                     enrolled_students=enrolled_count,
                     pending_enrollment=pending_enrollment_count,
@@ -424,26 +443,124 @@ class admission_and_enrollment(TemplateView):
                     pending_admission=pending_admission_count
                 )
 
-                dt1 = date.today()
-                dt2 = sy.date_created.date()
-                dt3 = dt1 - dt2
-                if dt3.days < 209:
+                if validate_enrollmentSetup(self.request, sy):
                     context["enrollment_status"] = self.setup_verification(sy)
                 else:
                     context["new_enrollment"] = True
+
         except:
             context["no_record"] = True
-
         return context
 
     def setup_verification(self, sy):
-        enrollment_obj = enrollment_admission_setup.objects.get(ea_setup_sy=sy)
-        if enrollment_obj.is_visible and enrollment_obj.still_accepting:
-            # If visible and still accepting request
-            return "continue"
-        elif not enrollment_obj.is_visible and enrollment_obj.still_accepting:
-            # If not visible but still allowed to accept request
-            return "pending"
+        try:
+            enrollment_obj = enrollment_admission_setup.objects.get(
+                ea_setup_sy=sy)
+            if enrollment_obj.is_visible and enrollment_obj.still_accepting:
+                # If visible and still accepting request
+                return "continue"
+            elif not enrollment_obj.is_visible and enrollment_obj.still_accepting:
+                # If not visible but still allowed to accept request
+                return "pending"
+            else:
+                # if not visible and no longer allowed to accept request
+                return "stop"
+        except:
+            return False
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class open_enrollment_admission(FormView):
+    template_name = "adminportal/AdmissionAndEnrollment/setup_enrollment.html"
+    form_class = ea_setup_form
+    success_url = "/School_admin/Admission_and_enrollment/"
+
+    def form_valid(self, form):
+        if form.has_changed():
+            start_date = form.cleaned_data["start_date"]
+            end_date = form.cleaned_data["end_date"]
+            display_now = form.cleaned_data["display_now"] if form.cleaned_data["display_now"] else False
+
+            if start_date < end_date:
+                try:
+                    sy = school_year.objects.latest("date_created")
+                    if validate_enrollmentSetup(self.request, sy):
+                        obj_create_from_existing_obj = enrollment_admission_setup.objects.create(
+                            ea_setup_sy=sy,
+                            start_date=start_date,
+                            end_date=end_date,
+                            is_visible=display_now,
+                        )
+                        messages.success(
+                            self.request, "Setup Form for S.Y. %s is created successfully." % sy.sy)
+                        return super().form_valid(form)
+                    else:
+                        obj_pure_create = enrollment_admission_setup.objects.create(
+                            ea_setup_sy=school_year.objects.get_or_create(
+                                sy=compute_schoolyear(1)
+                            ),
+                            start_date=start_date,
+                            end_date=end_date,
+                            is_visible=display_now,
+                        )
+                        messages.success(
+                            self.request, "Setup Form for S.Y. %s is created successfully." % obj_pure_create.ea_setup_sy.sy)
+                        return super().form_valid(form)
+                except:
+                    try:
+                        obj_created = enrollment_admission_setup.objects.create(
+                            ea_setup_sy=school_year.objects.create(
+                                sy=compute_schoolyear(1)),
+                            start_date=start_date,
+                            end_date=end_date,
+                            is_visible=display_now,
+                        )
+                        messages.success(
+                            self.request, "S.Y. %s Enrollment and Admission Forms is created successfully." % obj_created.ea_setup_sy.sy)
+                        return super().form_valid(form)
+                    except Exception as e:
+                        messages.error(self.request, e)
+                        return self.form_invalid(form)
+            else:
+                messages.warning(
+                    self.request, "Start date should be less than the End Date.")
+                return self.form_invalid(form)
         else:
-            # if not visible and no longer allowed to accept request
-            return "stop"
+            messages.warning(self.request, "Fill all fields with valid data.")
+            return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Setup Details"
+        context["sy"] = self.sy_display()
+        return context
+
+    def sy_display(self):
+        try:
+            sy_obj = school_year.objects.latest("date_created")
+            return sy_obj.sy if validate_enrollmentSetup(self.request, sy_obj) else compute_schoolyear(1)
+        except:
+            return compute_schoolyear(1)
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            sy = school_year.objects.latest("date_created")
+            if validate_enrollmentSetup(request, sy):
+                # if school year is less than 209 days since its creation
+                try:
+                    # If school_year has enrollment_admission_setup
+                    get_sy_objs = enrollment_admission_setup.objects.get(
+                        ea_setup_sy=sy)
+                    messages.warning(
+                        request, "You already have a setup form for S.Y. %s." % sy.sy)
+                    return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
+                except:
+                    messages.warning(
+                        request, "S.Y. %s has no admission and enrollment setup form. Create Now." % sy.sy)
+                    return super().dispatch(request, *args, **kwargs)
+            else:
+                # If school_year is greater than 209 days since its creation
+                return super().dispatch(request, *args, **kwargs)
+        except:
+            # if there's no data in school_year table
+            return super().dispatch(request, *args, **kwargs)

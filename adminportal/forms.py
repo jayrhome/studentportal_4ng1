@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from . models import shs_strand, shs_track
 from datetime import date, datetime
+from django.forms.widgets import DateInput
 
 User = get_user_model()
 
@@ -14,6 +15,11 @@ def get_track():
 
 track_choices = (
     (track.id, track.track_name) for track in get_track()
+)
+
+ea_setup_choices = (
+    (True, "Yes"),
+    (False, "No"),
 )
 
 
@@ -53,6 +59,8 @@ class edit_strand_form(forms.Form):
 
 class ea_setup_form(forms.Form):
     start_date = forms.DateField(label="Start Date", validators=[
-                                 setup_form_DateValidation])
+                                 setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(label="End Date", validators=[
-                               setup_form_DateValidation])
+                               setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
+    display_now = forms.ChoiceField(
+        label="Display Now?", widget=forms.RadioSelect, choices=ea_setup_choices)

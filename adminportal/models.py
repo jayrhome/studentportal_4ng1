@@ -266,4 +266,4 @@ class enrollment_admission_setup(models.Model):
     still_accepting = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.ea_setup_sy
+        return self.ea_setup_sy.sy

@@ -14,23 +14,17 @@
 {% endif %}
 
 {% if sy %}
-    <!-- if enrollment is ongoing, display the count of enrollment requests -->
     <div class="container col-md-6">
         {% for count in count_sy_details %}
+            <!-- if enrollment is ongoing, display the count of enrollment requests -->
             {% if count.enrolled_students %}
                 <p> {{count.enrolled_students}} student(s) are already enrolled for School Year: {{sy}} </p>
             {% endif %}
             {% if count.pending_enrollment %}
                 <p> {{count.pending_enrollment}} request for enrollment are still pending for School Year: {{sy}} </p>
             {% endif %}
-        {% empty %}
-            <p> There are no enrolled students for School Year: {{sy}} </p>
-        {% endfor %}
-    </div>
 
-    <!-- if admission is ongoing, display the count of admission requests -->
-    <div class="container col-md-6">
-        {% for count in count_sy_details %}
+            <!-- if admission is ongoing, display the count of admission requests -->
             {% if count.admitted_students %}
                 <p> {{count.admitted_students}} student(s) are already admitted for School Year: {{sy}} </p>
             {% endif %}
@@ -38,29 +32,34 @@
                 <p> {{count.pending_admission}} request for admission are still pending for School Year: {{sy}} </p>
             {% endif %}
         {% empty %}
-            <p> There are no admitted students for School Year: {{sy}} </p>
+            <p> There are no enrolled and admitted students for School Year: {{sy}} </p>
         {% endfor %}
     </div>
 {% endif %}
 
 <div class="container col-md-6">
     {% if no_record or new_enrollment %}
-        <a href="#" class="btn btn-primary"> Open enrollment </a>
+        <a href="{% url 'adminportal:admission_enrollment_setup' %}" class="btn btn-primary"> Open enrollment </a>
     {% endif %}
 </div>
 
 <div class="container col-md-6">
-    {% if enrollment_status == "continue" %}
-        <p> Temporarily Stop Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-primary"> Proceed </a>
-        <p> End the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-danger"> End Now </a>
-    {% elif enrollment_status == "pending" %}
-        <p> Continue the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-primary"> Continue </a>
-        <p> End the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-danger"> End Now </a>
-    {% elif enrollment_status == "stop" %}
-        <p> You have already end the Enrollment and Admission for School Year: {{sy}} </p>
-        <p> Open again the Enrollment and Admission for School Year: {{sy}} ? </p> <a href="#" class="btn btn-info"> Open Again </a>
-    {% else %}
+    {% if enrollment_status %}
+        {% if enrollment_status == "continue" %}
+            <p> Temporarily Stop Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-primary"> Proceed </a>
+            <p> End the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-danger"> End Now </a>
+        {% elif enrollment_status == "pending" %}
+            <p> Continue the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-primary"> Continue </a>
+            <p> End the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-danger"> End Now </a>
+        {% elif enrollment_status == "stop" %}
+            <p> You have already end the Enrollment and Admission for School Year: {{sy}} </p>
+            <p> Open again the Enrollment and Admission for School Year: {{sy}} ? </p> <a href="#" class="btn btn-info"> Open Again </a>
+        {% else %}
+        {% endif %}
+    {% elif enrollment_status == False %}
+        <p> The current school year is created in the database. To setup the enrollment and admission details, navigate to <a href="{% url 'adminportal:admission_enrollment_setup' %}" class="btn btn-info"> Setup Form </a> </p>
     {% endif %}
 </div>
+{{nani}}
 
 {% endblock content %}
