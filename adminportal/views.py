@@ -28,13 +28,13 @@ def add_school_year(start_year, year):
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class index(TemplateView):
-    template_name = "adminportal/index.html"
+    template_name = "adminportal/dashboard.html"
 
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class shs_courses(TemplateView):
     # View courses
-    template_name = "adminportal/courses.html"
+    template_name = "adminportal/Shs_courses/courses.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -47,7 +47,7 @@ class shs_courses(TemplateView):
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class add_shs_track_cbv(FormView):
-    template_name = "adminportal/create_track.html"
+    template_name = "adminportal/Shs_courses/create_track.html"
     form_class = add_shs_track
     success_url = "/School_admin/Courses/"
 
@@ -96,7 +96,7 @@ class add_shs_track_cbv(FormView):
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class edit_track(FormView):
-    template_name = "adminportal/edit_track.html"
+    template_name = "adminportal/Shs_courses/edit_track.html"
     form_class = add_shs_track
     success_url = "/School_admin/Courses/"
 
@@ -167,7 +167,7 @@ class edit_track(FormView):
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class delete_track(TemplateView):
-    template_name = "adminportal/delete_track.html"
+    template_name = "adminportal/Shs_courses/delete_track.html"
 
     def post(self, request, *args, **kwargs):
         obj = shs_track.objects.filter(id=self.kwargs["pk"]).first()
@@ -210,7 +210,7 @@ class delete_track(TemplateView):
 class add_strand(FormView):
     success_url = "/School_admin/Courses/"
     form_class = add_strand_form
-    template_name = "adminportal/create_strands.html"
+    template_name = "adminportal/Shs_courses/create_strands.html"
 
     def form_valid(self, form):
         strand_name = form.cleaned_data["strand_name"]
@@ -310,7 +310,7 @@ def strand_dispatch_func(request, strand_id):
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class edit_strand(FormView):
-    template_name = "adminportal/edit_strand.html"
+    template_name = "adminportal/Shs_courses/edit_strand.html"
     form_class = edit_strand_form
     success_url = "/School_admin/Courses/"
 
@@ -368,7 +368,7 @@ class edit_strand(FormView):
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class delete_strand(TemplateView):
-    template_name = "adminportal/delete_strand.html"
+    template_name = "adminportal/Shs_courses/delete_strand.html"
 
     def post(self, request, *args, **kwargs):
         obj = shs_strand.objects.filter(id=self.kwargs["pk"]).first()
@@ -410,6 +410,8 @@ class admission_and_enrollment(TemplateView):
             map(str, [date_now.strftime("%Y"), "-", add_year.strftime("%Y")]))
 
         context["enrollment_status"] = self.setup_verification(sy)
+        context["sy"] = sy
+        context["count_enrollment"] = ""
 
         return context
 
@@ -420,8 +422,11 @@ class admission_and_enrollment(TemplateView):
             enrollment_obj = enrollment_admission_setup.objects.filter(
                 ea_setup_sy__sy=sy)
             if enrollment_obj.is_visible and enrollment_obj.still_accepting:
+                # If visible and still accepting request
                 return "continue"
             elif not enrollment_obj.is_visible and enrollment_obj.still_accepting:
+                # If not visible but still allowed to accept request
                 return "pending"
             else:
+                # if not visible and no longer allowed to accept request
                 return "stop"

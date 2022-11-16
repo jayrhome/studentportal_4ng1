@@ -13,21 +13,24 @@
 </div>
 {% endif %}
 
-<!-- Option to open the enrollment and admission for new school year -->
 <!-- if enrollment is ongoing, display the count of enrollment requests -->
+
 <!-- if admission is ongoing, display the count of admission requests -->
 
-<!-- Option to halt and continue the enrollment and admission -->
-<!-- Option to end the enrollment and admission -->
-
+<div class="container col-md-6">
     {% if enrollment_status == "new" %}
-    <a href="#"> Open enrollment </a>
+        <!-- Option to open the enrollment and admission for new school year -->
+        <p> Open Enrollment and Admission for School Year: {{sy}} <a href="#" class="btn btn-primary"> Open </a> </p>
     {% elif enrollment_status == "continue" %}
-    <a href="#"> Halt Enrollment </a>
+        <p> Temporarily Stop Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-primary"> Proceed </a>
+        <p> End the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-danger"> End Now </a>
     {% elif enrollment_status == "pending" %}
-    <a href="#"> Continue Enrollment </a>
+        <p> Continue the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-primary"> Continue </a>
+        <p> End the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-danger"> End Now </a>
     {% else %}
-    <p> Force create </p>
+        <p> You have already end the Enrollment and Admission for School Year: {{sy}} </p>
+        <p> Open again the Enrollment and Admission for School Year: {{sy}} ? </p> <a href="#" class="btn btn-info"> Open Again </a>
     {% endif %}
+</div>
 
 {% endblock content %}

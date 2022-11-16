@@ -1,4 +1,4 @@
-{% extends 'adminportal/courses_base.html' %}
+{% extends 'adminportal/Shs_courses/courses_base.html' %}
 {% block content %}
 {% load std_portal %}
 
@@ -9,8 +9,14 @@
 
     <div class="container col-md-6">
         <div class="form-outline mb-4">
-            <h4> Do you want to delete {{strand_name}} from {{track}}? </h4>
-            <p> {{definition}} </p>
+            <h4> Do you want to delete {{obj.track_name}} ?</h4>
+
+            {% if related_strands %}
+                <p> Deleting the {{obj.track_name}} will also delete its related strands: </p>
+                {% for strand in related_strands %}
+                <p> {{strand.strand_name}} </p>
+                {% endfor %}
+            {% endif %}
 
         </div>
         <input type="submit" value="Delete" class="btn btn-danger btn-block mb-4">

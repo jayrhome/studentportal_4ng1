@@ -95,6 +95,8 @@ class shs_strand(models.Model):
 
 
 class student_address(models.Model):
+    address_owner = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="user_address")
     permanent_home_address = models.CharField(max_length=50)
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
@@ -104,6 +106,8 @@ class student_address(models.Model):
 
 
 class student_contact_number(models.Model):
+    contactnum_owner = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="user_contact")
     cp_number_regex = RegexValidator(regex=r"^(09)([0-9]{9})$")
     cellphone_number = models.CharField(
         max_length=11, unique=True, validators=[cp_number_regex])
@@ -115,6 +119,8 @@ class student_contact_number(models.Model):
 
 
 class student_report_card(models.Model):
+    report_card_owner = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="user_reportcard")
     report_card = models.ImageField(upload_to="Report_cards/%Y/")
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
@@ -124,6 +130,8 @@ class student_report_card(models.Model):
 
 
 class student_profile_image(models.Model):
+    image_user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="user_image")
     user_image = models.ImageField(upload_to="User_profiles/")
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
