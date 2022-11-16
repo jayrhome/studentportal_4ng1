@@ -12,7 +12,7 @@ from . forms import add_shs_track, add_strand_form, edit_strand_form, ea_setup_f
 from . models import *
 from django.db import IntegrityError
 from django.contrib import messages
-from django.db.models import Q, FilteredRelation, Prefetch
+from django.db.models import Q, FilteredRelation, Prefetch, Count
 
 
 def superuser_only(user):
@@ -404,29 +404,46 @@ class admission_and_enrollment(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        date_now = date.today()
-        add_year = add_school_year(date_now, 1)
-        sy = " ".join(
-            map(str, [date_now.strftime("%Y"), "-", add_year.strftime("%Y")]))
+        try:
+            sy = school_year.objects.latest("date_created")
+            if sy:
+                context["sy"] = sy.sy
 
-        context["enrollment_status"] = self.setup_verification(sy)
-        context["sy"] = sy
-        context["count_enrollment"] = ""
+                enrolled_count = Count(
+                    "sy_enrolled", filter=Q(sy_enrolled__is_passed=True))
+                pending_enrollment_count = Count(
+                    "sy_enrolled", filter=Q(sy_enrolled__is_passed=False))
+                admission_count = Count("sy_admitted", filter=Q(
+                    sy_admitted__is_validated=True))
+                pending_admission_count = Count(
+                    "sy_admitted", filter=Q(sy_admitted__is_validated=False))
+                context["count_sy_details"] = school_year.objects.filter(id=sy.id).annotate(
+                    enrolled_students=enrolled_count,
+                    pending_enrollment=pending_enrollment_count,
+                    admitted_students=admission_count,
+                    pending_admission=pending_admission_count
+                )
+
+                dt1 = date.today()
+                dt2 = sy.date_created.date()
+                dt3 = dt1 - dt2
+                if dt3.days < 209:
+                    context["enrollment_status"] = self.setup_verification(sy)
+                else:
+                    context["new_enrollment"] = True
+        except:
+            context["no_record"] = True
 
         return context
 
     def setup_verification(self, sy):
-        if not enrollment_admission_setup.objects.filter(ea_setup_sy__sy=sy).exists():
-            return "new"
+        enrollment_obj = enrollment_admission_setup.objects.get(ea_setup_sy=sy)
+        if enrollment_obj.is_visible and enrollment_obj.still_accepting:
+            # If visible and still accepting request
+            return "continue"
+        elif not enrollment_obj.is_visible and enrollment_obj.still_accepting:
+            # If not visible but still allowed to accept request
+            return "pending"
         else:
-            enrollment_obj = enrollment_admission_setup.objects.filter(
-                ea_setup_sy__sy=sy)
-            if enrollment_obj.is_visible and enrollment_obj.still_accepting:
-                # If visible and still accepting request
-                return "continue"
-            elif not enrollment_obj.is_visible and enrollment_obj.still_accepting:
-                # If not visible but still allowed to accept request
-                return "pending"
-            else:
-                # if not visible and no longer allowed to accept request
-                return "stop"
+            # if not visible and no longer allowed to accept request
+            return "stop"
