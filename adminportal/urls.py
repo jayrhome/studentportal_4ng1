@@ -17,7 +17,8 @@ urlpatterns = [
              add_strand.as_view(), name="add_strand"),
         path("Edit_strand/<strand_id>/",
              edit_strand.as_view(), name="edit_strand"),
-        path("Delete_strand/<pk>/", delete_strand.as_view(), name="delete_strand"),
+        path("Delete_strand/<pk>/",
+             delete_strand.as_view(), name="delete_strand"),
     ])),
 
     path("Admission_and_enrollment/", include([

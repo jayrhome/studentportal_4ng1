@@ -1,21 +1,11 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-from . models import shs_strand, shs_track
+from . models import *
 from datetime import date, datetime
 from django.forms.widgets import DateInput
 
 User = get_user_model()
-
-
-def get_track():
-    track = shs_track.objects.all()
-    return track
-
-
-track_choices = (
-    (track.id, track.track_name) for track in get_track()
-)
 
 ea_setup_choices = (
     (True, "Yes"),

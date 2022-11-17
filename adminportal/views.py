@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from datetime import date, datetime
-from . forms import add_shs_track, add_strand_form, edit_strand_form, ea_setup_form
+from . forms import *
 from . models import *
 from django.db import IntegrityError
 from django.contrib import messages

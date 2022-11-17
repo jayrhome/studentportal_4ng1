@@ -27,8 +27,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'adminportal.apps.AdminportalConfig',
     'studentportal.apps.StudentportalConfig',
+    'adminportal.apps.AdminportalConfig',
     'teachersportal.apps.TeachersportalConfig',
 ]
 

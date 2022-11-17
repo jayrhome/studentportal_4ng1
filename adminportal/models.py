@@ -73,7 +73,7 @@ class shs_track(models.Model):
 
 class shs_strand(models.Model):
     track = models.ForeignKey(
-        shs_track, on_delete=models.SET_NULL, null=True, related_name="track_strand")
+        "shs_track", on_delete=models.SET_NULL, null=True, related_name="track_strand")
     strand_name = models.CharField(max_length=100, unique=True)
     definition = models.TextField()
     date_added = models.DateTimeField(auto_now_add=True)
