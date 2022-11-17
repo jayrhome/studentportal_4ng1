@@ -48,7 +48,7 @@ class shs_courses(TemplateView):
         context = super().get_context_data(**kwargs)
         context["title"] = "Courses"
         context["courses"] = shs_track.objects.filter(is_deleted=False).prefetch_related(Prefetch(
-            "track_strand", queryset=shs_strand.objects.filter(is_deleted=False), to_attr="strands"))
+            "track_strand", queryset=shs_strand.objects.filter(is_deleted=False), to_attr="strands")).order_by("track_name")
 
         return context
 
@@ -436,12 +436,21 @@ class admission_and_enrollment(TemplateView):
                     sy_admitted__is_validated=True, sy_admitted__is_deleted=False))
                 pending_admission_count = Count(
                     "sy_admitted", filter=Q(sy_admitted__is_validated=False, sy_admitted__is_deleted=False))
+
                 context["count_sy_details"] = school_year.objects.filter(id=sy.id).annotate(
                     enrolled_students=enrolled_count,
                     pending_enrollment=pending_enrollment_count,
                     admitted_students=admission_count,
                     pending_admission=pending_admission_count
-                )
+                ).first()
+
+                enrollment_count = Count(
+                    "sy_enrolled", filter=Q(sy_enrolled__is_deleted=False))
+                admission_count_sy = Count(
+                    "sy_admitted", filter=Q(sy_admitted__is_deleted=False))
+                count_if_exist = school_year.objects.filter(id=sy.id).annotate(
+                    e_count=enrollment_count, a_count=admission_count_sy).first()
+                context["is_empty_count"] = False if count_if_exist.e_count or count_if_exist.a_count else True
 
                 if validate_enrollmentSetup(self.request, sy):
                     context["enrollment_status"] = self.setup_verification(sy)
@@ -555,8 +564,9 @@ class open_enrollment_admission(FormView):
                         request, "You already have a setup form for S.Y. %s." % sy.sy)
                     return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
                 except:
-                    messages.warning(
-                        request, "S.Y. %s has no admission and enrollment setup form. Create Now." % sy.sy)
+                    if request.method == "GET":
+                        messages.warning(
+                            request, "S.Y. %s has no admission and enrollment setup form. Create Now." % sy.sy)
                     return super().dispatch(request, *args, **kwargs)
             else:
                 # If school_year is greater than 209 days since its creation
@@ -564,3 +574,8 @@ class open_enrollment_admission(FormView):
         except:
             # if there's no data in school_year table
             return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class view_admitted_students(TemplateView):
+    pass

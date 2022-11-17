@@ -7,10 +7,10 @@ from django.forms.widgets import DateInput
 
 User = get_user_model()
 
-ea_setup_choices = (
+ea_setup_choices = [
     (True, "Yes"),
     (False, "No"),
-)
+]
 
 
 def validate_newStrand(strand):

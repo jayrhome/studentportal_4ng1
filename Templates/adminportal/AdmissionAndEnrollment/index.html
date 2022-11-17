@@ -15,25 +15,26 @@
 
 {% if sy %}
     <div class="container col-md-6">
-        {% for count in count_sy_details %}
-            <!-- if enrollment is ongoing, display the count of enrollment requests -->
-            {% if count.enrolled_students %}
-                <p> {{count.enrolled_students}} student(s) are already enrolled for School Year: {{sy}} </p>
-            {% endif %}
-            {% if count.pending_enrollment %}
-                <p> {{count.pending_enrollment}} request for enrollment are still pending for School Year: {{sy}} </p>
-            {% endif %}
+        <!-- If no enrollment or admission -->
+        {% if is_empty_count %}
+            <p> No students have been enrolled and admitted for S.Y. {{sy}} yet. </p>
+        {% endif %}
 
-            <!-- if admission is ongoing, display the count of admission requests -->
-            {% if count.admitted_students %}
-                <p> {{count.admitted_students}} student(s) are already admitted for School Year: {{sy}} </p>
-            {% endif %}
-            {% if count.pending_admission %}
-                <p> {{count.pending_admission}} request for admission are still pending for School Year: {{sy}} </p>
-            {% endif %}
-        {% empty %}
-            <p> There are no enrolled and admitted students for School Year: {{sy}} </p>
-        {% endfor %}
+        <!-- if enrollment is ongoing, display the item of enrollment requests -->
+        {% if count_sy_details.enrolled_students %}
+            <p> {{count_sy_details.enrolled_students}} student(s) are already enrolled for School Year: {{sy}} </p>
+        {% endif %}
+        {% if count_sy_details.pending_enrollment %}
+            <p> {{count_sy_details.pending_enrollment}} request for enrollment are still pending for School Year: {{sy}} </p>
+        {% endif %}
+
+        <!-- if admission is ongoing, display the item of admission requests -->
+        {% if count_sy_details.admitted_students %}
+            <p> {{count_sy_details.admitted_students}} student(s) are already admitted for School Year: {{sy}} </p>
+        {% endif %}
+        {% if count_sy_details.pending_admission %}
+            <p> {{count_sy_details.pending_admission}} request for admission are still pending for School Year: {{sy}} </p>
+        {% endif %}
     </div>
 {% endif %}
 
@@ -57,9 +58,8 @@
         {% else %}
         {% endif %}
     {% elif enrollment_status == False %}
-        <p> The current school year is created in the database. To setup the enrollment and admission details, navigate to <a href="{% url 'adminportal:admission_enrollment_setup' %}" class="btn btn-info"> Setup Form </a> </p>
+        <p> The current school year has setup details. To setup the enrollment and admission details, navigate to <a href="{% url 'adminportal:admission_enrollment_setup' %}" class="btn btn-info"> Setup Form </a> </p>
     {% endif %}
 </div>
-{{nani}}
 
 {% endblock content %}
