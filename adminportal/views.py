@@ -425,41 +425,55 @@ class admission_and_enrollment(TemplateView):
 
         try:
             sy = school_year.objects.latest("date_created")
-            if sy:
-                context["sy"] = sy.sy
+            context["sy"] = sy.sy
 
-                enrolled_count = Count(
-                    "sy_enrolled", filter=Q(sy_enrolled__is_passed=True, sy_enrolled__is_deleted=False))
-                pending_enrollment_count = Count(
-                    "sy_enrolled", filter=Q(sy_enrolled__is_passed=False, sy_enrolled__is_deleted=False))
-                admission_count = Count("sy_admitted", filter=Q(
-                    sy_admitted__is_validated=True, sy_admitted__is_deleted=False))
-                pending_admission_count = Count(
-                    "sy_admitted", filter=Q(sy_admitted__is_validated=False, sy_admitted__is_deleted=False))
+            if sy.setup_sy.start_date > date.today():
+                # if enrollment will start soon
+                context["start_soon"] = True
+                context["start_date"] = sy.setup_sy.start_date
+            elif sy.setup_sy.end_date > date.today():
+                # if enrollment is ongoing, options to extend enrollment period, postpone, etc.
+                context["is_extend"] = True
+                context["count_sy_details"] = self.count_validation1(sy)
+                context["is_empty_count"] = self.count_validation2(sy)
+                context["enrollment_status"] = self.setup_verification(sy)
+            else:
+                if sy.setup_sy.end_date <= date.today() and validate_enrollmentSetup(self.request, sy):
+                    # if enrollment reach the end date but still valid, option to extend enrollment period.
+                    context["extend_notif"] = True
+                    context["is_extend"] = True
+                    context["count_sy_details"] = self.count_validation1(sy)
+                    context["is_empty_count"] = self.count_validation2(sy)
 
-                context["count_sy_details"] = school_year.objects.filter(id=sy.id).annotate(
-                    enrolled_students=enrolled_count,
-                    pending_enrollment=pending_enrollment_count,
-                    admitted_students=admission_count,
-                    pending_admission=pending_admission_count
-                ).first()
-
-                enrollment_count = Count(
-                    "sy_enrolled", filter=Q(sy_enrolled__is_deleted=False))
-                admission_count_sy = Count(
-                    "sy_admitted", filter=Q(sy_admitted__is_deleted=False))
-                count_if_exist = school_year.objects.filter(id=sy.id).annotate(
-                    e_count=enrollment_count, a_count=admission_count_sy).first()
-                context["is_empty_count"] = False if count_if_exist.e_count or count_if_exist.a_count else True
-
-                if validate_enrollmentSetup(self.request, sy):
-                    context["enrollment_status"] = self.setup_verification(sy)
-                else:
-                    context["new_enrollment"] = True
+            if not validate_enrollmentSetup(self.request, sy):
+                context["new_enrollment"] = True
 
         except:
+            # It will commit an error if there's a school year but no row in setup_sy related table
             context["no_record"] = True
         return context
+
+    def count_validation2(self, sy):
+        enrollment_count = Count(
+            "sy_enrolled", filter=Q(sy_enrolled__is_deleted=False))
+        admission_count_sy = Count(
+            "sy_admitted", filter=Q(sy_admitted__is_deleted=False))
+        count_if_exist = school_year.objects.filter(id=sy.id).annotate(
+            e_count=enrollment_count, a_count=admission_count_sy).first()
+
+        return False if count_if_exist.e_count or count_if_exist.a_count else True
+
+    def count_validation1(self, sy):
+        enrolled_count = Count(
+            "sy_enrolled", filter=Q(sy_enrolled__is_passed=True, sy_enrolled__is_deleted=False))
+        pending_enrollment_count = Count(
+            "sy_enrolled", filter=Q(sy_enrolled__is_passed=False, sy_enrolled__is_deleted=False))
+        admission_count = Count("sy_admitted", filter=Q(
+            sy_admitted__is_validated=True, sy_admitted__is_deleted=False))
+        pending_admission_count = Count(
+            "sy_admitted", filter=Q(sy_admitted__is_validated=False, sy_admitted__is_deleted=False))
+
+        return school_year.objects.filter(id=sy.id).annotate(enrolled_students=enrolled_count, pending_enrollment=pending_enrollment_count, admitted_students=admission_count, pending_admission=pending_admission_count).first()
 
     def setup_verification(self, sy):
         try:

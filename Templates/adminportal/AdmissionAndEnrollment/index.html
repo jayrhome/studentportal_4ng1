@@ -15,6 +15,10 @@
 
 {% if sy %}
     <div class="container col-md-6">
+        {% if start_soon %}
+        <p> Enrollment will start on {{start_date}} </p>
+        {% endif %}
+
         <!-- If no enrollment or admission -->
         {% if is_empty_count %}
             <p> No students have been enrolled and admitted for S.Y. {{sy}} yet. </p>
@@ -35,6 +39,14 @@
         {% if count_sy_details.pending_admission %}
             <p> {{count_sy_details.pending_admission}} request for admission are still pending for School Year: {{sy}} </p>
         {% endif %}
+
+        {% if extend_notif %}
+        <p> Enrollment and Admission for S.Y. {{sy}} have already ended. </p>
+        {% endif %}
+        {% if is_extend %}
+        <a href="#" class="btn btn-primary"> Extend Enrollment Period</a>
+        {% endif %}
+
     </div>
 {% endif %}
 
