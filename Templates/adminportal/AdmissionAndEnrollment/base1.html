@@ -9,7 +9,7 @@
     {% if title %}
     <title> {{title}} </title>
     {% else %}
-    <title> Admin </title>
+    <title> Enrollment and Admission </title>
     {% endif %}
 
     <!-- Bootstrap -->
@@ -26,13 +26,15 @@
 
     <div class="container p-3">
         {% if user.is_authenticated %}
+        <a href="{% url 'adminportal:index' %}" class="btn btn-primary"> Home </a> &nbsp;
+        <a href="{% url 'adminportal:admission_and_enrollment' %}" class="btn btn-primary"> Admission and Enrollment </a> &nbsp;
         <a href="{% url 'studentportal:logout' %}" class="btn btn-primary"> Logout </a> &nbsp;
-        <a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary"> Courses </a> &nbsp;
         {% endif %}
     </div>
 
     {% block content %}{% endblock content %}
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
-    
+
 </body>
 </html>
