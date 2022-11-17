@@ -6,6 +6,7 @@ app_name = "adminportal"
 
 urlpatterns = [
     path("", index.as_view(), name="index"),
+
     path("Courses/", include([
         path("", shs_courses.as_view(), name="view_courses"),
         path("add_track/", add_shs_track_cbv.as_view(), name="add_track"),
@@ -17,5 +18,13 @@ urlpatterns = [
         path("Edit_strand/<strand_id>/",
              edit_strand.as_view(), name="edit_strand"),
         path("Delete_strand/<pk>/", delete_strand.as_view(), name="delete_strand"),
-    ]))
+    ])),
+
+    path("Admission_and_enrollment/", include([
+        path("", admission_and_enrollment.as_view(),
+             name="admission_and_enrollment"),
+        path("Setup/", open_enrollment_admission.as_view(),
+             name="admission_enrollment_setup"),
+    ])),
+
 ]
