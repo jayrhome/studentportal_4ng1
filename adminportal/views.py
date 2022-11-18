@@ -13,6 +13,8 @@ from . models import *
 from django.db import IntegrityError
 from django.contrib import messages
 from django.db.models import Q, FilteredRelation, Prefetch, Count
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 
 
 def superuser_only(user):
@@ -427,29 +429,44 @@ class admission_and_enrollment(TemplateView):
             sy = school_year.objects.latest("date_created")
             context["sy"] = sy.sy
 
-            if sy.setup_sy.start_date > date.today():
-                # if enrollment will start soon
-                context["start_soon"] = True
+            if sy.setup_sy.start_date > date.today() and validate_enrollmentSetup(self.request, sy):
+                # if school year is less than 209 days and setup form will start soon
+                context["start_soon"] = True  # For update period button
                 context["start_date"] = sy.setup_sy.start_date
-            elif sy.setup_sy.end_date > date.today():
-                # if enrollment is ongoing, options to extend enrollment period, postpone, etc.
-                context["is_extend"] = True
-                context["count_sy_details"] = self.count_validation1(sy)
-                context["is_empty_count"] = self.count_validation2(sy)
-                context["enrollment_status"] = self.setup_verification(sy)
+                context["uid"] = urlsafe_base64_encode(
+                    force_bytes(sy.setup_sy.id))
+
+            elif sy.setup_sy.end_date >= date.today() and validate_enrollmentSetup(self.request, sy):
+                # if school year is less than 209 days and setup form will end soon
+                if sy.setup_sy.still_accepting:
+                    context["is_empty_count"] = self.count_validation2(sy)
+                    context["count_sy_details"] = self.count_validation1(sy)
+                    context["is_extend"] = True  # extend period
+                    context["end_dt"] = sy.setup_sy.end_date
+                    context["enrollment_status"] = self.setup_verification(
+                        sy)  # postpone or continue
+                    context["stop_accepting"] = True
+
+                else:
+                    context["is_empty_count"] = self.count_validation2(sy)
+                    context["count_sy_details"] = self.count_validation1(sy)
+                    context["stop_from_accepting"] = True
+                    context["is_extend"] = True  # extend period
+
             else:
                 if sy.setup_sy.end_date <= date.today() and validate_enrollmentSetup(self.request, sy):
-                    # if enrollment reach the end date but still valid, option to extend enrollment period.
-                    context["extend_notif"] = True
-                    context["is_extend"] = True
-                    context["count_sy_details"] = self.count_validation1(sy)
+                    # if school year is less than 209 days and setup form period has ended
                     context["is_empty_count"] = self.count_validation2(sy)
+                    context["count_sy_details"] = self.count_validation1(sy)
+                    context["extend_notif"] = f"Enrollment and Admission for S.Y. {sy} have already ended."
 
             if not validate_enrollmentSetup(self.request, sy):
+                # If school year is greater than 209 days.
                 context["new_enrollment"] = True
 
         except:
-            # It will commit an error if there's a school year but no row in setup_sy related table
+            # if no school year
+            # if with school year but no setup form
             context["no_record"] = True
         return context
 
@@ -476,20 +493,88 @@ class admission_and_enrollment(TemplateView):
         return school_year.objects.filter(id=sy.id).annotate(enrolled_students=enrolled_count, pending_enrollment=pending_enrollment_count, admitted_students=admission_count, pending_admission=pending_admission_count).first()
 
     def setup_verification(self, sy):
+        if sy.setup_sy.is_visible:
+            return "postpone"
+        return "continue"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class update_enrollment(FormView):
+    form_class = ea_setup_form
+    template_name = "adminportal/AdmissionAndEnrollment/update_enrollment.html"
+    success_url = "/School_admin/Admission_and_enrollment/"
+
+    def form_valid(self, form):
         try:
-            enrollment_obj = enrollment_admission_setup.objects.get(
-                ea_setup_sy=sy)
-            if enrollment_obj.is_visible and enrollment_obj.still_accepting:
-                # If visible and still accepting request
-                return "continue"
-            elif not enrollment_obj.is_visible and enrollment_obj.still_accepting:
-                # If not visible but still allowed to accept request
-                return "pending"
+            if form.has_changed():
+                start_date = form.cleaned_data["start_date"]
+                end_date = form.cleaned_data["end_date"]
+                if start_date < end_date:
+                    enrollment_admission_setup.objects.filter(id=self.convert_to_pk(
+                        self.kwargs["uid"])).update(start_date=start_date, end_date=end_date)
+                    messages.success(
+                        self.request, "Enrollment and Admission period is updated successfully.")
+                    return super().form_valid(form)
+                else:
+                    messages.warning(
+                        self.request, "Dates are not valid! Try again.")
+                    return self.form_invalid(form)
             else:
-                # if not visible and no longer allowed to accept request
-                return "stop"
-        except:
-            return False
+                return super().form_valid(form)
+        except Exception as e:
+            messages.error(self.request, e)
+            return super().form_valid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        get_obj = enrollment_admission_setup.objects.get(
+            id=self.convert_to_pk(self.kwargs["uid"]))
+        initial["start_date"] = get_obj.start_date
+        initial["end_date"] = get_obj.end_date
+        return initial
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            uid = self.convert_to_pk(self.kwargs["uid"])
+            get_obj = enrollment_admission_setup.objects.get(id=uid)
+            if validate_enrollmentSetup(request, get_obj.ea_setup_sy):
+                if get_obj.start_date > date.today() and get_obj.end_date > date.today():
+                    return super().dispatch(request, *args, **kwargs)
+                else:
+                    messages.warning(
+                        request, "Enrollment and Admission period are no longer valid.")
+                    return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
+            else:
+                messages.warning(request, "%s is no longer valid." %
+                                 get_obj.ea_setup_sy.sy)
+                return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
+        except Exception as e:
+            messages.error(request, e)
+            return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Update Date"
+        context["setup_details"] = enrollment_admission_setup.objects.values(
+            "ea_setup_sy__sy").get(id=self.convert_to_pk(self.kwargs["uid"]))
+        return context
+
+    def convert_to_pk(self, uid):
+        return force_str(urlsafe_base64_decode(uid))
+
+
+class extend_enrollment(FormView):
+    # is_visible and still_accepting should be set to True
+    pass
+
+
+class stop_enrollment(TemplateView):
+    pass
+
+
+class enrollment_visibility(TemplateView):
+    # make enrollment visible and hidden
+    pass
 
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
@@ -502,7 +587,6 @@ class open_enrollment_admission(FormView):
         if form.has_changed():
             start_date = form.cleaned_data["start_date"]
             end_date = form.cleaned_data["end_date"]
-            display_now = form.cleaned_data["display_now"] if form.cleaned_data["display_now"] else False
 
             if start_date < end_date:
                 try:
@@ -512,7 +596,6 @@ class open_enrollment_admission(FormView):
                             ea_setup_sy=sy,
                             start_date=start_date,
                             end_date=end_date,
-                            is_visible=display_now,
                         )
                         messages.success(
                             self.request, "Setup Form for S.Y. %s is created successfully." % sy.sy)
@@ -524,7 +607,6 @@ class open_enrollment_admission(FormView):
                             ),
                             start_date=start_date,
                             end_date=end_date,
-                            is_visible=display_now,
                         )
                         messages.success(
                             self.request, "Setup Form for S.Y. %s is created successfully." % obj_pure_create.ea_setup_sy.sy)
@@ -536,7 +618,6 @@ class open_enrollment_admission(FormView):
                                 sy=compute_schoolyear(1)),
                             start_date=start_date,
                             end_date=end_date,
-                            is_visible=display_now,
                         )
                         messages.success(
                             self.request, "S.Y. %s Enrollment and Admission Forms is created successfully." % obj_created.ea_setup_sy.sy)

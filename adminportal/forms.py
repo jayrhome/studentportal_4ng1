@@ -7,11 +7,6 @@ from django.forms.widgets import DateInput
 
 User = get_user_model()
 
-ea_setup_choices = [
-    (True, "Yes"),
-    (False, "No"),
-]
-
 
 def validate_newStrand(strand):
     obj = shs_strand.objects.filter(strand_name=strand).first()
@@ -21,7 +16,7 @@ def validate_newStrand(strand):
 
 
 def setup_form_DateValidation(date):
-    if date < date.today():
+    if date <= date.today():
         raise ValidationError(
             "Invalid Date! Do not select the previous or current date.")
 
@@ -52,5 +47,3 @@ class ea_setup_form(forms.Form):
                                  setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(label="End Date", validators=[
                                setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
-    display_now = forms.ChoiceField(
-        label="Display Now?", widget=forms.RadioSelect, choices=ea_setup_choices)

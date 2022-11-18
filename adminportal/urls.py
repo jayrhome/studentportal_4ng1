@@ -26,6 +26,8 @@ urlpatterns = [
              name="admission_and_enrollment"),
         path("Setup/", open_enrollment_admission.as_view(),
              name="admission_enrollment_setup"),
+        path("Update_details/<uid>/", update_enrollment.as_view(),
+             name="setup_details_update"),
     ])),
 
 ]
