@@ -11,7 +11,7 @@ from django.views.generic.edit import FormView, CreateView
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.db import IntegrityError
-from . forms import loginForm, createaccountForm, resetaccountForm, resetpasswordForm
+from . forms import *
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.mail import EmailMessage
@@ -20,6 +20,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from .tokens import account_activation_token, password_reset_token
 from ratelimit.decorators import ratelimit
+from formtools.wizard.views import SessionWizardView
 
 
 User = get_user_model()
@@ -34,6 +35,10 @@ def student_and_anonymous(user):
         return user.is_student
     else:
         return True
+
+
+def student_access_only(user):
+    return user.is_student
 
 
 @method_decorator(user_passes_test(student_and_anonymous, login_url="adminportal:index"), name="dispatch")
@@ -283,3 +288,12 @@ class password_reset_form(FormView):
             else:
                 messages.error(self.request, "Reset token is no longer valid.")
                 return super().form_valid(form)
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class admission_application(SessionWizardView):
+    template_name = "studentportal/AdmissionAndEnrollment/admission.html"
+    form_list = [admission_personal_details, elementary_school_details]
+
+    def done(self, form_list, **kwargs):
+        pass
