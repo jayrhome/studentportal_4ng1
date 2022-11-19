@@ -24,7 +24,7 @@
 
         <!-- if school year is less than 209 days and setup form will start soon -->
         {% if start_soon %}
-            <p> Enrollment and Admission will start on {{start_date}}. </p>
+            <p> Enrollment and Admission will start on {{start_date}} until {{end_date}}. </p>
             <p> To update the Enrollment and Admission dates. Click <a href="{% url 'adminportal:setup_details_update' uid=uid %}" class="btn btn-primary">Update</a> </p>
         {% endif %}
 

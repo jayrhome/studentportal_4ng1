@@ -434,6 +434,8 @@ class admission_and_enrollment(TemplateView):
                 context["start_soon"] = True  # For update period button
                 context["start_date"] = sy.setup_sy.start_date.strftime(
                     "%A, %b %d, %Y")
+                context["end_date"] = sy.setup_sy.end_date.strftime(
+                    "%A, %b %d, %Y")
                 context["uid"] = urlsafe_base64_encode(
                     force_bytes(sy.setup_sy.id))
 
