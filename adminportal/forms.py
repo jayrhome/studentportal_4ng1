@@ -47,3 +47,8 @@ class ea_setup_form(forms.Form):
                                  setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(label="End Date", validators=[
                                setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
+
+
+class extend_enrollment(forms.Form):
+    end_date = forms.DateField(label="End Date", validators=[
+                               setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))

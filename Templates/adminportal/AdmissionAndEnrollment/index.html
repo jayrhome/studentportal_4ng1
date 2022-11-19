@@ -28,33 +28,32 @@
             <p> To update the Enrollment and Admission dates. Click <a href="{% url 'adminportal:setup_details_update' uid=uid %}" class="btn btn-primary">Update</a> </p>
         {% endif %}
 
-        <!-- if school year is less than 209 days and setup form will end soon -->
         {% if is_empty_count %}
             <p> No students have been enrolled and admitted for S.Y. {{sy}} yet. </p>
         {% endif %}
+
         {% if count_sy_details.admitted_students %}
             <p> {{count_sy_details.admitted_students}} student(s) are already admitted for School Year: {{sy}} </p>
         {% endif %}
+
         {% if count_sy_details.pending_admission %}
             <p> {{count_sy_details.pending_admission}} request for admission are still pending for School Year: {{sy}} </p>
         {% endif %}
+
         {% if stop_from_accepting %}
-            <p> You stopped from accepting Enrollment and Admission requests. To enable, click the Extend button below. </p>
+            <p> You postpone the Enrollment and Admission. To revert, click the Extend button below. </p>
         {% endif %}
+
         {% if is_extend %}
-            <p> Enrollment and Admission for S.Y. {{sy}} will end in {{end_dt}}. To extend, click <a href="#" class="btn btn-primary"> Extend </a> </p>
+            <p> Enrollment and Admission for S.Y. {{sy}} will end in {{end_dt}}. To extend, click <a href="{% url 'adminportal:extend_enrollment' uid=uid %}" class="btn btn-primary"> Extend </a> </p>
         {% endif %}
+
         {% if stop_accepting %}
-            <p> Do you want to stop from accepting Enrollment and Admission requests? Click <a href="#" class="btn btn-primary">Stop</a> </p>
+            <p> Do you want to postpone the Enrollment and Admission for S.Y. {{sy}}? Click <a href="{% url 'adminportal:postpone_enrollment' uid=uid %}" class="btn btn-primary">Postpone</a> </p>
         {% endif %}
+
         {% if extend_notif %}
-            <p> {{extend_notif}} To extend, click <a href="#" class="btn btn-primary"> Extend </a> </p>
-        {% endif %}
-        {% if enrollment_status == "postpone" %}
-            <p> Postpone from receiving Admission and Enrollment? Click <a href="#" class="btn btn-primary">Postpone</a> </p>
-        {% endif %}
-        {% if enrollment_status == "continue" %}
-            <p> You postponed from receiving Admission and Enrollment. To revert, click <a href="#" class="btn btn-primary">Continue</a> </p>
+            <p> {{extend_notif}} To extend, click <a href="{% url 'adminportal:extend_enrollment' uid=uid %}" class="btn btn-primary"> Extend </a> </p>
         {% endif %}
 
     </div>

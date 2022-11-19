@@ -262,7 +262,6 @@ class enrollment_admission_setup(models.Model):
         school_year, on_delete=models.SET_NULL, null=True, related_name="setup_sy")
     start_date = models.DateField()
     end_date = models.DateField()
-    is_visible = models.BooleanField(default=True)
     still_accepting = models.BooleanField(default=True)
 
     def __str__(self):
