@@ -432,7 +432,8 @@ class admission_and_enrollment(TemplateView):
             if sy.setup_sy.start_date > date.today() and validate_enrollmentSetup(self.request, sy):
                 # if school year is less than 209 days and setup form will start soon
                 context["start_soon"] = True  # For update period button
-                context["start_date"] = sy.setup_sy.start_date
+                context["start_date"] = sy.setup_sy.start_date.strftime(
+                    "%A, %b %d, %Y")
                 context["uid"] = urlsafe_base64_encode(
                     force_bytes(sy.setup_sy.id))
 
@@ -443,7 +444,8 @@ class admission_and_enrollment(TemplateView):
                     context["is_empty_count"] = self.count_validation2(sy)
                     context["count_sy_details"] = self.count_validation1(sy)
                     context["is_extend"] = True  # extend period
-                    context["end_dt"] = sy.setup_sy.end_date
+                    context["end_dt"] = sy.setup_sy.end_date.strftime(
+                        "%A, %b %d, %Y")
 
                     # use to postpone enrollment
                     context["stop_accepting"] = True
@@ -456,6 +458,8 @@ class admission_and_enrollment(TemplateView):
                     context["count_sy_details"] = self.count_validation1(sy)
                     context["stop_from_accepting"] = True
                     context["is_extend"] = True  # extend period
+                    context["end_dt"] = sy.setup_sy.end_date.strftime(
+                        "%A, %b %d, %Y")
                     context["uid"] = urlsafe_base64_encode(
                         force_bytes(sy.setup_sy.id))
 
@@ -585,7 +589,7 @@ class extend_enrollment(FormView):
                     get_enrollment = enrollment_admission_setup.objects.values(
                         'end_date').get(id=self.convert_to_pk(self.kwargs["uid"]))
                     messages.success(
-                        self.request, "Enrollment and Admission period is successfully extended until %s." % get_enrollment["end_date"])
+                        self.request, "Enrollment and Admission period is successfully extended until %s." % get_enrollment["end_date"].strftime("%A, %b %d, %Y"))
                     return super().form_valid(form)
                 else:
                     messages.warning(
