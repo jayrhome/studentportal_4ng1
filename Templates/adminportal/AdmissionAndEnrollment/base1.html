@@ -28,6 +28,8 @@
         {% if user.is_authenticated %}
         <a href="{% url 'adminportal:index' %}" class="btn btn-primary"> Home </a> &nbsp;
         <a href="{% url 'adminportal:admission_and_enrollment' %}" class="btn btn-primary"> Admission and Enrollment </a> &nbsp;
+        <a href="{% url 'adminportal:admission' %}" class="btn btn-primary"> Admission </a> &nbsp;
+        <a href="#" class="btn btn-primary"> Enrollment </a> &nbsp;
         <a href="{% url 'studentportal:logout' %}" class="btn btn-primary"> Logout </a> &nbsp;
         {% endif %}
     </div>

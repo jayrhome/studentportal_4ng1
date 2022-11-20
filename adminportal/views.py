@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, HttpResponseRedirect
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView, FormMixin
 from django.views.generic.detail import DetailView
+from django.views.generic.list import ListView
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -485,7 +486,6 @@ class admission_and_enrollment(TemplateView):
                     context["extend_notif"] = f"Enrollment and Admission for S.Y. {sy} have already ended."
                     context["uid"] = urlsafe_base64_encode(
                         force_bytes(sy.setup_sy.id))
-
             if not validate_enrollmentSetup(self.request, sy):
                 # If school year is greater than 209 days.
                 context["new_enrollment"] = True
@@ -500,7 +500,7 @@ class admission_and_enrollment(TemplateView):
         enrollment_count = Count(
             "sy_enrolled", filter=Q(sy_enrolled__is_deleted=False))
         admission_count_sy = Count(
-            "sy_admitted", filter=Q(sy_admitted__is_deleted=False))
+            "sy_admitted", filter=Q(sy_admitted__is_denied=False))
         count_if_exist = school_year.objects.filter(id=sy.id).annotate(
             e_count=enrollment_count, a_count=admission_count_sy).first()
 
@@ -512,9 +512,9 @@ class admission_and_enrollment(TemplateView):
         pending_enrollment_count = Count(
             "sy_enrolled", filter=Q(sy_enrolled__is_passed=False, sy_enrolled__is_deleted=False))
         admission_count = Count("sy_admitted", filter=Q(
-            sy_admitted__is_validated=True, sy_admitted__is_deleted=False))
+            sy_admitted__is_validated=True, sy_admitted__is_denied=False))  # For accepted
         pending_admission_count = Count(
-            "sy_admitted", filter=Q(sy_admitted__is_validated=False, sy_admitted__is_deleted=False))
+            "sy_admitted", filter=Q(sy_admitted__is_validated=False, sy_admitted__is_denied=False))  # For pending but not denied
 
         return school_year.objects.filter(id=sy.id).annotate(enrolled_students=enrolled_count, pending_enrollment=pending_enrollment_count, admitted_students=admission_count, pending_admission=pending_admission_count).first()
 
@@ -810,5 +810,10 @@ class open_enrollment_admission(FormView):
 
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class view_admitted_students(TemplateView):
-    pass
+class admission(ListView):
+    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/admission.html"
+    allow_empty = True
+    context_object_name = "pending_list"
+    queryset = student_admission_details.objects.filter(
+        is_validated=False, is_denied=False)
+    paginate_by = 1

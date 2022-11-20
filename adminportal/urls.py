@@ -32,6 +32,7 @@ urlpatterns = [
              name="extend_enrollment"),
         path("Postpone_enrollment/<uid>/",
              postpone_enrollment.as_view(), name="postpone_enrollment"),
+        path("Admission/", admission.as_view(), name="admission"),
     ])),
 
 

@@ -180,7 +180,7 @@ class student_admission_details(models.Model):
     jhs_community_learning_center = models.CharField(max_length=50)
     jhs_clc_address = models.CharField(max_length=50)
 
-    is_validated = models.BooleanField(default=False)
+    is_validated = models.BooleanField(default=False)  # if pending or accepted
     admission_sy = models.ForeignKey(
         school_year, on_delete=models.SET_NULL, null=True, related_name="sy_admitted")
     first_chosen_strand = models.ForeignKey(
@@ -191,7 +191,7 @@ class student_admission_details(models.Model):
     is_late = models.BooleanField(default=False)
     is_transferee = models.BooleanField(default=False)
 
-    is_deleted = models.BooleanField(default=False)
+    is_denied = models.BooleanField(default=False)  # if denied, for review
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
 
@@ -266,3 +266,14 @@ class enrollment_admission_setup(models.Model):
 
     def __str__(self):
         return self.ea_setup_sy.sy
+
+
+class for_review_admission(models.Model):
+    to_review = models.ForeignKey(
+        student_admission_details, on_delete=models.CASCADE, related_name="admission_review")
+    comment = models.TextField()
+    date_created = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.to_review.first_name
