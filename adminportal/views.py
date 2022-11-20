@@ -61,6 +61,12 @@ class add_shs_track_cbv(FormView):
     form_class = add_shs_track
     success_url = "/School_admin/Courses/"
 
+    def get_success_url(self):
+        if "another" in self.request.POST:
+            return "/School_admin/Courses/add_track/"
+        else:
+            return super().get_success_url()
+
     def form_valid(self, form):
         name = form.cleaned_data["name"]
         details = form.cleaned_data["details"]
@@ -221,6 +227,12 @@ class add_strand(FormView):
     success_url = "/School_admin/Courses/"
     form_class = add_strand_form
     template_name = "adminportal/Shs_courses/create_strands.html"
+
+    def get_success_url(self):
+        if "another" in self.request.POST:
+            return "/School_admin/Courses/Add_strand/" + self.kwargs["track_id"]
+        else:
+            return super().get_success_url()
 
     def form_valid(self, form):
         strand_name = form.cleaned_data["strand_name"]

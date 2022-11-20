@@ -34,4 +34,5 @@ urlpatterns = [
              postpone_enrollment.as_view(), name="postpone_enrollment"),
     ])),
 
+
 ]
