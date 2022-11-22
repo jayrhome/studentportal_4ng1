@@ -1,3 +1,7 @@
-<a href="#" class="btn btn-primary"> Admitted </a> &nbsp;
-<a href="#" class="btn btn-info"> For review </a> &nbsp;
-<a href="#" class="btn btn-danger"> Denied </a> &nbsp;
+<div class="container col-md-8">
+    <a href="{% url 'adminportal:admitted_students' %}" class="btn btn-primary btn-sm"> Admitted List </a> &nbsp; <!-- For all admitted students, rank by schoolyear, admission date -->
+    <a href="{% url 'adminportal:forReviewAdmission' %}" class="btn btn-info btn-sm"> For review </a> &nbsp; <!-- For denied admission but with review -->
+    <a href="{% url 'adminportal:denied_admissions' %}" class="btn btn-danger btn-sm"> Denied List </a> &nbsp; <!-- For denied admission with no review -->
+</div>
+
+

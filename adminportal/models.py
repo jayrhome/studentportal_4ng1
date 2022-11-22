@@ -6,6 +6,8 @@ from django.core.validators import RegexValidator
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
 from django.db.models import Q
+from django.shortcuts import HttpResponseRedirect
+from django.urls import reverse
 
 User = get_user_model()
 
@@ -219,6 +221,18 @@ class student_admission_details(models.Model):
             "birthplace": self.birthplace,
             "nationality": self.nationality,
         }
+
+    def to_pendingList(self):
+        return reverse("adminportal:admission")
+
+    def to_admittedList(self):
+        return reverse("adminportal:admitted_students")
+
+    def to_reviewList(self):
+        return reverse("adminportal:forReviewAdmission")
+
+    def to_deniedList(self):
+        return reverse("adminportal:denied_admissions")
 
 
 class student_enrollment_details(models.Model):

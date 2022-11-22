@@ -33,6 +33,13 @@ urlpatterns = [
         path("Postpone_enrollment/<uid>/",
              postpone_enrollment.as_view(), name="postpone_enrollment"),
         path("Admission/", admission.as_view(), name="admission"),
+        path("Admitted_students/", admitted_students.as_view(),
+             name="admitted_students"),
+        path("Details/<pk>/", adm_details.as_view(), name="details"),
+        path("For_review/", review_admissionList.as_view(),
+             name="forReviewAdmission"),
+        path("Denied_admission/", denied_admissionList.as_view(),
+             name="denied_admissions"),
     ])),
 
 

@@ -32,11 +32,11 @@
         {% endif %}
 
         {% if count_sy_details.admitted_students %}
-            <p> {{count_sy_details.admitted_students}} student(s) are already admitted for School Year: {{sy}} </p>
+            <p> {{count_sy_details.admitted_students}} student(s) are already admitted for School Year: {{sy}} <a href="{% url 'adminportal:admitted_students' %}" class="btn btn-primary"> View </a> </p>
         {% endif %}
 
         {% if count_sy_details.pending_admission %}
-            <p> {{count_sy_details.pending_admission}} request for admission are still pending for School Year: {{sy}} </p>
+            <p> {{count_sy_details.pending_admission}} request for admission are still pending for School Year: {{sy}} <a href="{% url 'adminportal:admission' %}" class="btn btn-primary"> Review </a> </p>
         {% endif %}
 
         {% if stop_from_accepting %}

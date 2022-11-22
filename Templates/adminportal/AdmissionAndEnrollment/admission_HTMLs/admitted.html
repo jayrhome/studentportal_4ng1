@@ -15,7 +15,7 @@
 {% endif %}
 <br>
 <div class="container col-md-12">
-    <center><h4> Pending Admission </h4></center>
+    <center><h4> Admitted Students </h4></center>
 
     <table class="table">
         <thead class="thead-dark">
@@ -31,20 +31,20 @@
             </tr>
         </thead>
         <tbody>
-            {% for admission in pending_list %}
+            {% for student in list_of_admitted %}
                 <tr>
-                    <th scope="row"> {{admission.id}} </th>
-                    <td> {{admission.admission_owner__email}} </td>
-                    <td> {{admission.last_name}} </td>
-                    <td> {{admission.sex}} </td>
-                    <td> {{admission.first_chosen_strand__strand_name}} </td>
-                    <td> {{admission.second_chosen_strand__strand_name}} </td>
-                    <td> {{admission.date_created}} </td>
-                    <td> <a href="{% url 'adminportal:details' pk=admission.id %}" class="btn btn-primary btn-sm"> Review </a> </td>
+                    <th scope="row"> {{student.id}} </th>
+                    <td> {{student.admission_owner__email}} </td>
+                    <td> {{student.last_name}} </td>
+                    <td> {{student.sex}} </td>
+                    <td> {{student.first_chosen_strand__strand_name}} </td>
+                    <td> {{student.second_chosen_strand__strand_name}} </td>
+                    <td> {{student.date_created}} </td>
+                    <td> <a href="{% url 'adminportal:details' pk=student.id %}" class="btn btn-primary btn-sm"> View </a> </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td> No pending admission... </td>
+                    <td> No admitted students... </td>
                 </tr>
             {% endfor %}
         </tbody>

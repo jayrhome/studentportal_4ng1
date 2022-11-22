@@ -16,6 +16,7 @@ from django.contrib import messages
 from django.db.models import Q, FilteredRelation, Prefetch, Count
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
+from django.core.exceptions import ObjectDoesNotExist
 
 
 def superuser_only(user):
@@ -422,13 +423,16 @@ class delete_strand(TemplateView):
 
 # validate the latest school year
 def validate_enrollmentSetup(request, sy):
-    dt1 = date.today()
-    dt2 = sy.date_created.date()
-    dt3 = dt1 - dt2
+    try:
+        dt1 = date.today()
+        dt2 = sy.date_created.date()
+        dt3 = dt1 - dt2
 
-    if dt3.days < 209:
-        return True
-    return False
+        if dt3.days < 209:
+            return True
+        return False
+    except:
+        return False
 
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
@@ -811,9 +815,153 @@ class open_enrollment_admission(FormView):
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class admission(ListView):
+    # Get the list of pending admission using the latest school year
     template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/admission.html"
     allow_empty = True
     context_object_name = "pending_list"
-    queryset = student_admission_details.objects.filter(
-        is_validated=False, is_denied=False)
-    paginate_by = 1
+    paginate_by = 35
+
+    def get_queryset(self):
+        try:
+            sy = school_year.objects.latest("date_created")
+            if validate_enrollmentSetup(self.request, sy):
+                qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name").filter(
+                    admission_sy=sy, is_validated=False, is_denied=False).order_by("date_created", "id")
+            else:
+                qs = student_admission_details.objects.none()
+        except ObjectDoesNotExist:
+            messages.error(self.request, "You have no school year.")
+            qs = student_admission_details.objects.none()
+        except:
+            qs = student_admission_details.objects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Admission"
+        return context
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class adm_details(DetailView):
+    # Get the admission details of any admission status
+    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/adm_details.html"
+    context_object_name = "admissionDetails"
+    model = student_admission_details
+
+    def post(self, request, *args, **kwargs):
+        pass
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Admission Details"
+
+        adm_obj = student_admission_details.objects.filter(
+            id=self.kwargs["pk"]).first()
+
+        if not adm_obj.is_validated and not adm_obj.is_denied:
+            # If pending
+            context["pending"] = True
+            context["status_txt"] = '<i class="bi bi-hourglass-split"> Pending </i>'
+            context["btn_redirectTo"] = adm_obj.to_pendingList()
+        elif adm_obj.is_validated and not adm_obj.is_denied:
+            # if validated
+            context["validated"] = True
+            context["status_txt"] = '<i class="bi bi-check2-circle"> Validated </i>'
+            context["btn_redirectTo"] = adm_obj.to_admittedList()
+        elif not adm_obj.is_validated and adm_obj.is_denied:
+            # if denied
+            rev_obj = for_review_admission.objects.filter(
+                to_review__id=adm_obj.id).count()
+            if rev_obj > 0:
+                # if denied with review
+                context["revision"] = True
+                context["status_txt"] = '<i class="bi bi-recycle"> For review </i>'
+                context["review_contexts"] = for_review_admission.objects.values(
+                    "comment", "date_created").filter(to_review__id=self.kwargs["pk"]).order_by("date_created", "id")
+                context["btn_redirectTo"] = adm_obj.to_reviewList()
+            else:
+                # if denied and no review
+                context["full_denied"] = True
+                context["status_txt"] = '<i class="bi bi-trash3-fill"> Denied </i>'
+                context["btn_redirectTo"] = adm_obj.to_deniedList()
+        else:
+            pass
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            student_admission_details.objects.get(id=self.kwargs["pk"])
+            return super().dispatch(request, *args, **kwargs)
+        except Exception as e:
+            messages.error(request, e)
+            return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class admitted_students(ListView):
+    # Get the list of admitted students from all school year
+    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/admitted.html"
+    allow_empty = True
+    context_object_name = "list_of_admitted"
+    paginate_by = 35
+
+    def get_queryset(self):
+        try:
+            qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name",
+                                                          "second_chosen_strand__strand_name").filter(is_validated=True, is_denied=False).order_by("admission_sy__sy", "date_created", "id")
+        except Exception as e:
+            messages.error(self.request, e)
+            qs = student_admission_details.objects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Admitted Students"
+        return context
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class review_admissionList(ListView):
+    # Get the list of for review admission from all school year
+    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/for_reviewList.html"
+    allow_empty = True
+    context_object_name = "forReview_List"
+    paginate_by = 35
+
+    def get_queryset(self):
+        try:
+            qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name").alias(
+                count_reviews=Count("admission_review")).filter(count_reviews__gt=0, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "id")
+        except Exception as e:
+            messages.error(self.request, e)
+            qs = student_admission_details.objects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "For review"
+        return context
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class denied_admissionList(ListView):
+    # Get the list of denied with no reviews admission from all school year
+    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/denied_admissions.html"
+    allow_empty = True
+    context_object_name = "denied_list"
+    paginate_by = 35
+
+    def get_queryset(self):
+        try:
+            qs = student_admission_details.objects.values("id", "date_created", "date_modified", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name").alias(
+                count_reviews=Count("admission_review")).filter(count_reviews__lt=1, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "id")
+        except Exception as e:
+            messages.error(self.request, e)
+            qs = student_admission_details.objects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Denied Admission"
+        return context

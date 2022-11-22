@@ -20,7 +20,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from .tokens import account_activation_token, password_reset_token
 from ratelimit.decorators import ratelimit
-from formtools.wizard.views import SessionWizardView
+# from formtools.wizard.views import SessionWizardView
 
 
 User = get_user_model()
@@ -290,10 +290,10 @@ class password_reset_form(FormView):
                 return super().form_valid(form)
 
 
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
-class admission_application(SessionWizardView):
-    template_name = "studentportal/AdmissionAndEnrollment/admission.html"
-    form_list = [admission_personal_details, elementary_school_details]
+# @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+# class admission_application(SessionWizardView):
+#     template_name = "studentportal/AdmissionAndEnrollment/admission.html"
+#     form_list = [admission_personal_details, elementary_school_details]
 
-    def done(self, form_list, **kwargs):
-        pass
+#     def done(self, form_list, **kwargs):
+#         pass
