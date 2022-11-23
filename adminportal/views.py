@@ -837,9 +837,12 @@ class adm_details(DetailView):
             context["btn_redirectTo"] = adm_obj.to_pendingList()
         elif adm_obj.is_validated and not adm_obj.is_denied:
             # if validated
-            context["validated"] = True
             context["status_txt"] = '<i class="bi bi-check2-circle"> Validated </i>'
             context["btn_redirectTo"] = adm_obj.to_admittedList()
+
+            # Option to hold enrollment for admission with no valid enrollment data
+            context["validated"] = self.can_hold()
+
         elif not adm_obj.is_validated and adm_obj.is_denied:
             # if denied
             rev_obj = for_review_admission.objects.filter(
@@ -857,8 +860,22 @@ class adm_details(DetailView):
                 context["status_txt"] = '<i class="bi bi-trash3-fill"> Denied </i>'
                 context["btn_redirectTo"] = adm_obj.to_deniedList()
         else:
+            # For admission with is_validated=True, is_denied=True = Hold status
             pass
         return context
+
+    def can_hold(self):
+        enrollment_objs = student_enrollment_details.objects.filter(
+            admission_details__id=self.kwargs["pk"])
+        if enrollment_objs:
+            for obj in enrollment_objs:
+                if obj.is_passed and not obj.is_denied:
+                    ans = False
+                    break
+            ans = True
+        else:
+            ans = True
+        return ans
 
     def dispatch(self, request, *args, **kwargs):
         try:
@@ -882,7 +899,7 @@ class admission(ListView):
             sy = school_year.objects.latest("date_created")
             if validate_enrollmentSetup(self.request, sy):
                 qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name").filter(
-                    admission_sy=sy, is_validated=False, is_denied=False).order_by("date_created", "id")
+                    admission_sy=sy, is_validated=False, is_denied=False).order_by("date_modified", "date_created", "id")
             else:
                 qs = student_admission_details.objects.none()
         except ObjectDoesNotExist:
@@ -909,7 +926,7 @@ class admitted_students(ListView):
     def get_queryset(self):
         try:
             qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name",
-                                                          "second_chosen_strand__strand_name").filter(is_validated=True, is_denied=False).order_by("admission_sy__sy", "date_created", "id")
+                                                          "second_chosen_strand__strand_name").filter(is_validated=True, is_denied=False).order_by("admission_sy__sy", "date_modified", "date_created", "id")
         except Exception as e:
             messages.error(self.request, e)
             qs = student_admission_details.objects.none()
@@ -932,7 +949,7 @@ class review_admissionList(ListView):
     def get_queryset(self):
         try:
             qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name").alias(
-                count_reviews=Count("admission_review")).filter(count_reviews__gt=0, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "id")
+                count_reviews=Count("admission_review")).filter(count_reviews__gt=0, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "date_created", "id")
         except Exception as e:
             messages.error(self.request, e)
             qs = student_admission_details.objects.none()
@@ -955,7 +972,7 @@ class denied_admissionList(ListView):
     def get_queryset(self):
         try:
             qs = student_admission_details.objects.values("id", "date_created", "date_modified", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name").alias(
-                count_reviews=Count("admission_review")).filter(count_reviews__lt=1, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "id")
+                count_reviews=Count("admission_review")).filter(count_reviews__lt=1, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "date_created", "id")
         except Exception as e:
             messages.error(self.request, e)
             qs = student_admission_details.objects.none()

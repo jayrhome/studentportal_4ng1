@@ -256,7 +256,7 @@ class student_enrollment_details(models.Model):
         student_profile_image, on_delete=models.SET_NULL, null=True, related_name="enrollment_profile_image")
 
     is_passed = models.BooleanField(default=False)
-    is_deleted = models.BooleanField(default=False)
+    is_denied = models.BooleanField(default=False)
 
     is_late = models.BooleanField(default=False)
     is_repeater = models.BooleanField(default=False)
