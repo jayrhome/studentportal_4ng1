@@ -13,28 +13,60 @@
 </div>
 {% endif %}
 
-<div class="container col-md-6">
-    <a href="{% url 'adminportal:add_track' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Track </a>
+<style>
+    .add_track{
+        background: rgba(10, 25, 56, 0.8);
+        color: #fff;
+        padding: 10px;
+        text-decoration: none;
+        transition: 0.3s ease;
+        margin-left: auto;
+        border-radius: 5px;
+    }
+    .add_track:hover{
+        background: rgba(10, 29, 68, 0.8);
+        color: #fff;
+    }
+</style>
+
+<div class="container  pt-5 d-flex flex-column">
+    <a href="{% url 'adminportal:add_track' %}" class="add_track"><i class="bi bi-plus-lg"></i> Add Track </a>
     {% for track in courses %}
-        <div class="p-3 mb-2 bg-light text-dark">
-            <br>
-            <a href="{% url 'adminportal:edit_track' track_id=track.id %}" class="btn btn-primary"> Edit </a>
-            <a href="{% url 'adminportal:delete_track' pk=track.id %}" class="btn btn-danger"> Delete </a>
+        <div class="p-3 mt-3 mb-2 bg-light text-dark border rounded">
+            <div class="track d-flex">
+                <div class="track">
+                    <h3> {{track.track_name}} </h3>
+                    <p> {{track.definition}} </p>
+                </div>
+                <div class="action d-flex justify-content-center align-items-start ms-2">
+                    <a href="{% url 'adminportal:edit_track' track_id=track.id %}" class="btn btn-primary "> Edit </a>
+                    <a href="{% url 'adminportal:delete_track' pk=track.id %}" class="btn btn-danger ms-2"> 
+                        <i class="fa fa-trash" aria-hidden="true"></i>
+                     </a>
+                </div>
+            </div>
             
-            <h3> {{track.track_name}} </h3>
-            <p> {{track.definition}} </p>
             
-            <a href="{% url 'adminportal:add_strand' track_id=track.id %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Add Strand </a>
-            
-            <br><br>
+            <div class="strand_header d-flex align-items-center justify-content-between border-bottom pb-2">
+                <h4 class="m-0">Strand</h4>
+                <a href="{% url 'adminportal:add_strand' track_id=track.id %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Add Strand </a>
+            </div>
             {% for strand in track.strands %}
-                <h6> {{strand.strand_name}} </h6>
-                <p> {{strand.definition}} </p>
-                <a href="{% url 'adminportal:edit_strand' strand_id=strand.id %}" class="btn btn-primary"> Edit </a>
-                <a href="{% url 'adminportal:delete_strand' pk=strand.id %}" class="btn btn-danger"> Delete </a>
-                <hr>
-            {% empty %}
-            <p> {{track.track_name}} has no strand. </p>
+            <div class="strand mt-3 p-2 rounded" style="background:#fff; ">
+                    <h6 class="mt-4"> {{strand.strand_name}} </h6>
+                    <p> {{strand.definition}} </p>
+                    <div class="d-flex">
+                        <a href="{% url 'adminportal:edit_strand' strand_id=strand.id %}" class="btn btn-primary ms-auto me-2"> Edit </a>
+                        <a href="{% url 'adminportal:delete_strand' pk=strand.id %}" class="btn btn-danger"> 
+                            <i class="fa fa-trash" aria-hidden="true"></i>    
+                        </a>
+
+                    </div>
+            </div>
+                    <!-- <hr> -->
+                {% empty %}
+                <p> {{track.track_name}} has no strand. </p>
+
             
             {% endfor %}
         </div>
