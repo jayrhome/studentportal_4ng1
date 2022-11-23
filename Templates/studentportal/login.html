@@ -13,97 +13,36 @@
 </div>
 {% endif %}
 
-<style>
-    body{
+<form id="loginform" method="post">
+    {% csrf_token %}
 
-    }
-    .main{
-        height: 100%;
-        min-height: 91.5vh;
-        background-image: url('/Media/adminportal_image/adminportal_image.jpeg');
-        background-repeat: no-repeat;
-        background-size: cover;
-        background-position: center 100%;
-        position: relative;        
-    }
-    .main .opacity{
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        height: 100%;
-        width: 100%;
-        background: rgba(0, 0, 0, 0.5);
-    }
-    #loginform{
-        margin-top: 50px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .card_login{
-        background: #fff;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        max-width: 450px;
-        padding:30px 20px ;
-        margin: 0 10px;
-    }
-    .card_login h4{
-        text-align: center;
-        padding-bottom: 20px;
-    }
+    <!-- List of errors from forms.py -->
+    {{ form.non_field_errors }}
 
-    .card_login input{
-        border-radius: 50px;
-    }
-    .card_login .btn_login{
-        background: rgba(10, 25, 56, 0.8);
-        border: none;
-        outline: none;
-        color: #fff;
-        padding: 8px;
-    }
-    .card_login a{
-        color: rgb(100, 100, 100);
-    }
-    .card_login a:hover{
-        color: rgb(48, 48, 48);
-    }
-</style>
+    <div class="container col-md-3">
+        <h4> Login your Account </h4>
+        <div class="form-outline mb-4">
+            {{ form.email.errors }}
+            <label for="{{ form.email.id_for_label }}" class="form-label"> Email: </label>
+            {{ form.email|addclass:"form-control"}} <!-- Input Field -->
+            <div id="emailHelp" class="form-text"> Enter your email </div>
+        </div>
 
-<div class="main">
-    <div class="opacity">
-        <form id="loginform" method="post">
-            {% csrf_token %}
-        
-            <!-- List of errors from forms.py -->
-            {{ form.non_field_errors }}
-        
-            <div class="card_login">
-                <h4> Login your Account </h4>        
-                {{ form.email.errors }}
-                <label for="{{ form.email.id_for_label }}" class="form-label"> Email: </label>
-                {{ form.email|addclass:"form-control mb-3"}} <!-- Input Field -->
-        
-                {{ form.password.errors }}
-                <label for="{{ form.password.id_for_label }}" class="form-label"> Password: </label>
-                {{ form.password|addclass:"form-control mb-1"}} <!-- Input Field -->
-                <a href="{% url 'studentportal:password_reset' %}" class="mb-4"> Forgot Password? </a>
-        
-                <input type="submit" value="Login" class="btn_login btn-block mb-3">
-                <div class="text">
-                    <p>Not a member? <a href="{% url 'studentportal:createaccount' %}">Register</a></p>
-                </div>
-            </div>
-        </form>
+        <div class="form-outline mb-4">
+            {{ form.password.errors }}
+            <label for="{{ form.password.id_for_label }}" class="form-label"> Password: </label>
+            {{ form.password|addclass:"form-control" }} <!-- Input Field -->
+        </div>
+
+        <input type="submit" value="Login" class="btn btn-primary btn-block mb-4">
+        <a href="{% url 'studentportal:password_reset' %}"> Forgot Password? </a>
+
+        <div class="text">
+            <p>Not a member? <a href="{% url 'studentportal:createaccount' %}">Register</a></p>
+        </div>
 
     </div>
-
-</div>
+</form>
 
 <!-- Email: admin@gmail.com Password: admin  -->
 <script>
