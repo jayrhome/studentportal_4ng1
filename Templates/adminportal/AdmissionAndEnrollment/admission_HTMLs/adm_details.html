@@ -95,6 +95,13 @@
                 <a href="#" class="btn btn-primary btn-sm"> Send Review </a>
                 <a href="#" class="btn btn-primary btn-sm"> Send Review and View Another </a>
             {% endif %}
+
+            {% if is_hold %}
+                <a href="#" class="btn btn-primary btn-sm"> Pending </a>
+                <a href="#" class="btn btn-primary btn-sm"> Validated </a>
+                <a href="#" class="btn btn-primary btn-sm"> Denied </a>
+            {% endif %}
+
         </form>
         <br>
         <a href="{{ btn_redirectTo }}" class="btn btn-primary"> Back </a>

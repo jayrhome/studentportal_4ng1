@@ -15,7 +15,7 @@
 {% endif %}
 <br>
 <div class="container col-md-12">
-    <center><h4> For review admission </h4></center>
+    <center><h4> Hold Admissions </h4></center>
 
     <table class="table">
         <thead class="thead-dark">
@@ -32,7 +32,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for student in forReview_List %}
+            {% for student in hold_list %}
                 <tr>
                     <th scope="row"> {{student.id}} </th>
                     <td> {{student.admission_sy__sy}} </td>
@@ -46,7 +46,7 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td> No admission for review... </td>
+                    <td> No hold admission... </td>
                 </tr>
             {% endfor %}
         </tbody>

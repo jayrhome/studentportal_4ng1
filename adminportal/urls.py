@@ -40,6 +40,8 @@ urlpatterns = [
              name="forReviewAdmission"),
         path("Denied_admission/", denied_admissionList.as_view(),
              name="denied_admissions"),
+        path("Hold_admission/", hold_admissionList.as_view(),
+             name="hold_admissions"),
     ])),
 
 

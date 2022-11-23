@@ -234,6 +234,9 @@ class student_admission_details(models.Model):
     def to_deniedList(self):
         return reverse("adminportal:denied_admissions")
 
+    def to_holdList(self):
+        return reverse("adminportal:hold_admissions")
+
 
 class student_enrollment_details(models.Model):
     student_user = models.ForeignKey(

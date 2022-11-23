@@ -861,7 +861,10 @@ class adm_details(DetailView):
                 context["btn_redirectTo"] = adm_obj.to_deniedList()
         else:
             # For admission with is_validated=True, is_denied=True = Hold status
-            pass
+            if adm_obj.is_validated and adm_obj.is_denied:
+                context["is_hold"] = True
+                context["status_txt"] = '<i class="bi bi-hourglass-split"> On-Hold </i>'
+                context["btn_redirectTo"] = adm_obj.to_holdList()
         return context
 
     def can_hold(self):
@@ -926,7 +929,7 @@ class admitted_students(ListView):
     def get_queryset(self):
         try:
             qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name",
-                                                          "second_chosen_strand__strand_name").filter(is_validated=True, is_denied=False).order_by("admission_sy__sy", "date_modified", "date_created", "id")
+                                                          "second_chosen_strand__strand_name", "admission_sy__sy").filter(is_validated=True, is_denied=False).order_by("admission_sy__sy", "date_modified", "date_created", "id")
         except Exception as e:
             messages.error(self.request, e)
             qs = student_admission_details.objects.none()
@@ -948,7 +951,7 @@ class review_admissionList(ListView):
 
     def get_queryset(self):
         try:
-            qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name").alias(
+            qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name", "admission_sy__sy").alias(
                 count_reviews=Count("admission_review")).filter(count_reviews__gt=0, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "date_created", "id")
         except Exception as e:
             messages.error(self.request, e)
@@ -971,7 +974,7 @@ class denied_admissionList(ListView):
 
     def get_queryset(self):
         try:
-            qs = student_admission_details.objects.values("id", "date_created", "date_modified", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name").alias(
+            qs = student_admission_details.objects.values("id", "date_created", "date_modified", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name", "admission_sy__sy").alias(
                 count_reviews=Count("admission_review")).filter(count_reviews__lt=1, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "date_created", "id")
         except Exception as e:
             messages.error(self.request, e)
@@ -981,4 +984,27 @@ class denied_admissionList(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Denied Admission"
+        return context
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class hold_admissionList(ListView):
+    # Get the list of hold admission, applicable to validated and denied = True admission.
+    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/hold_admissions.html"
+    allow_empty = True
+    context_object_name = "hold_list"
+    paginate_by = 35
+
+    def get_queryset(self):
+        try:
+            qs = student_admission_details.objects.values("id", "date_created", "date_modified", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name",
+                                                          "second_chosen_strand__strand_name", "admission_sy__sy").filter(is_validated=True, is_denied=True).order_by("admission_sy__sy", "date_modified", "id", "date_created")
+        except Exception as e:
+            messages.error(self.request, e)
+            qs = student_admission_details.objects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Hold Enrollments"
         return context
