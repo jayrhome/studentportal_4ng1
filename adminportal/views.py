@@ -814,35 +814,6 @@ class open_enrollment_admission(FormView):
 
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class admission(ListView):
-    # Get the list of pending admission using the latest school year
-    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/admission.html"
-    allow_empty = True
-    context_object_name = "pending_list"
-    paginate_by = 35
-
-    def get_queryset(self):
-        try:
-            sy = school_year.objects.latest("date_created")
-            if validate_enrollmentSetup(self.request, sy):
-                qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name").filter(
-                    admission_sy=sy, is_validated=False, is_denied=False).order_by("date_created", "id")
-            else:
-                qs = student_admission_details.objects.none()
-        except ObjectDoesNotExist:
-            messages.error(self.request, "You have no school year.")
-            qs = student_admission_details.objects.none()
-        except:
-            qs = student_admission_details.objects.none()
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Admission"
-        return context
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class adm_details(DetailView):
     # Get the admission details of any admission status
     template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/adm_details.html"
@@ -896,6 +867,35 @@ class adm_details(DetailView):
         except Exception as e:
             messages.error(request, e)
             return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class admission(ListView):
+    # Get the list of pending admission using the latest school year
+    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/admission.html"
+    allow_empty = True
+    context_object_name = "pending_list"
+    paginate_by = 35
+
+    def get_queryset(self):
+        try:
+            sy = school_year.objects.latest("date_created")
+            if validate_enrollmentSetup(self.request, sy):
+                qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name").filter(
+                    admission_sy=sy, is_validated=False, is_denied=False).order_by("date_created", "id")
+            else:
+                qs = student_admission_details.objects.none()
+        except ObjectDoesNotExist:
+            messages.error(self.request, "You have no school year.")
+            qs = student_admission_details.objects.none()
+        except:
+            qs = student_admission_details.objects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Admission"
+        return context
 
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
