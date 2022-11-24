@@ -494,15 +494,16 @@ class admission_and_enrollment(TemplateView):
                 # If school year is greater than 209 days.
                 context["new_enrollment"] = True
 
-        except:
+        except Exception as e:
             # if no school year
             # if with school year but no setup form
+            messages.error(self.request, e)
             context["no_record"] = True
         return context
 
     def count_validation2(self, sy):
         enrollment_count = Count(
-            "sy_enrolled", filter=Q(sy_enrolled__is_deleted=False))
+            "sy_enrolled", filter=Q(sy_enrolled__is_denied=False))
         admission_count_sy = Count(
             "sy_admitted", filter=Q(sy_admitted__is_denied=False))
         count_if_exist = school_year.objects.filter(id=sy.id).annotate(
@@ -512,9 +513,9 @@ class admission_and_enrollment(TemplateView):
 
     def count_validation1(self, sy):
         enrolled_count = Count(
-            "sy_enrolled", filter=Q(sy_enrolled__is_passed=True, sy_enrolled__is_deleted=False))
+            "sy_enrolled", filter=Q(sy_enrolled__is_passed=True, sy_enrolled__is_denied=False))
         pending_enrollment_count = Count(
-            "sy_enrolled", filter=Q(sy_enrolled__is_passed=False, sy_enrolled__is_deleted=False))
+            "sy_enrolled", filter=Q(sy_enrolled__is_passed=False, sy_enrolled__is_denied=False))
         admission_count = Count("sy_admitted", filter=Q(
             sy_admitted__is_validated=True, sy_admitted__is_denied=False))  # For accepted
         pending_admission_count = Count(
@@ -813,6 +814,23 @@ class open_enrollment_admission(FormView):
             return super().dispatch(request, *args, **kwargs)
 
 
+def get_next_pending_item(request, pk):
+    try:
+        sy = school_year.objects.latest("date_created")
+        qs = student_admission_details.objects.values_list("id", flat=True).filter(
+            admission_sy=sy, is_validated=False, is_denied=False).order_by("date_modified", "date_created", "id")
+        qs_count = qs.count()
+
+        tupl_to_list = list(qs)
+        nxt_id = tupl_to_list.index(int(pk)) + 1
+        nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
+        return nxx
+
+    except Exception as e:
+        messages.error(request, e)
+        return HttpResponseRedirect(reverse("adminportal:admission"))
+
+
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class adm_details(DetailView):
     # Get the admission details of any admission status
@@ -821,7 +839,46 @@ class adm_details(DetailView):
     model = student_admission_details
 
     def post(self, request, *args, **kwargs):
-        pass
+        try:
+            obj = student_admission_details.objects.filter(
+                id=self.kwargs["pk"])
+            if "accept" in request.POST:
+                redirect_link = self.where_to_redirect(obj)
+                obj1 = obj.first()
+                obj1.is_validated = True
+                obj1.is_denied = False
+                obj1.save()
+                obj1.refresh_from_db()
+                return HttpResponseRedirect(redirect_link)
+            elif "pen_nxt_accept" in request.POST:
+                nxt = get_next_pending_item(request, self.kwargs["pk"])
+                return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": nxt}))
+            elif "denied" in request.POST:
+                pass
+            else:
+                pass
+        except Exception as e:
+            messages.error(request, e)
+            return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
+
+    def where_to_redirect(self, obj):
+        obj1 = obj.first()
+        if obj1.is_validated and obj1.is_denied:
+            # if hold
+            return obj1.to_holdList()
+        elif not obj1.is_validated and not obj1.is_denied:
+            # if pending
+            return obj1.to_pendingList()
+        elif not obj1.is_validated and obj1.is_denied:
+            # if denied
+            rev_obj = for_review_admission.objects.filter(
+                to_review__id=obj1.id).count()
+            if rev_obj > 0:
+                return obj1.to_reviewList()
+            else:
+                return obj1.to_deniedList()
+        else:
+            pass
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -966,7 +1023,7 @@ class review_admissionList(ListView):
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class denied_admissionList(ListView):
-    # Get the list of denied with no reviews admission from all school year
+    # Get the list of denied admissions with no reviews from all school year
     template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/denied_admissions.html"
     allow_empty = True
     context_object_name = "denied_list"
@@ -990,6 +1047,7 @@ class denied_admissionList(ListView):
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class hold_admissionList(ListView):
     # Get the list of hold admission, applicable to validated and denied = True admission.
+    # Applicable to admission with validated status and no valid enrollment status.
     template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/hold_admissions.html"
     allow_empty = True
     context_object_name = "hold_list"

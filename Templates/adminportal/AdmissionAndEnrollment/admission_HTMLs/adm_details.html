@@ -26,7 +26,8 @@
             {% endfor %}
         {% endif %}
         
-        <form id="" method="post">
+        <form id="change_status" method="post">
+            {% csrf_token %}
             <div class="row">
                 <p> {{status_txt|safe}} </p>
             </div>
@@ -70,40 +71,39 @@
             <p> S.Y. Admitted: {{admissionDetails.admission_sy}} </p>
             <p> Date Applied: {{admissionDetails.date_created}} </p>
 
-            <a href="#" class="btn btn-primary btn-sm"> View enrollment details </a>
+            <a href="#" class="btn btn-primary btn-block mb-4"> View enrollment details </a>
 
             <!-- Change href to input type submit and button type submit -->
             {% if pending %}
-                <a href="#" class="btn btn-primary btn-sm"> Accept </a>
-                <a href="#" class="btn btn-primary btn-sm"> Accept and Review Another </a>
-                <a href="#" class="btn btn-danger btn-sm"> Denied </a>
-                <a href="#" class="btn btn-danger btn-sm"> Denied and Review Another </a>
+                <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                <button type="submit" name="pen_nxt_accept" class="btn btn-primary btn-block mb-4"> Accept and Next </button>
+                <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> Denied </button>
+                <button type="submit" name="pen_rev_den" class="btn btn-primary btn-block mb-4"> Denied and Next </button>
             {% endif %}
 
             {% if validated %}
-                <a href="#" class="btn btn-danger btn-sm"> Hold </a>
+                <button type="submit" name="hold" class="btn btn-primary btn-block mb-4"> Hold </button>
             {% endif %}
 
             {% if revision %}
-                <a href="#" class="btn btn-primary btn-sm"> Accept </a>
-                <a href="#" class="btn btn-primary btn-sm"> Accept and Review Another </a>
-                <a href="#" class="btn btn-danger btn-sm"> Denied </a>
-                <a href="#" class="btn btn-danger btn-sm"> Denied and Review Another </a>
+                <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                <button type="submit" name="rev_nxt_accept" class="btn btn-primary btn-block mb-4"> Accept and Next </button>
+                <button type="submit" name="rev_next" class="btn btn-primary btn-block mb-4"> Next </button>
             {% endif %}
 
             {% if full_denied %}
-                <a href="#" class="btn btn-primary btn-sm"> Send Review </a>
-                <a href="#" class="btn btn-primary btn-sm"> Send Review and View Another </a>
+                <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                <button type="submit" name="den_add_review" class="btn btn-primary btn-block mb-4"> Add Review </button>
+                <button type="submit" name="add_rev_next" class="btn btn-primary btn-block mb-4"> Add Review and Next </button>
             {% endif %}
 
             {% if is_hold %}
-                <a href="#" class="btn btn-primary btn-sm"> Pending </a>
-                <a href="#" class="btn btn-primary btn-sm"> Validated </a>
-                <a href="#" class="btn btn-primary btn-sm"> Denied </a>
+                <button type="submit" name="to_pending" class="btn btn-primary btn-block mb-4"> Pending </button>
+                <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> Denied </button>
             {% endif %}
 
         </form>
-        <br>
         <a href="{{ btn_redirectTo }}" class="btn btn-primary"> Back </a>
     {% else %}
         <p> No data found. </p>
