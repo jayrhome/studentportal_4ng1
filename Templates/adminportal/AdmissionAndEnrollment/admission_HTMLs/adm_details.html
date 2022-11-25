@@ -77,12 +77,27 @@
             {% if pending %}
                 <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
                 <button type="submit" name="pen_nxt_accept" class="btn btn-primary btn-block mb-4"> Accept and Next </button>
-                <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> Denied </button>
-                <button type="submit" name="pen_rev_den" class="btn btn-primary btn-block mb-4"> Denied and Next </button>
+                <button type="button" class="btn btn-primary btn-block mb-4"> Denied </button> <!-- Open pending_prompt -->
+
+                <div id="pending_prompt">
+                    <!-- For pending -->
+                    <!-- Display after clicking the Denied button -->
+                    <p> Do you want to add review? </p>
+                    <button type="button" class="btn btn-primary btn-block mb-4"> Yes </button> <!-- If yes, open the review area1 and hide this prompt -->
+                    <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> No </button> <!-- If no, hide this prompt -->
+                </div>
+                <div id="review_area">
+                    <!-- For pending -->
+                    <!-- Review area 1 -->
+                    <textarea name="review" id="review" cols="30" rows="10"></textarea>
+                    <button type="submit" name="submit_revs" class="btn btn-primary btn-block mb-4"> Submit </button>
+                    <button type="submit" name="pend_next_denied_with_revs" class="btn btn-primary btn-block mb-4"> Submit and Next </button>
+                </div>
             {% endif %}
 
             {% if validated %}
                 <button type="submit" name="hold" class="btn btn-primary btn-block mb-4"> Hold </button>
+                <button type="submit" name="next_valid" class="btn btn-primary btn-block mb-4"> Next </button>
             {% endif %}
 
             {% if revision %}
@@ -93,15 +108,38 @@
 
             {% if full_denied %}
                 <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
-                <button type="submit" name="den_add_review" class="btn btn-primary btn-block mb-4"> Add Review </button>
-                <button type="submit" name="add_rev_next" class="btn btn-primary btn-block mb-4"> Add Review and Next </button>
+                <button type="button" name="den_add_review" class="btn btn-primary btn-block mb-4"> Add Review </button> <!-- Open rev2 -->
+                <button type="submit" name="nxt_denied" class="btn btn-primary btn-block mb-4"> Next </button>
+
+                <div id="rev2">
+                    <!-- For full denied review -->
+                    <textarea name="review" id="review" cols="30" rows="10"></textarea>
+                    <button type="submit" name="submit_revs" class="btn btn-primary btn-block mb-4"> Submit </button>
+                    <button type="submit" name="next_denied_with_revs" class="btn btn-primary btn-block mb-4"> Submit and Next </button>
+                </div>
             {% endif %}
 
             {% if is_hold %}
                 <button type="submit" name="to_pending" class="btn btn-primary btn-block mb-4"> Pending </button>
                 <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
-                <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> Denied </button>
+                <button type="button" class="btn btn-primary btn-block mb-4"> Denied </button> <!-- Open rev3 -->
+
+                <div id="rev3">
+                    <!-- For is_hold -->
+                    <!-- Display after clicking the Denied button -->
+                    <p> Do you want to add review? </p>
+                    <button type="button" class="btn btn-primary btn-block mb-4"> Yes </button> <!-- If yes, open the review area2 and hide this prompt -->
+                    <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> No </button> <!-- If no, hide this prompt -->
+                </div>
+                <div id="review_area2">
+                    <!-- For is_hold -->
+                    <!-- Review area 1 -->
+                    <textarea name="review" id="review" cols="30" rows="10"></textarea>
+                    <button type="submit" name="submit_revs" class="btn btn-primary btn-block mb-4"> Submit </button>
+                    <button type="submit" name="hold_next_denied_with_revs" class="btn btn-primary btn-block mb-4"> Submit and Next </button>
+                </div>
             {% endif %}
+
 
         </form>
         <a href="{{ btn_redirectTo }}" class="btn btn-primary"> Back </a>

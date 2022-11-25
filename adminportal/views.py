@@ -814,23 +814,6 @@ class open_enrollment_admission(FormView):
             return super().dispatch(request, *args, **kwargs)
 
 
-def get_next_pending_item(request, pk):
-    try:
-        sy = school_year.objects.latest("date_created")
-        qs = student_admission_details.objects.values_list("id", flat=True).filter(
-            admission_sy=sy, is_validated=False, is_denied=False).order_by("date_modified", "date_created", "id")
-        qs_count = qs.count()
-
-        tupl_to_list = list(qs)
-        nxt_id = tupl_to_list.index(int(pk)) + 1
-        nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
-        return nxx
-
-    except Exception as e:
-        messages.error(request, e)
-        return HttpResponseRedirect(reverse("adminportal:admission"))
-
-
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class adm_details(DetailView):
     # Get the admission details of any admission status
@@ -843,25 +826,142 @@ class adm_details(DetailView):
             obj = student_admission_details.objects.filter(
                 id=self.kwargs["pk"])
             if "accept" in request.POST:
+                # Accept enrollment
                 redirect_link = self.where_to_redirect(obj)
-                obj1 = obj.first()
-                obj1.is_validated = True
-                obj1.is_denied = False
-                obj1.save()
-                obj1.refresh_from_db()
+                self.validate_obj(obj)
                 return HttpResponseRedirect(redirect_link)
+
             elif "pen_nxt_accept" in request.POST:
-                nxt = get_next_pending_item(request, self.kwargs["pk"])
-                return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": nxt}))
+                # Accept enrollment and redirect to the next pending enrollment details
+                nxt = self.get_next_pending_url(self.kwargs["pk"])
+                self.validate_obj(obj)
+                return HttpResponseRedirect(nxt)
+
             elif "denied" in request.POST:
-                pass
+                # Denied enrollment with no comments
+                nxt = self.where_to_redirect(obj)
+                self.denied_obj(obj)
+                return HttpResponseRedirect(nxt)
+
+            elif "submit_revs" in request.POST:
+                # Denied enrollment and save comments
+                comments = request.POST.get('review')
+                if comments:
+                    next_link = self.where_to_redirect(obj)
+                    self.denied_obj(obj)
+                    self.add_comments(obj, comments)
+                    return HttpResponseRedirect(next_link)
+                else:
+                    messages.warning(
+                        request, "Add a comment if you click the submit button for denied.")
+                    return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
+
+            elif "pend_next_denied_with_revs" in request.POST:
+                # Denied pending enrollment and save comments, then redirect to the next pending enrollment
+                comments = request.POST.get('review')
+                if comments:
+                    next_link = self.get_next_pending_url(self.kwargs["pk"])
+                    self.denied_obj(obj)
+                    self.add_comments(obj, comments)
+                    return HttpResponseRedirect(next_link)
+                else:
+                    messages.warning(
+                        request, "Add a comment if you click the submit button for denied.")
+                    return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
+
+            elif "hold" in request.POST:
+                try:
+                    obj = obj.first()
+                    obj.is_denied = True
+                    obj.save()
+                    obj.refresh_from_db()
+                    messages.warning(
+                        request, "You hold the validated admission of Mr / Ms. %s" % obj.first_name)
+                    return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
+                except Exception as e:
+                    messages.error(request, e)
+                    return HttpResponseRedirect(reverse("adminportal:admitted_students"))
+
+            elif "next_valid" in request.POST:
+                nxt = self.get_next_valid_url(self.kwargs["pk"])
+                return HttpResponseRedirect(nxt)
+
             else:
-                pass
+                return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
+
         except Exception as e:
             messages.error(request, e)
             return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
 
+    def add_comments(self, obj, comments):
+        obj = obj.first()
+        for_review_admission.objects.create(to_review=obj, comment=comments)
+
+    def denied_obj(self, obj):
+        obj = obj.first()
+        obj.is_validated = False
+        obj.is_denied = True
+        obj.save()
+
+    def validate_obj(self, obj):
+        obj = obj.first()
+        obj.is_validated = True
+        obj.is_denied = False
+        obj.save()
+        obj.refresh_from_db()
+
+    def get_next_pending_url(self, pk):
+        # Get the next pending pk after the given pk using the same queryset
+        try:
+            sy = school_year.objects.latest("date_created")
+            qs = student_admission_details.objects.values_list("id", flat=True).filter(
+                admission_sy=sy, is_validated=False, is_denied=False).order_by("date_modified", "date_created", "id")
+
+            if qs:
+                try:
+                    qs_count = qs.count()
+                    tupl_to_list = list(qs)
+                    nxt_id = tupl_to_list.index(int(pk)) + 1
+                    nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
+                    return reverse("adminportal:details", kwargs={"pk": nxx})
+                except ValueError:
+                    # If pk is no longer pending
+                    return reverse("adminportal:details", kwargs={"pk": tupl_to_list[0]})
+                except:
+                    return reverse("adminportal:admission")
+            else:
+                return reverse("adminportal:admission")
+        except Exception as e:
+            messages.error(self.request, e)
+            return reverse("adminportal:admission")
+
+    def get_next_valid_url(self, pk):
+        # Get the next valid pk after the given pk using the same queryset
+        try:
+            sy = school_year.objects.latest("date_created")
+            qs = student_admission_details.objects.values_list("id", flat=True).filter(
+                admission_sy=sy, is_validated=False, is_denied=False).order_by("admission_sy__sy", "date_modified", "date_created", "id")
+
+            if qs:
+                try:
+                    qs_count = qs.count()
+                    tupl_to_list = list(qs)
+                    nxt_id = tupl_to_list.index(int(pk)) + 1
+                    nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
+                    return reverse("adminportal:details", kwargs={"pk": nxx})
+                except ValueError:
+                    # If pk is no longer pending
+                    return reverse("adminportal:details", kwargs={"pk": tupl_to_list[0]})
+                except:
+                    return reverse("adminportal:admitted_students")
+            else:
+                return reverse("adminportal:admitted_students")
+        except Exception as e:
+            messages.error(self.request, e)
+            return reverse("adminportal:admitted_students")
+
     def where_to_redirect(self, obj):
+        # If accept only
         obj1 = obj.first()
         if obj1.is_validated and obj1.is_denied:
             # if hold
@@ -878,7 +978,7 @@ class adm_details(DetailView):
             else:
                 return obj1.to_deniedList()
         else:
-            pass
+            return obj1.to_admittedList()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
