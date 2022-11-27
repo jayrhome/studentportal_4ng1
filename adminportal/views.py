@@ -892,6 +892,52 @@ class adm_details(DetailView):
                 nxt = self.get_next_for_revision_url(self.kwargs["pk"])
                 return HttpResponseRedirect(nxt)
 
+            elif "rev_next" in request.POST:
+                nxt = self.get_next_for_revision_url
+                return HttpResponseRedirect(nxt)
+
+            elif "nxt_denied" in request.POST:
+                nxx = self.get_next_denied_url(self.kwargs["pk"])
+                return HttpResponseRedirect(nxx)
+
+            elif "next_denied_with_revs" in request.POST:
+                comments = request.POST.get('review')
+                if comments:
+                    next_link = self.get_next_denied_url(self.kwargs["pk"])
+                    self.denied_obj(obj)
+                    self.add_comments(obj, comments)
+                    return HttpResponseRedirect(next_link)
+                else:
+                    messages.warning(
+                        request, "Add a comment if you click the submit button for denied.")
+                    return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
+
+            elif "to_pending" in request.POST:
+                try:
+                    nxt = self.where_to_redirect(obj)
+                    obj = obj.first()
+                    obj.is_validated = False
+                    obj.is_denied = False
+                    obj.save()
+                    obj.refresh_from_db()
+                    messages.success(
+                        request, "%s admission is moved to pending." % obj.first_name)
+                    return HttpResponseRedirect(nxt)
+                except Exception as e:
+                    messages.error(request, e)
+                    return HttpResponseRedirect(reverse("adminportal:hold_admissions"))
+
+            elif "hold_next_denied_with_revs" in request.POST:
+                comments = request.POST.get("review")
+                if comments:
+                    self.denied_obj(obj)
+                    self.add_comments(obj, comments)
+                    nxt = ""
+                else:
+                    messages.warning(
+                        request, "Add a comment if you click the submit button for denied.")
+                    return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
+
             else:
                 return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
 
@@ -915,6 +961,54 @@ class adm_details(DetailView):
         obj.is_denied = False
         obj.save()
         obj.refresh_from_db()
+
+    def get_next_hold_url(self, pk):
+        # Get the next url hold admission
+        try:
+            qs = student_admission_details.objects.values_list('id', flat=True).filter(
+                is_validated=True, is_denied=True).order_by("admission_sy__sy", "date_modified", "id", "date_created")
+            if qs:
+                try:
+                    qs_count = qs.count()
+                    tupl_to_list = list(qs)
+                    nxt_id = tupl_to_list.index(int(pk)) + 1
+                    nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
+                    return reverse("adminportal:details", kwargs={"pk": nxx})
+                except ValueError:
+                    # if pk is not in the qs
+                    return reverse("adminportal:details", kwargs={"pk": tupl_to_list[0]})
+                except Exception as e:
+                    messages.error(self.request, e)
+                    return reverse("adminportal:hold_admissions")
+            else:
+                return reverse("adminportal:hold_admissions")
+        except Exception as e:
+            messages.error(self.request, e)
+            return reverse("adminportal:hold_admissions")
+
+    def get_next_denied_url(self, pk):
+        # Get the next url denied admission
+        try:
+            qs = student_admission_details.objects.values_list('id', flat=True).alias(count_reviews=Count("admission_review")).filter(
+                count_reviews__lt=1, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "date_created", "id")
+            if qs:
+                try:
+                    qs_count = qs.count()
+                    tupl_to_list = list(qs)
+                    nxt_id = tupl_to_list.index(int(pk)) + 1
+                    nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
+                    return reverse("adminportal:details", kwargs={"pk": nxx})
+                except ValueError:
+                    # if pk is not in the qs
+                    return reverse("adminportal:details", kwargs={"pk": tupl_to_list[0]})
+                except Exception as e:
+                    messages.error(self.request, e)
+                    return reverse("adminportal:denied_admissions")
+            else:
+                return reverse("adminportal:denied_admissions")
+        except Exception as e:
+            messages.error(self.request, e)
+            return reverse("adminportal:denied_admissions")
 
     def get_next_for_revision_url(self, pk):
         # Get the next url for revision
@@ -970,7 +1064,7 @@ class adm_details(DetailView):
         try:
             sy = school_year.objects.latest("date_created")
             qs = student_admission_details.objects.values_list("id", flat=True).filter(
-                admission_sy=sy, is_validated=False, is_denied=False).order_by("admission_sy__sy", "date_modified", "date_created", "id")
+                admission_sy=sy, is_validated=True, is_denied=False).order_by("admission_sy__sy", "date_modified", "date_created", "id")
 
             if qs:
                 try:
