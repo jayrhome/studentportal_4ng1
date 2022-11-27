@@ -886,6 +886,12 @@ class adm_details(DetailView):
                 nxt = self.get_next_valid_url(self.kwargs["pk"])
                 return HttpResponseRedirect(nxt)
 
+            elif "rev_nxt_accept" in request.POST:
+                # Accept from revision list, then next revision details
+                self.validate_obj(obj)
+                nxt = self.get_next_for_revision_url(self.kwargs["pk"])
+                return HttpResponseRedirect(nxt)
+
             else:
                 return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
 
@@ -909,6 +915,30 @@ class adm_details(DetailView):
         obj.is_denied = False
         obj.save()
         obj.refresh_from_db()
+
+    def get_next_for_revision_url(self, pk):
+        # Get the next url for revision
+        try:
+            qs = student_admission_details.objects.values_list('id', flat=True).alias(count_reviews=Count("admission_review")).filter(
+                count_reviews__gt=0, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "date_created", "id")
+            if qs:
+                try:
+                    qs_count = qs.count()
+                    tupl_to_list = list(qs)
+                    nxt_id = tupl_to_list.index(int(pk)) + 1
+                    nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
+                    return reverse("adminportal:details", kwargs={"pk": nxx})
+                except ValueError:
+                    # if pk is not in the qs
+                    return reverse("adminportal:details", kwargs={"pk": tupl_to_list[0]})
+                except Exception as e:
+                    messages.error(self.request, e)
+                    return reverse("adminportal:forReviewAdmission")
+            else:
+                return reverse("adminportal:forReviewAdmission")
+        except Exception as e:
+            messages.error(self.request, e)
+            return reverse("adminportal:forReviewAdmission")
 
     def get_next_pending_url(self, pk):
         # Get the next pending pk after the given pk using the same queryset
@@ -950,7 +980,7 @@ class adm_details(DetailView):
                     nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
                     return reverse("adminportal:details", kwargs={"pk": nxx})
                 except ValueError:
-                    # If pk is no longer pending
+                    # If pk is no longer pending or not in the retrieve queryset
                     return reverse("adminportal:details", kwargs={"pk": tupl_to_list[0]})
                 except:
                     return reverse("adminportal:admitted_students")
