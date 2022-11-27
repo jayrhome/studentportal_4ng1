@@ -12,15 +12,17 @@
     </ul>
 </div>
 {% endif %}
-
-<form id="AddStrands" method="post">
+<div class="container py-3 d-flex justify-content-end">
+    <a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary" > Back </a>
+</div>
+<form id="AddStrands" class="p-3" method="post">
     {% csrf_token %}
     <!-- List of errors from forms.py -->
     {{ form.non_field_errors }}
 
-    <div class="container col-md-3">
+    <div class="container col-md-8 mt-4 p-3 bg-light">
         <h4> Add Strand </h4>
-
+        
         <div class="form-outline mb-4">
             {{ form.track.errors }} <!-- Field errors -->
             <label for="{{ form.track.id_for_label }}" class="form-label"> Track: </label>
@@ -44,7 +46,7 @@
     </div>
 
 </form>
-<a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary" > Back </a>
+
 <script>
     $('#AddStrands').one('submit', function() {
         $(this).find('input[type="submit"]').attr('disabled','disabled');

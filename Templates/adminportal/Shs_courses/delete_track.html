@@ -1,13 +1,17 @@
 {% extends 'adminportal/Shs_courses/courses_base.html' %}
 {% block content %}
 {% load std_portal %}
+<div class="container py-3 d-flex justify-content-end">
+    <a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary"> Back </a>
 
-<form id="del_form" method="post">
+</div>
+
+<form id="del_form" class="p-3" method="post">
     {% csrf_token %}
     <!-- List of errors from forms.py -->
     {{ form.non_field_errors }}
 
-    <div class="container col-md-6">
+    <div class="container col-md-8 mt-4 p-3 bg-light">
         <div class="form-outline mb-4">
             <h4> Do you want to delete {{obj.track_name}} ?</h4>
 
@@ -19,11 +23,11 @@
             {% endif %}
 
         </div>
-        <input type="submit" value="Delete" class="btn btn-danger btn-block mb-4">
+            <input type="submit" value="Delete" class="btn btn-danger btn-block mb-4">
+       
     </div>
 </form>
 
-<a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary"> Back </a>
 
 <script>
     $('#del_form').one('submit', function() {
