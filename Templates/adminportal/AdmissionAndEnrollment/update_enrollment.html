@@ -13,13 +13,13 @@
 </div>
 {% endif %}
 
-<form id="add_setupdetails" method="post">
+<form id="edit_setupdetails" method="post">
     {% csrf_token %}
     <!-- List of errors from forms.py -->
     {{ form.non_field_errors }}
 
     <div class="container col-md-3">
-        <h4> Admission and Enrollment Setup Form for S.Y. {{sy}} </h4>
+        <h4> Admission and Enrollment Setup Form for S.Y. {{setup_details.ea_setup_sy__sy}} </h4>
 
         <div class="form-outline mb-4">
             {{ form.start_date.errors }} <!-- Field errors -->
@@ -33,14 +33,14 @@
             {{ form.end_date|addclass:"form-control"}} <!-- Input Field -->
         </div>
 
-        <input type="submit" value="Submit" class="btn btn-primary btn-block mb-4">
+        <input type="submit" value="Update" class="btn btn-primary btn-block mb-4">
     </div>
 
 </form>
 <a href="{% url 'adminportal:admission_and_enrollment' %}" class="btn btn-primary" > Back </a>
 
 <script>
-    $('#add_setupdetails').one('submit', function() {
+    $('#edit_setupdetails').one('submit', function() {
         $(this).find('input[type="submit"]').attr('disabled','disabled');
     }); 
 </script>

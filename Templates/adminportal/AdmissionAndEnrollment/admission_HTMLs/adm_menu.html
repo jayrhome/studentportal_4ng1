@@ -1,0 +1,6 @@
+<div class="container col-md-8">
+    <a href="{% url 'adminportal:admitted_students' %}" class="btn btn-primary btn-sm"> Admitted List </a> &nbsp; <!-- For all admitted students, rank by schoolyear, admission date -->
+    <a href="{% url 'adminportal:forReviewAdmission' %}" class="btn btn-info btn-sm"> For review </a> &nbsp; <!-- For denied admission but with review -->
+    <a href="{% url 'adminportal:denied_admissions' %}" class="btn btn-danger btn-sm"> Denied List </a> &nbsp; <!-- For denied admission with no review -->
+    <a href="{% url 'adminportal:hold_admissions' %}" class="btn btn-danger btn-sm"> Hold List </a> &nbsp; <!-- For hold admission -->
+</div>

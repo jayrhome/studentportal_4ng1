@@ -1,0 +1,156 @@
+{% extends 'adminportal/AdmissionAndEnrollment/base1.html' %}
+{% block content %}
+{% load std_portal %}
+{% include 'adminportal/AdmissionAndEnrollment/admission_HTMLs/adm_menu.html' %}
+
+<!-- Message from messages framework / views.py -->
+{% if messages %}
+<div class="container col-md-3">
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<br>
+<div class="container col-md-12">
+
+    {% if admissionDetails %}
+
+        {% if review_contexts %}
+            <h6> Comments: </h6>
+            {% for review in review_contexts %}
+                <p> {{review.date_created}}: {{review.comment}} </p>
+            {% endfor %}
+        {% endif %}
+        
+        <form id="change_status" method="post">
+            {% csrf_token %}
+            <div class="row">
+                <p> {{status_txt|safe}} </p>
+            </div>
+            
+            <h5> Student Basic Details </h5>
+            <p> User: {{admissionDetails.admission_owner}} </p>
+            <p> Name: {{admissionDetails.last_name}}, {{admissionDetails.first_name}} {{admissionDetails.middle_name}} </p>
+            <p> Sex: {{admissionDetails.sex}} </p>
+            <p> Birthdate: {{admissionDetails.date_of_birth}} </p>
+            <p> Birthplace: {{admissionDetails.birthplace}} </p>
+            <p> Nationality: {{admissionDetails.nationality}} </p>
+
+
+            <h5> Elementary School </h5>
+            <p> School Name: {{admissionDetails.elem_name}} </p>
+            <p> School Address: {{admissionDetails.elem_address}} </p>
+            <p> Region: {{admissionDetails.elem_region}} </p>
+            <p> Year Completed: {{admissionDetails.elem_year_completed | date:"Y"}} </p>
+            <p> Passer of Philippine Educational Placement Test (PEPT) for Elementary Level? {{ admissionDetails.elem_pept_passer|yesno:"Yes,No" }} </p>
+            <p> {% if admissionDetails.elem_pept_passer %} Year Completed: {{admissionDetails.elem_pept_date_completion | date:"Y"}} {% endif %} </p>
+            <p> Passer of Accreditation and Equivalency (A&E) Test for Elementary Level? {{ admissionDetails.elem_ae_passer|yesno:"Yes,No" }} </p>
+            <p> {% if admissionDetails.elem_ae_passer %} Year Completed: {{admissionDetails.elem_ae_date_completion | date:"Y"}} {% endif %} </p>
+            <p> Name of Community Learning Center: {{admissionDetails.elem_community_learning_center}} </p>
+            <p> CLC Address: {{admissionDetails.elem_clc_address}} </p>
+
+
+            <h5> Junior High School </h5>
+            <p> School Name: {{admissionDetails.jhs_name}} </p>
+            <p> School Address: {{admissionDetails.jhs_address}} </p>
+            <p> Region: {{admissionDetails.jhs_region}} </p>
+            <p> Year Completed: {{admissionDetails.jhs_year_completed | date:"Y"}} </p>
+            <p> Passer of Philippine Educational Placement Test (PEPT) for JHS Level? {{ admissionDetails.jhs_pept_passer|yesno:"Yes,No" }} </p>
+            <p> {% if admissionDetails.jhs_pept_passer %} Year Completed: {{admissionDetails.jhs_pept_date_completion | date:"Y"}} {% endif %} </p>
+            <p> Passer of Accreditation and Equivalency (A&E) Test for JHS Level? {{ admissionDetails.jhs_ae_passer|yesno:"Yes,No" }} </p>
+            <p> {% if admissionDetails.jhs_ae_passer %} Year Completed: {{admissionDetails.jhs_ae_date_completion | date:"Y"}} {% endif %} </p>
+            <p> Name of Community Learning Center: {{admissionDetails.jhs_community_learning_center}} </p>
+            <p> CLC Address: {{admissionDetails.jhs_clc_address}} </p>
+
+
+            <h5> Other Details </h5>
+            <p> S.Y. Admitted: {{admissionDetails.admission_sy}} </p>
+            <p> Date Applied: {{admissionDetails.date_created}} </p>
+
+            <a href="#" class="btn btn-primary btn-block mb-4"> View enrollment details </a>
+
+            <!-- Change href to input type submit and button type submit -->
+            {% if pending %}
+                <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                <button type="submit" name="pen_nxt_accept" class="btn btn-primary btn-block mb-4"> Accept and Next </button>
+                <button type="button" class="btn btn-primary btn-block mb-4"> Denied </button> <!-- Open pending_prompt -->
+
+                <div id="pending_prompt">
+                    <!-- For pending -->
+                    <!-- Display after clicking the Denied button -->
+                    <p> Do you want to add review? </p>
+                    <button type="button" class="btn btn-primary btn-block mb-4"> Yes </button> <!-- If yes, open the review area1 and hide this prompt -->
+                    <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> No </button> <!-- If no, hide this prompt -->
+                </div>
+                <div id="review_area">
+                    <!-- For pending -->
+                    <!-- Review area 1 -->
+                    <textarea name="review" id="review" cols="30" rows="10"></textarea>
+                    <button type="submit" name="submit_revs" class="btn btn-primary btn-block mb-4"> Submit </button>
+                    <button type="submit" name="pend_next_denied_with_revs" class="btn btn-primary btn-block mb-4"> Submit and Next </button>
+                </div>
+            {% endif %}
+
+            {% if validated %}
+                <button type="submit" name="hold" class="btn btn-primary btn-block mb-4"> Hold </button>
+                <button type="submit" name="next_valid" class="btn btn-primary btn-block mb-4"> Next </button>
+            {% endif %}
+
+            {% if revision %}
+                <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                <button type="submit" name="rev_nxt_accept" class="btn btn-primary btn-block mb-4"> Accept and Next </button>
+                <button type="submit" name="rev_next" class="btn btn-primary btn-block mb-4"> Next </button>
+            {% endif %}
+
+            {% if full_denied %}
+                <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                <button type="button" name="den_add_review" class="btn btn-primary btn-block mb-4"> Add Review </button> <!-- Open rev2 -->
+                <button type="submit" name="nxt_denied" class="btn btn-primary btn-block mb-4"> Next </button>
+
+                <div id="rev2">
+                    <!-- For full denied review -->
+                    <textarea name="review" id="review" cols="30" rows="10"></textarea>
+                    <button type="submit" name="submit_revs" class="btn btn-primary btn-block mb-4"> Submit </button>
+                    <button type="submit" name="next_denied_with_revs" class="btn btn-primary btn-block mb-4"> Submit and Next </button>
+                </div>
+            {% endif %}
+
+            {% if is_hold %}
+                <button type="submit" name="to_pending" class="btn btn-primary btn-block mb-4"> Pending </button>
+                <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                <button type="button" class="btn btn-primary btn-block mb-4"> Denied </button> <!-- Open rev3 -->
+
+                <div id="rev3">
+                    <!-- For is_hold -->
+                    <!-- Display after clicking the Denied button -->
+                    <p> Do you want to add review? </p>
+                    <button type="button" class="btn btn-primary btn-block mb-4"> Yes </button> <!-- If yes, open the review area2 and hide this prompt -->
+                    <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> No </button> <!-- If no, hide this prompt -->
+                </div>
+                <div id="review_area2">
+                    <!-- For is_hold -->
+                    <!-- Review area 2 -->
+                    <textarea name="review" id="review" cols="30" rows="10"></textarea>
+                    <button type="submit" name="submit_revs" class="btn btn-primary btn-block mb-4"> Submit </button>
+                    <button type="submit" name="hold_next_denied_with_revs" class="btn btn-primary btn-block mb-4"> Submit and Next </button>
+                </div>
+            {% endif %}
+
+
+        </form>
+        <a href="{{ btn_redirectTo }}" class="btn btn-primary"> Back </a>
+    {% else %}
+        <p> No data found. </p>
+        <br>
+        <a href="{% url 'adminportal:admission_and_enrollment' %}" class="btn btn-primary"> Back </a>
+    {% endif %}
+    <br>
+</div>
+
+<br>
+
+{% endblock content %}
