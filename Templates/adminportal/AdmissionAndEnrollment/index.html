@@ -12,54 +12,50 @@
     </ul>
 </div>
 {% endif %}
+<div class="container col-md-6">
+    {% if no_record or new_enrollment %}
+        <p> Open enrollment and admission for this school year? Click <a href="{% url 'adminportal:admission_enrollment_setup' %}" class="btn btn-primary"> Open </a> </p>
+    {% endif %}
+</div>
 
 {% if sy %}
     <div class="container col-md-6">
-        {% for count in count_sy_details %}
-            <!-- if enrollment is ongoing, display the count of enrollment requests -->
-            {% if count.enrolled_students %}
-                <p> {{count.enrolled_students}} student(s) are already enrolled for School Year: {{sy}} </p>
-            {% endif %}
-            {% if count.pending_enrollment %}
-                <p> {{count.pending_enrollment}} request for enrollment are still pending for School Year: {{sy}} </p>
-            {% endif %}
 
-            <!-- if admission is ongoing, display the count of admission requests -->
-            {% if count.admitted_students %}
-                <p> {{count.admitted_students}} student(s) are already admitted for School Year: {{sy}} </p>
-            {% endif %}
-            {% if count.pending_admission %}
-                <p> {{count.pending_admission}} request for admission are still pending for School Year: {{sy}} </p>
-            {% endif %}
-        {% empty %}
-            <p> There are no enrolled and admitted students for School Year: {{sy}} </p>
-        {% endfor %}
+        <!-- if school year is less than 209 days and setup form will start soon -->
+        {% if start_soon %}
+            <p> Enrollment and Admission will start on {{start_date}} until {{end_date}}. </p>
+            <p> To update the Enrollment and Admission dates. Click <a href="{% url 'adminportal:setup_details_update' uid=uid %}" class="btn btn-primary">Update</a> </p>
+        {% endif %}
+
+        {% if is_empty_count %}
+            <p> No students have been enrolled and admitted for S.Y. {{sy}} yet. </p>
+        {% endif %}
+
+        {% if count_sy_details.admitted_students %}
+            <p> {{count_sy_details.admitted_students}} student(s) are already admitted for School Year: {{sy}} <a href="{% url 'adminportal:admitted_students' %}" class="btn btn-primary"> View </a> </p>
+        {% endif %}
+
+        {% if count_sy_details.pending_admission %}
+            <p> {{count_sy_details.pending_admission}} request for admission are still pending for School Year: {{sy}} <a href="{% url 'adminportal:admission' %}" class="btn btn-primary"> Review </a> </p>
+        {% endif %}
+
+        {% if stop_from_accepting %}
+            <p> You postpone the Enrollment and Admission. To revert, click the Extend button below. </p>
+        {% endif %}
+
+        {% if is_extend %}
+            <p> Enrollment and Admission for S.Y. {{sy}} will end in {{end_dt}}. To extend, click <a href="{% url 'adminportal:extend_enrollment' uid=uid %}" class="btn btn-primary"> Extend </a> </p>
+        {% endif %}
+
+        {% if stop_accepting %}
+            <p> Do you want to postpone the Enrollment and Admission for S.Y. {{sy}}? Click <a href="{% url 'adminportal:postpone_enrollment' uid=uid %}" class="btn btn-primary">Postpone</a> </p>
+        {% endif %}
+
+        {% if extend_notif %}
+            <p> {{extend_notif}} To extend, click <a href="{% url 'adminportal:extend_enrollment' uid=uid %}" class="btn btn-primary"> Extend </a> </p>
+        {% endif %}
+
     </div>
 {% endif %}
-
-<div class="container col-md-6">
-    {% if no_record or new_enrollment %}
-        <a href="{% url 'adminportal:admission_enrollment_setup' %}" class="btn btn-primary"> Open enrollment </a>
-    {% endif %}
-</div>
-
-<div class="container col-md-6">
-    {% if enrollment_status %}
-        {% if enrollment_status == "continue" %}
-            <p> Temporarily Stop Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-primary"> Proceed </a>
-            <p> End the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-danger"> End Now </a>
-        {% elif enrollment_status == "pending" %}
-            <p> Continue the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-primary"> Continue </a>
-            <p> End the Admission and Enrollment for School Year: {{sy}} </p> <a href="#" class="btn btn-danger"> End Now </a>
-        {% elif enrollment_status == "stop" %}
-            <p> You have already end the Enrollment and Admission for School Year: {{sy}} </p>
-            <p> Open again the Enrollment and Admission for School Year: {{sy}} ? </p> <a href="#" class="btn btn-info"> Open Again </a>
-        {% else %}
-        {% endif %}
-    {% elif enrollment_status == False %}
-        <p> The current school year is created in the database. To setup the enrollment and admission details, navigate to <a href="{% url 'adminportal:admission_enrollment_setup' %}" class="btn btn-info"> Setup Form </a> </p>
-    {% endif %}
-</div>
-{{nani}}
 
 {% endblock content %}

@@ -6,6 +6,8 @@ from django.core.validators import RegexValidator
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
 from django.db.models import Q
+from django.shortcuts import HttpResponseRedirect
+from django.urls import reverse
 
 User = get_user_model()
 
@@ -73,7 +75,7 @@ class shs_track(models.Model):
 
 class shs_strand(models.Model):
     track = models.ForeignKey(
-        shs_track, on_delete=models.SET_NULL, null=True, related_name="track_strand")
+        "shs_track", on_delete=models.SET_NULL, null=True, related_name="track_strand")
     strand_name = models.CharField(max_length=100, unique=True)
     definition = models.TextField()
     date_added = models.DateTimeField(auto_now_add=True)
@@ -180,7 +182,7 @@ class student_admission_details(models.Model):
     jhs_community_learning_center = models.CharField(max_length=50)
     jhs_clc_address = models.CharField(max_length=50)
 
-    is_validated = models.BooleanField(default=False)
+    is_validated = models.BooleanField(default=False)  # if pending or accepted
     admission_sy = models.ForeignKey(
         school_year, on_delete=models.SET_NULL, null=True, related_name="sy_admitted")
     first_chosen_strand = models.ForeignKey(
@@ -191,7 +193,7 @@ class student_admission_details(models.Model):
     is_late = models.BooleanField(default=False)
     is_transferee = models.BooleanField(default=False)
 
-    is_deleted = models.BooleanField(default=False)
+    is_denied = models.BooleanField(default=False)  # if denied, for review
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
 
@@ -220,6 +222,21 @@ class student_admission_details(models.Model):
             "nationality": self.nationality,
         }
 
+    def to_pendingList(self):
+        return reverse("adminportal:admission")
+
+    def to_admittedList(self):
+        return reverse("adminportal:admitted_students")
+
+    def to_reviewList(self):
+        return reverse("adminportal:forReviewAdmission")
+
+    def to_deniedList(self):
+        return reverse("adminportal:denied_admissions")
+
+    def to_holdList(self):
+        return reverse("adminportal:hold_admissions")
+
 
 class student_enrollment_details(models.Model):
     student_user = models.ForeignKey(
@@ -242,7 +259,7 @@ class student_enrollment_details(models.Model):
         student_profile_image, on_delete=models.SET_NULL, null=True, related_name="enrollment_profile_image")
 
     is_passed = models.BooleanField(default=False)
-    is_deleted = models.BooleanField(default=False)
+    is_denied = models.BooleanField(default=False)
 
     is_late = models.BooleanField(default=False)
     is_repeater = models.BooleanField(default=False)
@@ -262,8 +279,18 @@ class enrollment_admission_setup(models.Model):
         school_year, on_delete=models.SET_NULL, null=True, related_name="setup_sy")
     start_date = models.DateField()
     end_date = models.DateField()
-    is_visible = models.BooleanField(default=False)
     still_accepting = models.BooleanField(default=True)
 
     def __str__(self):
         return self.ea_setup_sy.sy
+
+
+class for_review_admission(models.Model):
+    to_review = models.ForeignKey(
+        student_admission_details, on_delete=models.CASCADE, related_name="admission_review")
+    comment = models.TextField()
+    date_created = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.to_review.first_name
