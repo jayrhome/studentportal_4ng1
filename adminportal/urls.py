@@ -17,7 +17,8 @@ urlpatterns = [
              add_strand.as_view(), name="add_strand"),
         path("Edit_strand/<strand_id>/",
              edit_strand.as_view(), name="edit_strand"),
-        path("Delete_strand/<pk>/", delete_strand.as_view(), name="delete_strand"),
+        path("Delete_strand/<pk>/",
+             delete_strand.as_view(), name="delete_strand"),
     ])),
 
     path("Admission_and_enrollment/", include([
@@ -25,6 +26,23 @@ urlpatterns = [
              name="admission_and_enrollment"),
         path("Setup/", open_enrollment_admission.as_view(),
              name="admission_enrollment_setup"),
+        path("Update_details/<uid>/", update_enrollment.as_view(),
+             name="setup_details_update"),
+        path("Extend_details/<uid>/", extend_enrollment.as_view(),
+             name="extend_enrollment"),
+        path("Postpone_enrollment/<uid>/",
+             postpone_enrollment.as_view(), name="postpone_enrollment"),
+        path("Admission/", admission.as_view(), name="admission"),
+        path("Admitted_students/", admitted_students.as_view(),
+             name="admitted_students"),
+        path("Details/<pk>/", adm_details.as_view(), name="details"),
+        path("For_review/", review_admissionList.as_view(),
+             name="forReviewAdmission"),
+        path("Denied_admission/", denied_admissionList.as_view(),
+             name="denied_admissions"),
+        path("Hold_admission/", hold_admissionList.as_view(),
+             name="hold_admissions"),
     ])),
+
 
 ]

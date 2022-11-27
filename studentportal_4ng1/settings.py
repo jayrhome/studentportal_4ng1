@@ -27,8 +27,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'adminportal.apps.AdminportalConfig',
+
     'studentportal.apps.StudentportalConfig',
+    'adminportal.apps.AdminportalConfig',
     'teachersportal.apps.TeachersportalConfig',
 ]
 
@@ -124,8 +125,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'fakegmail@gmail.com'
-EMAIL_HOST_PASSWORD = 'not_true'  # App password
+EMAIL_HOST_USER = 'aaaa3@gmail.com'
+EMAIL_HOST_PASSWORD = 'asd'  # App password
 
 PASSWORD_RESET_TIMEOUT = 60  # 20 Minutes
 
