@@ -1,7 +1,91 @@
+<html>
+<head>
+
+
+</head>
+
+<body>
+
+
+    <style>
+  
+
+        .main{ 
+            height: 100%; 
+            min-height: 91.5vh;
+            background-image: url('/Media/back/hatdog.jpeg');
+            background-repeat: no-repeat; 
+            background-size: cover; 
+            background-position: center 100%; 
+            position: relative; 
+            } 
+            .main .submain{ 
+                position: absolute; 
+                top: 0; 
+                left: 0; 
+                bottom: 0; 
+                right: 0; 
+                height: 100%; 
+                width: 100%; 
+                background: rgba(0, 0, 0, 0.5); 
+                
+                } 
+    
+                .hehe 
+                { 
+                    margin-top: 50px; 
+                    display: flex; 
+                    justify-content: center; 
+                    align-items: center; 
+                    } 
+    
+                    .cards { 
+                        background: #fff; 
+                        border-radius: 8px; 
+                        display: flex; 
+                        flex-direction: column; 
+                        width: 100%; 
+                        
+                        max-width: 450px; 
+                        padding:30px 20px ; 
+                        margin: 0 10px; 
+                    } 
+                        .cards h4{ 
+                            text-align: center; 
+                            padding-bottom: 20px; 
+                     } 
+                            .cards input{ 
+                                border-radius: 50px;
+                             } 
+                                .cards  .btnproceed{
+                                     background: rgba(10, 25, 56, 0.8); 
+                                     border: none; 
+                                     outline: none; 
+                                     color: #fff; 
+                                     padding: 8px; 
+                                    
+                                    } 
+                                    
+    </style>
+
+
+
+
 {% extends 'studentportal/base1.html' %}
 {% block content %}
 
-<p> Hi, {{name}}. We sent a confirmation link to {{email}} to activate your account. </p>
-<a href="https://gmail.com/" class="btn btn-primary"> Go to Gmail </a>
+
+<div class="main">
+    <div class="submain">
+        <div class="hehe">
+        <div class="cards">
+<h4> Hi, {{name}}. We sent a confirmation link to {{email}} to activate your account.</h4> 
+<a href="https://gmail.com/" class="btn btnproceed"> Go to Gmail </a>
 
 {% endblock content %}
+</body>
+   </div>
+</div>
+</div>
+</div>
+</html>
