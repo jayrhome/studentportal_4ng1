@@ -12,11 +12,11 @@
     </ul>
 </div>
 {% endif %}
+
 <div class="container py-3 d-flex justify-content-end">
-
     <a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary" > Back </a>
-
 </div>
+
 <form id="edit_trackForm" class="p-3" method="post">
     {% csrf_token %}
     <!-- List of errors from forms.py -->

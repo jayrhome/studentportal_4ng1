@@ -441,7 +441,7 @@ class admission_and_enrollment(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
+        context["title"] = "Enrollment and Admission"
         try:
             sy = school_year.objects.latest("date_created")
             context["sy"] = sy.sy
@@ -497,7 +497,7 @@ class admission_and_enrollment(TemplateView):
         except Exception as e:
             # if no school year
             # if with school year but no setup form
-            messages.error(self.request, e)
+            # messages.error(self.request, e)
             context["no_record"] = True
         return context
 
@@ -893,7 +893,7 @@ class adm_details(DetailView):
                 return HttpResponseRedirect(nxt)
 
             elif "rev_next" in request.POST:
-                nxt = self.get_next_for_revision_url
+                nxt = self.get_next_for_revision_url(self.kwargs["pk"])
                 return HttpResponseRedirect(nxt)
 
             elif "nxt_denied" in request.POST:
@@ -1288,5 +1288,5 @@ class hold_admissionList(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Hold Enrollments"
+        context["title"] = "Hold Admissions"
         return context
