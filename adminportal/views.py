@@ -872,12 +872,17 @@ class adm_details(DetailView):
             elif "hold" in request.POST:
                 try:
                     obj = obj.first()
-                    obj.is_denied = True
-                    obj.save()
-                    obj.refresh_from_db()
-                    messages.warning(
-                        request, "You hold the validated admission of Mr / Ms. %s" % obj.first_name)
-                    return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
+                    if obj.is_validated and not obj.is_denied:
+                        obj.is_denied = True
+                        obj.save()
+                        obj.refresh_from_db()
+                        messages.warning(
+                            request, "You hold the validated admission of Mr / Ms. %s" % obj.first_name)
+                        return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
+                    else:
+                        messages.warning(
+                            request, "Admission can no longer be hold.")
+                        return HttpResponseRedirect(reverse("adminportal:admitted_students"))
                 except Exception as e:
                     messages.error(request, e)
                     return HttpResponseRedirect(reverse("adminportal:admitted_students"))
@@ -930,9 +935,10 @@ class adm_details(DetailView):
             elif "hold_next_denied_with_revs" in request.POST:
                 comments = request.POST.get("review")
                 if comments:
+                    next_link = self.get_next_hold_url(self.kwargs["pk"])
                     self.denied_obj(obj)
                     self.add_comments(obj, comments)
-                    nxt = ""
+                    return HttpResponseRedirect(next_link)
                 else:
                     messages.warning(
                         request, "Add a comment if you click the submit button for denied.")
@@ -1195,7 +1201,7 @@ class admission(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Admission"
+        context["title"] = "Pending Admission"
         return context
 
 
