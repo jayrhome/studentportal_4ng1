@@ -1296,3 +1296,38 @@ class hold_admissionList(ListView):
         context = super().get_context_data(**kwargs)
         context["title"] = "Hold Admissions"
         return context
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class enrollment_details(DetailView):
+    pass
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class pending_enrollment_list(ListView):
+    # Get the list of pending enrollment, applicable to valid admissions only.
+    template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrollment.html"
+    allow_empty = True
+    context_object_name = "pending_enrollmentList"
+    paginate_by = 35
+
+    def get_queryset(self):
+        try:
+            sy = school_year.objects.latest('date_created')
+            if validate_enrollmentSetup(self.request, sy):
+                qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created').filter(
+                    enrolled_schoolyear__sy=sy, is_passed=False, is_denied=False).order_by('-date_created', '-last_modified', '-id')
+            else:
+                qs = student_enrollment_details.validObjects.none()
+        except ObjectDoesNotExist:
+            messages.error(self.request, "You have no school year.")
+            qs = student_enrollment_details.validObjects.none()
+        except Exception as e:
+            messages.error(self.request, e)
+            qs = student_enrollment_details.validObjects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Pending Enrollment"
+        return context

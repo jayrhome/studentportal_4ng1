@@ -37,7 +37,7 @@
                 <a href="{% url 'adminportal:index' %}" class="nav-link"> Home </a>
                 <a href="{% url 'adminportal:admission_and_enrollment' %}" class="btn btn-primary"> Admission and Enrollment </a> &nbsp;
                 <a href="{% url 'adminportal:admission' %}" class="btn btn-primary"> Admission </a> &nbsp;
-                <a href="#" class="btn btn-primary"> Enrollment </a> &nbsp;
+                <a href="{% url 'adminportal:pending_enrollment' %}" class="btn btn-primary"> Enrollment </a> &nbsp;
                 {% endif %}
               </li>
               <li class="nav-item">

@@ -42,6 +42,11 @@ urlpatterns = [
              name="denied_admissions"),
         path("Hold_admission/", hold_admissionList.as_view(),
              name="hold_admissions"),
+
+        path("Enrollment/", include([
+            path("", pending_enrollment_list.as_view(),
+                 name="pending_enrollment"),
+        ]))
     ])),
 
 

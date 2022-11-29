@@ -238,6 +238,12 @@ class student_admission_details(models.Model):
         return reverse("adminportal:hold_admissions")
 
 
+class studentEnrollment_manager(models.Manager):
+    # Use this manager to get enrollments with validated admission
+    def get_queryset(self):
+        return super().get_queryset().filter(admission_details__is_validated=True, admission_details__is_denied=False)
+
+
 class student_enrollment_details(models.Model):
     student_user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, related_name="user_enrollment_details")
@@ -245,7 +251,7 @@ class student_enrollment_details(models.Model):
         student_admission_details, on_delete=models.SET_NULL, null=True, related_name="user_student_enrollment_details")
     selected_strand = models.ForeignKey(
         shs_strand, on_delete=models.SET_NULL, null=True, related_name="chosen_strand")
-    full_name = models.CharField(max_length=35)
+    full_name = models.CharField(max_length=60)
     home_address = models.ForeignKey(
         student_address, on_delete=models.SET_NULL, null=True, related_name="student_address")
     age_validator = RegexValidator(regex=r"([0-9])")
@@ -269,6 +275,9 @@ class student_enrollment_details(models.Model):
 
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
+
+    objects = models.Manager()  # Default manager
+    validObjects = studentEnrollment_manager()
 
     def __str__(self):
         return self.full_name
