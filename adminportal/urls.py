@@ -50,6 +50,12 @@ urlpatterns = [
                     name="pending_enrollment"),
             re_path(r"Enrolled_students/(?:(?P<dts>[a-zA-Z\d]+)/)?$",
                     enrolled_students.as_view(), name="enrolled_students"),
+            re_path(r"For_review_enrollments/(?:(?P<dts>[a-zA-Z\d]+)/)?$",
+                    for_review_enrollmentList.as_view(), name="ForReviewEnrollmentLists"),
+            re_path(r"Denied_enrollments/(?:(?P<dts>[a-zA-Z\d]+)/)?$",
+                    denied_enrollment_list.as_view(), name="denied_enrollment_lists"),
+            re_path(r"Hold_enrollments/(?:(?P<dts>[a-zA-Z\d]+)/)?$",
+                    hold_enrollment_lists.as_view(), name="hold_enrollment_lists"),
         ]))
     ])),
 

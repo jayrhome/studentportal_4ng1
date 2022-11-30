@@ -1,0 +1,97 @@
+{% extends 'adminportal/AdmissionAndEnrollment/base1.html' %}
+{% block content %}
+{% include 'adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrollment_menus.html' %}
+
+<!-- Message from messages framework / views.py -->
+{% if messages %}
+<div class="container col-md-3">
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<br>
+
+<div class="container col-md-12">
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="input-group">
+            <div class="form-outline">
+                <input type="search" name="search_this" id="search_this" class="form-control" placeholder="Student Name or ID" required/>
+            </div>
+            <input type="submit" value="Search" class="btn btn-primary mb-3">
+        </div>
+    </form>
+
+    <center><h4> Denied Enrollments </h4></center>
+
+    <table class="table">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Id</th>
+                <th scope="col">S.Y.</th>
+                <th scope="col">Applicant Name</th>
+                <th scope="col">Address</th>
+                <th scope="col">Age</th>
+                <th scope="col">Late Applicant?</th>
+                <th scope="col">Is Repeater?</th>
+                <th scope="col">Date Applied</th>
+                <th scope="col">Denied Date</th>
+                <th scope="col">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for denied_enrollment in denied_enrollments %}
+                <tr>
+                    <th scope="row"> {{denied_enrollment.id}} </th>
+                    <td> {{denied_enrollment.enrolled_schoolyear}} </td>
+                    <td> {{denied_enrollment.full_name|truncatewords:3}} </td>
+                    <td> {{denied_enrollment.home_address__permanent_home_address|truncatewords:4}} </td>
+                    <td> {{denied_enrollment.age}} </td>
+                    <td> {{denied_enrollment.is_late|yesno:"Yes,No"}} </td>
+                    <td> {{denied_enrollment.is_repeater|yesno:"Yes,No"}} </td>
+                    <td> {{denied_enrollment.date_created}} </td>
+                    <td> {{denied_enrollment.last_modified}} </td>
+                    <td> <a href="#" class="btn btn-primary btn-sm"> Review </a> </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td> No denied enrollment... </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm"> Prev </a>
+            {% endif %}
+
+            {% block pagination %}
+                {% for page_number in page_obj.paginator.get_elided_page_range %}
+                    {% if page_number == page_obj.paginator.ELLIPSIS %}
+                        {{page_number}}
+                    {% else %}
+                        <a href="?page={{page_number}}" class="btn btn-secondary btn-sm"> {{page_number}} </a>
+                    {% endif %}
+                {% endfor %}
+            {% endblock %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm"> Next </a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+        </span>
+    </div>
+    
+</div>
+
+{% endblock content %}

@@ -303,3 +303,14 @@ class for_review_admission(models.Model):
 
     def __str__(self):
         return self.to_review.first_name
+
+
+class enrollment_review(models.Model):
+    to_review = models.ForeignKey(
+        student_enrollment_details, on_delete=models.CASCADE, related_name="enrollment_review")
+    comment = models.TextField()
+    date_created = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.to_review.full_name
