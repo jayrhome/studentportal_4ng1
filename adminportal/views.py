@@ -17,6 +17,7 @@ from django.db.models import Q, FilteredRelation, Prefetch, Count
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.exceptions import ObjectDoesNotExist
+import re
 
 
 def superuser_only(user):
@@ -1303,6 +1304,31 @@ class enrollment_details(DetailView):
     pass
 
 
+def enrollment_not_existing_kwarg(request, qs, val):
+    if not qs:
+        # if qs = walang laman, then:
+        messages.warning(request, "%s does not exist." % val)
+
+
+def search_regex_match(request, val):
+    rgx = re.compile("([a-zA-Z\d]+)")
+    if rgx.fullmatch(val):
+        return True
+    else:
+        messages.warning(request, "%s is invalid." % val)
+        return False
+
+
+def dts_to_list(val):
+    try:
+        if int(val):
+            # if val is int
+            return True
+    except:
+        # if val is string
+        return False
+
+
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class pending_enrollment_list(ListView):
     # Get the list of pending enrollment, applicable to valid admissions only.
@@ -1311,12 +1337,49 @@ class pending_enrollment_list(ListView):
     context_object_name = "pending_enrollmentList"
     paginate_by = 35
 
+    def post(self, request, *args, **kwargs):
+        try:
+            search_this = request.POST.get("search_this")
+            if search_this:
+                if search_regex_match(request, search_this):
+                    return HttpResponseRedirect(reverse("adminportal:pending_enrollment", kwargs={"dts": search_this}))
+                else:
+                    return HttpResponseRedirect(reverse("adminportal:pending_enrollment"))
+            else:
+                messages.warning(
+                    request, "Enter the Student Name or ID to search.")
+                return HttpResponseRedirect(reverse("adminportal:pending_enrollment"))
+        except Exception as e:
+            messages.error(request, e)
+            return HttpResponseRedirect(reverse("adminportal:pending_enrollment"))
+
     def get_queryset(self):
         try:
             sy = school_year.objects.latest('date_created')
             if validate_enrollmentSetup(self.request, sy):
-                qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created').filter(
-                    enrolled_schoolyear__sy=sy, is_passed=False, is_denied=False).order_by('-date_created', '-last_modified', '-id')
+                if "dts" in self.kwargs:
+
+                    # Convert to list
+                    dts1 = [ltr for ltr in self.kwargs["dts"]]
+                    map_func_res = map(dts_to_list, dts1)
+
+                    if all(map_func_res):
+                        # if all are integers
+                        qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created').filter(
+                            id=int(self.kwargs["dts"]), enrolled_schoolyear__sy=sy, is_passed=False, is_denied=False).order_by('-date_created', '-last_modified', '-id')
+                        enrollment_not_existing_kwarg(
+                            self.request, qs, self.kwargs["dts"])
+
+                    else:
+                        # If combination of str and int, or pure str
+                        qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created').filter(
+                            full_name__unaccent__icontains=str(self.kwargs["dts"]), enrolled_schoolyear__sy=sy, is_passed=False, is_denied=False).order_by('-date_created', '-last_modified', '-id')
+                        enrollment_not_existing_kwarg(
+                            self.request, qs, self.kwargs["dts"])
+
+                else:
+                    qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created').filter(
+                        enrolled_schoolyear__sy=sy, is_passed=False, is_denied=False).order_by('-date_created', '-last_modified', '-id')
             else:
                 qs = student_enrollment_details.validObjects.none()
         except ObjectDoesNotExist:
@@ -1330,4 +1393,47 @@ class pending_enrollment_list(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Pending Enrollment"
+        return context
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class enrolled_students(ListView):
+    # Get the list of enrolled students from all school year
+    template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrolled_students.html"
+    allow_empty = True
+    context_object_name = "enrolled_students"
+    paginate_by = 35
+
+    def post(self, request, *args, **kwargs):
+        try:
+            search_this = request.POST.get("search_this")
+            if search_this:
+                if search_regex_match(request, search_this):
+                    return HttpResponseRedirect(reverse("adminportal:enrolled_students", kwargs={"dts": search_this}))
+                else:
+                    return HttpResponseRedirect(reverse("adminportal:enrolled_students"))
+            else:
+                messages.warning(
+                    request, "Enter the Student Name or ID to search.")
+                return HttpResponseRedirect(reverse("adminportal:enrolled_students"))
+        except Exception as e:
+            messages.error(request, e)
+            return HttpResponseRedirect(reverse("adminportal:enrolled_students"))
+
+    def get_queryset(self):
+        try:
+            if "dts" in self.kwargs:
+                pass
+            else:
+                qs = student_enrollment_details.objects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age',
+                                                               'is_late', 'is_repeater', 'date_created', 'last_modified').filter(is_passed=True, is_denied=False).order_by('-last_modified', '-id')
+        except Exception as e:
+            messages.error(self.request, e)
+            qs = student_admission_details.objects.none()
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Enrolled Students"
         return context

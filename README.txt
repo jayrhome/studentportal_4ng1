@@ -53,3 +53,19 @@ Step 2: Hover to the "Pull/Push" and click "Sync".
 --- REQUIRED STEPS AFTER A SUCCESSFUL BRANCH MERGE IN THE REMOTE REPOSITORY ---
 Step 1: Under the source control, click the "View and More Actions".
 Step 2: Hover to the "Pull/Push" and click "Sync".
+
+
+
+--- POSTGRES unaccent CONFIG Steps ---
+For reference: https://stackoverflow.com/questions/31382675/how-can-i-activate-the-unaccent-extension-on-an-already-existing-model
+Step 0: Open the settings.py, inside the INSTALLED_APPS, add django.contrib.postgres
+Step 1: Open the SQL SHELL(psql)
+Step 2: Follow the authentication process in sql shell.
+Step 3: Then enter, CREATE EXTENSION unaccent;
+Step 4: Open the vs code terminal window, and enter the following commands to create an empty migration file:
+		python manage.py makemigrations appname --empty
+
+Step 5: Navigate to the appname.migrations folder and open the latest migration file.
+Step 6: On the selected migration file, type from django.contrib.postgres.operations import UnaccentExtension on line 1 or 2.
+Step 7: Under the class Migration, enter UnaccentExtension() inside the operations variable.
+Step 8: Return to the vs code terminal window, now enter python manage.py migrate

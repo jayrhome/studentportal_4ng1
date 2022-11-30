@@ -16,6 +16,17 @@
 <br>
 
 <div class="container col-md-12">
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="input-group">
+            <div class="form-outline">
+                <input type="search" name="search_this" id="search_this" class="form-control" placeholder="Student Name or ID" required/>
+            </div>
+            <input type="submit" value="Search" class="btn btn-primary mb-3">
+        </div>
+    </form>
+
     <center><h4> Pending Enrollment </h4></center>
 
     <table class="table">

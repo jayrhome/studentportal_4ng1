@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from .views import *
 
 
@@ -32,20 +32,24 @@ urlpatterns = [
              name="extend_enrollment"),
         path("Postpone_enrollment/<uid>/",
              postpone_enrollment.as_view(), name="postpone_enrollment"),
-        path("Admission/", admission.as_view(), name="admission"),
-        path("Admitted_students/", admitted_students.as_view(),
-             name="admitted_students"),
+
+        re_path(r"Admission/(?:(?P<dts>[a-zA-Z\d]+)/)?$",
+                admission.as_view(), name="admission"),
+        re_path(r"Admitted_students/(?:(?P<dts>[a-zA-Z\d]+)/)?$",
+                admitted_students.as_view(), name="admitted_students"),
         path("Details/<pk>/", adm_details.as_view(), name="details"),
-        path("For_review/", review_admissionList.as_view(),
-             name="forReviewAdmission"),
-        path("Denied_admission/", denied_admissionList.as_view(),
-             name="denied_admissions"),
-        path("Hold_admission/", hold_admissionList.as_view(),
-             name="hold_admissions"),
+        re_path(r"For_review/(?:(?P<dts>[a-zA-Z\d]+)/)?$",
+                review_admissionList.as_view(), name="forReviewAdmission"),
+        re_path(r"Denied_admission/(?:(?P<dts>[a-zA-Z\d]+)/)?$",
+                denied_admissionList.as_view(), name="denied_admissions"),
+        re_path(r"Hold_admission/(?:(?P<dts>[a-zA-Z\d]+)/)?$",
+                hold_admissionList.as_view(), name="hold_admissions"),
 
         path("Enrollment/", include([
-            path("", pending_enrollment_list.as_view(),
-                 name="pending_enrollment"),
+            re_path(r"(?:(?P<dts>[a-zA-Z\d]+)/)?$", pending_enrollment_list.as_view(),
+                    name="pending_enrollment"),
+            re_path(r"Enrolled_students/(?:(?P<dts>[a-zA-Z\d]+)/)?$",
+                    enrolled_students.as_view(), name="enrolled_students"),
         ]))
     ])),
 
