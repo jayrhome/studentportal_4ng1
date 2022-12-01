@@ -75,7 +75,7 @@ class shs_track(models.Model):
 
 class shs_strand(models.Model):
     track = models.ForeignKey(
-        "shs_track", on_delete=models.SET_NULL, null=True, related_name="track_strand")
+        "shs_track", on_delete=models.PROTECT, related_name="track_strand")
     strand_name = models.CharField(max_length=100, unique=True)
     definition = models.TextField()
     date_added = models.DateTimeField(auto_now_add=True)
@@ -98,7 +98,7 @@ class shs_strand(models.Model):
 
 class student_address(models.Model):
     address_owner = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, related_name="user_address")
+        User, on_delete=models.PROTECT, related_name="user_address")
     permanent_home_address = models.CharField(max_length=50)
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
@@ -109,7 +109,7 @@ class student_address(models.Model):
 
 class student_contact_number(models.Model):
     contactnum_owner = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, related_name="user_contact")
+        User, on_delete=models.PROTECT, related_name="user_contact")
     cp_number_regex = RegexValidator(regex=r"^(09)([0-9]{9})$")
     cellphone_number = models.CharField(
         max_length=11, unique=True, validators=[cp_number_regex])
@@ -122,7 +122,7 @@ class student_contact_number(models.Model):
 
 class student_report_card(models.Model):
     report_card_owner = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, related_name="user_reportcard")
+        User, on_delete=models.PROTECT, related_name="user_reportcard")
     report_card = models.ImageField(upload_to="Report_cards/%Y/")
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
@@ -133,7 +133,7 @@ class student_report_card(models.Model):
 
 class student_profile_image(models.Model):
     image_user = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, related_name="user_image")
+        User, on_delete=models.PROTECT, related_name="user_image")
     user_image = models.ImageField(upload_to="User_profiles/")
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
@@ -149,7 +149,7 @@ class student_admission_details(models.Model):
         FEMALE = 'F', _('Female')
 
     admission_owner = models.OneToOneField(
-        User, on_delete=models.SET_NULL, null=True, related_name="admission_details")
+        User, on_delete=models.PROTECT, related_name="admission_details")
     first_name = models.CharField(max_length=20)
     middle_name = models.CharField(max_length=20)
     last_name = models.CharField(max_length=20)
@@ -184,11 +184,11 @@ class student_admission_details(models.Model):
 
     is_validated = models.BooleanField(default=False)  # if pending or accepted
     admission_sy = models.ForeignKey(
-        school_year, on_delete=models.SET_NULL, null=True, related_name="sy_admitted")
+        school_year, on_delete=models.PROTECT, related_name="sy_admitted")
     first_chosen_strand = models.ForeignKey(
-        shs_strand, on_delete=models.SET_NULL, null=True, related_name="first_strand")
+        shs_strand, on_delete=models.PROTECT, related_name="first_strand")
     second_chosen_strand = models.ForeignKey(
-        shs_strand, on_delete=models.SET_NULL, null=True, related_name="second_strand")
+        shs_strand, on_delete=models.PROTECT, related_name="second_strand")
 
     is_late = models.BooleanField(default=False)
     is_transferee = models.BooleanField(default=False)
@@ -246,23 +246,23 @@ class studentEnrollment_manager(models.Manager):
 
 class student_enrollment_details(models.Model):
     student_user = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, related_name="user_enrollment_details")
+        User, on_delete=models.PROTECT, related_name="user_enrollment_details")
     admission_details = models.ForeignKey(
-        student_admission_details, on_delete=models.SET_NULL, null=True, related_name="user_student_enrollment_details")
+        student_admission_details, on_delete=models.PROTECT, related_name="user_student_enrollment_details")
     selected_strand = models.ForeignKey(
-        shs_strand, on_delete=models.SET_NULL, null=True, related_name="chosen_strand")
+        shs_strand, on_delete=models.PROTECT, related_name="chosen_strand")
     full_name = models.CharField(max_length=60)
     home_address = models.ForeignKey(
-        student_address, on_delete=models.SET_NULL, null=True, related_name="student_address")
+        student_address, on_delete=models.PROTECT, related_name="student_address")
     age_validator = RegexValidator(regex=r"([0-9])")
     age = models.CharField(max_length=3, validators=[age_validator])
     contact_number = models.ForeignKey(
-        student_contact_number, on_delete=models.SET_NULL, null=True, related_name="cp_number")
+        student_contact_number, on_delete=models.PROTECT, related_name="cp_number")
 
     card = models.ForeignKey(
-        student_report_card, on_delete=models.SET_NULL, null=True, related_name="enrollment_report_card")
+        student_report_card, on_delete=models.PROTECT, related_name="enrollment_report_card")
     profile_image = models.ForeignKey(
-        student_profile_image, on_delete=models.SET_NULL, null=True, related_name="enrollment_profile_image")
+        student_profile_image, on_delete=models.PROTECT, related_name="enrollment_profile_image")
 
     is_passed = models.BooleanField(default=False)
     is_denied = models.BooleanField(default=False)
@@ -271,7 +271,7 @@ class student_enrollment_details(models.Model):
     is_repeater = models.BooleanField(default=False)
 
     enrolled_schoolyear = models.ForeignKey(
-        school_year, on_delete=models.SET_NULL, null=True, related_name="sy_enrolled")
+        school_year, on_delete=models.PROTECT, related_name="sy_enrolled")
 
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
@@ -285,7 +285,7 @@ class student_enrollment_details(models.Model):
 
 class enrollment_admission_setup(models.Model):
     ea_setup_sy = models.OneToOneField(
-        school_year, on_delete=models.SET_NULL, null=True, related_name="setup_sy")
+        school_year, on_delete=models.PROTECT, related_name="setup_sy")
     start_date = models.DateField()
     end_date = models.DateField()
     still_accepting = models.BooleanField(default=True)
@@ -314,3 +314,31 @@ class enrollment_review(models.Model):
 
     def __str__(self):
         return self.to_review.full_name
+
+
+class school_contact_number(models.Model):
+    contactnum_owner = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="contact_number")
+    cp_number_regex = RegexValidator(regex=r"^(09)([0-9]{9})$")
+    cellphone_number = models.CharField(
+        max_length=11, unique=True, validators=[cp_number_regex])
+    date_created = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now_add=True)
+
+    is_deleted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.cellphone_number
+
+
+class school_email(models.Model):
+    email_from = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="contact_email")
+    email = models.EmailField(max_length=50)
+    date_created = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now_add=True)
+
+    is_deleted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.email

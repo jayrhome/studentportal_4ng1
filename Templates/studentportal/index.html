@@ -14,10 +14,69 @@
 
 <!-- School image -->
     <!-- Enroll Now button -->
+<div class="container col-md-3">
+    {% if enroll_now == "anonymous" %}
+        <a href="#" class="btn btn-primary btn-sm"> Enroll now </a>
+    {% endif %}
+    {{enroll_now}}
+</div>
+
+<!-- School Announcements : FEATURES TO ADD SOON -->
+<!-- School Events : FEATURES TO ADD SOON -->
 
 <!-- List of courses offered -->
-<!-- List of common questions -->
-<!-- School location in google map -->
-<!-- School contact details -->
+<div class="container col-md-3">
+    {% for course in courses %}
+        <p> {{course.track_name}} </p>
+        <h5> Strands: </h5>
+        {% for strand in course.strands %}
+            <p> {{strand.strand_name}} </p>
+        {% empty %}
+            <p> ---------------------- </p>
+        {% endfor %}
+        <br>
+    {% endfor %}
+</div>
+
+<!-- List of Teachers : FEATURE TO ADD SOON -->
+
+<!-- School location in google map and school contact details -->
+<section class="p-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md">
+                <h2 class="text-center mb-4"> Contact Details </h2>
+                <ul class="list-group list-group-flush lead">
+                    <li class="list-group-item">
+                        <span class="fw-bold"> Address: </span> Macam St. Taal Bocaue Bulacan
+                    </li>
+
+                    <li class="list-group-item">
+                        <span class="fw-bold"> Contact: </span> {{contacts.cellphone_number}}
+                    </li>
+
+                    <li class="list-group-item">
+                        <span class="fw-bold"> Email: </span>  {{emails.email}}
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-md">
+                <div id='map' style='width: 600px; height: 450px;'></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script type="text/javascript">
+    // map
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYnVoYXlwYWFrbzIwMjIiLCJhIjoiY2wwNTdkM3VvMXY4djNicGswdG44NTU2aiJ9.o86cyM3P2LrsZ9GZZf444Q';
+    var map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [120.92545821448982,14.810937916453184],
+        zoom: 15
+    });
+</script>
 
 {% endblock content %}

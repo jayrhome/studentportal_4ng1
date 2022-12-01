@@ -11,6 +11,7 @@ from django.views.generic.edit import FormView, CreateView
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.db import IntegrityError
+from django.db.models import Prefetch, Count, Q
 from . forms import *
 from django.template.loader import render_to_string
 from django.conf import settings
@@ -20,6 +21,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from .tokens import account_activation_token, password_reset_token
 from ratelimit.decorators import ratelimit
+from adminportal.models import school_year, shs_track, shs_strand, student_admission_details, student_enrollment_details
 # from formtools.wizard.views import SessionWizardView
 
 
@@ -40,6 +42,21 @@ def student_and_anonymous(user):
 def student_access_only(user):
     return user.is_student
 
+# validate the latest school year
+
+
+def validate_enrollmentSetup(request, sy):
+    try:
+        dt1 = date.today()
+        dt2 = sy.date_created.date()
+        dt3 = dt1 - dt2
+
+        if dt3.days < 209:
+            return True
+        return False
+    except:
+        return False
+
 
 @method_decorator(user_passes_test(student_and_anonymous, login_url="adminportal:index"), name="dispatch")
 class index(TemplateView):
@@ -47,9 +64,59 @@ class index(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Home"
+        context["title"] = "Newfangled Senior High School"
+        context["courses"] = shs_track.objects.filter(is_deleted=False).prefetch_related(Prefetch(
+            "track_strand", queryset=shs_strand.objects.filter(is_deleted=False).order_by("strand_name"), to_attr="strands")).order_by("track_name")
+        context["contacts"] = school_contact_number.objects.filter(
+            is_deleted=False).first()
+        context["emails"] = school_email.objects.filter(
+            is_deleted=False).first()
+
+        context["enroll_now"] = self.enroll_now(self.request)
 
         return context
+
+    def enroll_now(self, request):
+        if request.user.is_authenticated:
+            if request.user.is_student:
+                try:
+                    sy = school_year.objects.latest('date_created')
+                    if validate_enrollmentSetup(request, sy):
+                        if enrollment_admission_setup.objects.filter(ea_setup_sy=sy).exists():
+                            setup_obj = enrollment_admission_setup.objects.filter(
+                                ea_setup_sy=sy).first()
+                            if setup_obj.start_date <= date.today() and setup_obj.end_date >= date.today():
+                                # If enrollment and admission dates are ongoing
+                                if setup_obj.still_accepting:
+                                    get_admission = student_admission_details.objects.filter(
+                                        admission_owner__id=request.user.id).first()
+
+                                    if get_admission:
+                                        # If student already have admission
+                                        if get_admission.is_validated and not get_admission.is_denied:
+                                            # if student admission is validated and not denied
+                                            if not student_enrollment_details.objects.filter(admission_details=get_admission, enrolled_schoolyear=sy).exists():
+                                                return "add_enrollment"
+                                        else:
+                                            if get_admission.admission_sy == sy:
+                                                if not student_enrollment_details.objects.filter(admission_details=get_admission, enrolled_schoolyear=sy).exists():
+                                                    # For student with not yet validated admission and no submitted enrollment
+                                                    return "add_enrollment"
+                                            else:
+                                                # For student with previous admission but not valid and school_year is previous, they can submit new admission
+                                                return "new_admission"
+                                    else:
+                                        return "no_admission"
+                                else:
+                                    return "postpone"
+                            elif setup_obj.start_date > date.today() and setup_obj.end_date > date.today():
+                                return "start_soon"
+                            else:
+                                pass
+                except:
+                    pass
+        else:
+            return "anonymous"
 
 
 @login_required(login_url="studentportal:login")
@@ -89,7 +156,7 @@ class login(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Account Login"
+        context["title"] = "Newfangled Senior High School"
         return context
 
     def form_invalid(self, form):
@@ -141,7 +208,7 @@ class create_useraccount(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Account Registration"
+        context["title"] = "Newfangled Senior High School"
         return context
 
 
@@ -213,7 +280,7 @@ class password_reset(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Forgot Password"
+        context["title"] = "Newfangled Senior High School"
         return context
 
 
