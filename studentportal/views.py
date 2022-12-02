@@ -22,7 +22,7 @@ from django.utils.encoding import force_bytes, force_str
 from .tokens import account_activation_token, password_reset_token
 from ratelimit.decorators import ratelimit
 from adminportal.models import school_year, shs_track, shs_strand, student_admission_details, student_enrollment_details
-# from formtools.wizard.views import SessionWizardView
+from formtools.wizard.views import SessionWizardView
 
 
 User = get_user_model()
@@ -383,10 +383,30 @@ class password_reset_form(FormView):
                 return super().form_valid(form)
 
 
-# @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
-# class admission_application(SessionWizardView):
-#     template_name = "studentportal/AdmissionAndEnrollment/admission.html"
-#     form_list = [admission_personal_details, elementary_school_details]
+admission_templates = {
+    "adm1": "studentportal/AdmissionAndEnrollment/admission.html",
+    "adm2": "studentportal/AdmissionAndEnrollment/admission2.html",
+    "adm3": "studentportal/AdmissionAndEnrollment/admission3.html",
+}
 
-#     def done(self, form_list, **kwargs):
-#         pass
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class admission_application(SessionWizardView):
+    form_list = [("adm1", admission_personal_details),
+                 ("adm2", elementary_school_details),
+                 ("adm3", jhs_details)]
+
+    def get_template_names(self):
+        return [admission_templates[self.steps.current]]
+
+    def done(self, form_list, **kwargs):
+        return render(self.request, "studentportal/AdmissionAndEnrollment/done.html", {'formdata': self.get_cleaned_data_for_step("adm1"), })
+
+    def render_goto_step(self, goto_step, **kwargs):
+        form = self.get_form(data=self.request.POST, files=self.request.FILES)
+        if form.is_valid():
+            self.storage.set_step_data(
+                self.steps.current, self.process_step(form))
+            self.storage.set_step_files(
+                self.steps.current, self.process_step_files(form))
+        return super().render_goto_step(goto_step, **kwargs)

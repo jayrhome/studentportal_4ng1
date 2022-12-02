@@ -86,6 +86,12 @@ class admission_personal_details(forms.Form):
                                  birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
     birthplace = forms.CharField(label="Place of birth", max_length=200)
     nationality = forms.CharField(label="Nationality", max_length=50)
+    first_chosen_strand = forms.ChoiceField(label="Select First Strand", choices=(
+        (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
+    ))
+    second_chosen_strand = forms.ChoiceField(label="Select Second Strand", choices=(
+        (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
+    ))
 
 
 class elementary_school_details(forms.Form):
@@ -95,11 +101,42 @@ class elementary_school_details(forms.Form):
     elem_region = forms.CharField(label="School Region", max_length=30)
     elem_year_completed = forms.DateField(label="Year Completed", validators=[
                                           birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
+
     elem_pept_passer = forms.ChoiceField(
-        label="PEPT Passer?", choices=boolean_choices())
+        label="Are you a passer of Philippine Educational Placement Test (PEPT) for Elementary Level?", choices=boolean_choices())
+    elem_pept_date_completion = forms.DateField(label="Date Completed", validators=[
+                                                birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
+
+    elem_ae_passer = forms.ChoiceField(
+        label="Are you a passer of Accreditation and Equivalency (A&E) Test for Elementary Level?", choices=boolean_choices())
     elem_ae_date_completion = forms.DateField(label="Date Completed", validators=[
                                               birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
+
     elem_community_learning_center = forms.CharField(
-        label="Community Learning Center", max_length=50)
+        label="Name of Community Learning Center", max_length=50)
     elem_clc_address = forms.CharField(
+        label="Community Learning Center Address", max_length=50)
+
+
+class jhs_details(forms.Form):
+    jhs_name = forms.CharField(label="Junior High School Name", max_length=50)
+    jhs_address = forms.CharField(
+        label="Junior High School Address", max_length=50)
+    jhs_region = forms.CharField(label="School Region", max_length=30)
+    jhs_year_completed = forms.DateField(label="Year Completed", validators=[
+        birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
+
+    jhs_pept_passer = forms.ChoiceField(
+        label="Are you a passer of Philippine Educational Placement Test (PEPT) for JHS Level?", choices=boolean_choices())
+    jhs_pept_date_completion = forms.DateField(label="Date Completed", validators=[
+                                               birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
+
+    jhs_ae_passer = forms.ChoiceField(
+        label="Are you a passer of Accreditation and Equivalency (A&E) Test for JHS Level?", choices=boolean_choices())
+    jhs_ae_date_completion = forms.DateField(label="Date Completed", validators=[
+                                             birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
+
+    jhs_community_learning_center = forms.CharField(
+        label="Name of Community Learning Center", max_length=50)
+    jhs_clc_address = forms.CharField(
         label="Community Learning Center Address", max_length=50)

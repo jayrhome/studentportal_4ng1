@@ -15,7 +15,7 @@ urlpatterns = [
     path("Password_reset_form/<uidb64>/<token>",
          password_reset_form.as_view(), name="password_reset_form"),
 
-    # path("Application/", include([
-    #     path("", admission_application.as_view(), name="application"),
-    # ]))
+    path("Application/", include([
+        path("", admission_application.as_view(), name="application"),
+    ]))
 ]

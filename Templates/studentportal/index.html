@@ -23,7 +23,7 @@
 
     {% elif enroll_now == "enroll" %}
         <p> Enrollment and Admission will end on {{end_date_enrollment.end_date|date:"l, M d, o"}}. </p>
-        <a href="#" class="btn btn-primary btn-sm"> Apply Now </a> <!-- Button to apply for admission and enrollment -->
+        <a href="{% url 'studentportal:application' %}" class="btn btn-primary btn-sm"> Apply Now </a> <!-- Button to apply for admission and enrollment -->
 
     {% elif enroll_now == "start_soon" %}
         <p> Enrollment and Admission will start on {{start_date_enrollment.start_date|date:"l, M d, o"}}. </p>
