@@ -822,12 +822,14 @@ class adm_details(DetailView):
     context_object_name = "admissionDetails"
     model = student_admission_details
 
+    # Add features to validate if an admission still qualified to be validated according to school year and current date
+
     def post(self, request, *args, **kwargs):
         try:
             obj = student_admission_details.objects.filter(
                 id=self.kwargs["pk"])
             if "accept" in request.POST:
-                # Accept enrollment
+                # Accept admission
                 redirect_link = self.where_to_redirect(obj)
                 self.validate_obj(obj)
                 return HttpResponseRedirect(redirect_link)

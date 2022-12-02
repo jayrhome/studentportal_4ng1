@@ -13,13 +13,25 @@
 {% endif %}
 
 <!-- School image -->
-    <!-- Enroll Now button -->
+
 <div class="container col-md-3">
-    {% if enroll_now == "anonymous" %}
-        <a href="#" class="btn btn-primary btn-sm"> Enroll now </a>
+
+    {% firstof sy %} <!-- Display school year -->
+
+    {% if enroll_now == "postpone" %}
+        <p> Enrollment and Admission are currently postponed. </p>
+
+    {% elif enroll_now == "enroll" %}
+        <p> Enrollment and Admission will end on {{end_date_enrollment.end_date|date:"l, M d, o"}}. </p>
+        <a href="#" class="btn btn-primary btn-sm"> Apply Now </a> <!-- Button to apply for admission and enrollment -->
+
+    {% elif enroll_now == "start_soon" %}
+        <p> Enrollment and Admission will start on {{start_date_enrollment.start_date|date:"l, M d, o"}}. </p>
+
     {% endif %}
-    {{enroll_now}}
+
 </div>
+<br>
 
 <!-- School Announcements : FEATURES TO ADD SOON -->
 <!-- School Events : FEATURES TO ADD SOON -->
