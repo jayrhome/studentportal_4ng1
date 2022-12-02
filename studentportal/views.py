@@ -384,9 +384,9 @@ class password_reset_form(FormView):
 
 
 admission_templates = {
-    "adm1": "studentportal/AdmissionAndEnrollment/admission.html",
-    "adm2": "studentportal/AdmissionAndEnrollment/admission2.html",
-    "adm3": "studentportal/AdmissionAndEnrollment/admission3.html",
+    "adm1": "studentportal/AdmissionAndEnrollment/admission_student_details.html",
+    "adm2": "studentportal/AdmissionAndEnrollment/admission_elementary_details.html",
+    "adm3": "studentportal/AdmissionAndEnrollment/admission_jhs_details.html",
 }
 
 

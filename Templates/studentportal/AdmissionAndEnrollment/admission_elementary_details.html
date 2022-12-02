@@ -2,7 +2,8 @@
 {% block content %}
 {% load i18n %}
 
-<p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+<h4> Elementary School Details </h4>
+
 <form action="" method="post">
     {% csrf_token %}
     <table>
@@ -21,5 +22,7 @@
     <button name="wizard_goto_step" type="submit"> Next </button>
 
 </form>
+
+<p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
 
 {% endblock content %}
