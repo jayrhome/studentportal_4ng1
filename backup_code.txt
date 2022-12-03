@@ -127,3 +127,5 @@ def password_reset_form(request, uidb64, token):
         messages.error(request, "Password reset link is no longer valid!")
 
     return HttpResponseRedirect(reverse("studentportal:login"))
+
+<button name="wizard_goto_step" type="submit" class="btn btn-primary btn-sm"> Next </button>

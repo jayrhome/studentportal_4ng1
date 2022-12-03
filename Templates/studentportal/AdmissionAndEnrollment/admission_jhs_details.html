@@ -1,28 +1,80 @@
 {% extends 'studentportal/base1.html' %}
 {% block content %}
 {% load i18n %}
+{% load std_portal %}
+
 
 <h4> Junior High School Details </h4>
 
-<form action="" method="post">
-    {% csrf_token %}
-    <table>
-    {{ wizard.management_form }}
-    {% if wizard.form.forms %}
-        {{ wizard.form.management_form }}
-        {% for form in wizard.form.forms %}
-            {{ form }}
-        {% endfor %}
-    {% else %}
-        {{ wizard.form }}
-    {% endif %}
-    </table>
-    
-    <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}">{% trans "Prev" %}</button>
-    <input type="submit" value="Submit">
+<div class="container col-md-8">
+    <form id="adm3" method="post">
 
-</form>
+        {{ wizard.form.non_field_errors }}
+        {% csrf_token %}
+        <table>
+        {{ wizard.management_form }}
+        {% if wizard.form.forms %}
+            {{ wizard.form.management_form }}
+            {% for form in wizard.form.forms %}
+                {{ form }}
+            {% endfor %}
+        {% else %}
+
+            {{ wizard.form.jhs_name.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.jhs_name.id_for_label }}" class="form-label"> {{ wizard.form.jhs_name.label }} </label>
+            {{ wizard.form.jhs_name|addclass:"form-control"}} <!-- Input Field -->
+            
+            {{ wizard.form.jhs_address.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.jhs_address.id_for_label }}" class="form-label"> {{ wizard.form.jhs_address.label }} </label>
+            {{ wizard.form.jhs_address|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.jhs_region.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.jhs_region.id_for_label }}" class="form-label"> {{ wizard.form.jhs_region.label }} </label>
+            {{ wizard.form.jhs_region|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.jhs_year_completed.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.jhs_year_completed.id_for_label }}" class="form-label"> {{ wizard.form.jhs_year_completed.label }} </label>
+            {{ wizard.form.jhs_year_completed|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.jhs_pept_passer.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.jhs_pept_passer.id_for_label }}" class="form-label"> {{ wizard.form.jhs_pept_passer.label }} </label>
+            {{ wizard.form.jhs_pept_passer|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.jhs_pept_date_completion.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.jhs_pept_date_completion.id_for_label }}" class="form-label"> {{ wizard.form.jhs_pept_date_completion.label }} </label>
+            {{ wizard.form.jhs_pept_date_completion|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.jhs_ae_passer.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.jhs_ae_passer.id_for_label }}" class="form-label"> {{ wizard.form.jhs_ae_passer.label }} </label>
+            {{ wizard.form.jhs_ae_passer|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.jhs_ae_date_completion.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.jhs_ae_date_completion.id_for_label }}" class="form-label"> {{ wizard.form.jhs_ae_date_completion.label }} </label>
+            {{ wizard.form.jhs_ae_date_completion|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.jhs_community_learning_center.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.jhs_community_learning_center.id_for_label }}" class="form-label"> {{ wizard.form.jhs_community_learning_center.label }} </label>
+            {{ wizard.form.jhs_community_learning_center|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.jhs_clc_address.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.jhs_clc_address.id_for_label }}" class="form-label"> {{ wizard.form.jhs_clc_address.label }} </label>
+            {{ wizard.form.jhs_clc_address|addclass:"form-control"}} <!-- Input Field -->
+            
+        {% endif %}
+        </table>
+
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-primary btn-sm">{% trans "Prev" %}</button>
+        <input type="submit" name="wizard_goto_step" value="Submit" class="btn btn-primary btn-sm">
+
+    </form>
+</div>
 
 <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+
+<script>
+    $('#adm3').one('submit', function() {
+        $(this).find('input[type="submit"]').attr('disabled','disabled');
+    }); 
+</script>
 
 {% endblock content %}
