@@ -438,6 +438,8 @@ def validate_enrollmentSetup(request, sy):
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
 class admission_and_enrollment(TemplateView):
+    # Used to create admission and enrollment form, then create the school year
+    # Add Features to check if the given dates are properly set, if not, then it should inform the user/admin
     template_name = "adminportal/AdmissionAndEnrollment/index.html"
 
     def get_context_data(self, **kwargs):

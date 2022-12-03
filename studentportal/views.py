@@ -23,6 +23,7 @@ from .tokens import account_activation_token, password_reset_token
 from ratelimit.decorators import ratelimit
 from adminportal.models import school_year, shs_track, shs_strand, student_admission_details, student_enrollment_details
 from formtools.wizard.views import SessionWizardView
+from datetime import date, datetime
 
 
 User = get_user_model()
@@ -410,3 +411,31 @@ class admission_application(SessionWizardView):
             self.storage.set_step_files(
                 self.steps.current, self.process_step_files(form))
         return super().render_goto_step(goto_step, **kwargs)
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form, **kwargs)
+        context['title'] = "Student Admission"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            sy = school_year.objects.latest("date_created")
+            if validate_enrollmentSetup(request, sy):
+                enb_ob = enrollment_admission_setup.objects.exclude(Q(start_date__gt=date.today()) | Q(
+                    end_date__lt=date.today()) | Q(still_accepting=False)).filter(ea_setup_sy=sy)
+
+                if enb_ob:
+                    enb_ob1 = enb_ob.first()
+                    if enb_ob1.start_date <= date.today() and enb_ob1.end_date >= date.today() and enb_ob1.still_accepting:
+                        return super().dispatch(request, *args, **kwargs)
+                    else:
+                        return HttpResponseRedirect(reverse("studentportal:index"))
+                else:
+                    return HttpResponseRedirect(reverse("studentportal:index"))
+            else:
+                return HttpResponseRedirect(reverse("studentportal:index"))
+
+        except Exception as e:
+            messages.error(
+                request, e)
+            return HttpResponseRedirect(reverse("studentportal:index"))
