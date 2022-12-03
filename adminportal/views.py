@@ -832,6 +832,7 @@ class adm_details(DetailView):
                 id=self.kwargs["pk"])
             if "accept" in request.POST:
                 # Accept admission
+                # Add functions to validate if an admission is still qualified to be accepted. To qualify, the admission_sy.date_created should be less than 209 days
                 redirect_link = self.where_to_redirect(obj)
                 self.validate_obj(obj)
                 return HttpResponseRedirect(redirect_link)
@@ -1315,7 +1316,7 @@ def enrollment_not_existing_kwarg(request, qs, val):
 
 
 def search_regex_match(request, val):
-    rgx = re.compile("([a-zA-Z\d]+)")
+    rgx = re.compile("([a-zA-Z\d\s]+)")
     if rgx.fullmatch(val):
         return True
     else:

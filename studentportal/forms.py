@@ -47,6 +47,20 @@ def boolean_choices():
     return bool_choices
 
 
+def validate_cp_number(number):
+    regex = r"^(09)([0-9]{9})$"
+    if not re.match(regex, str(number)):
+        raise ValidationError("Invalid Contact Number")
+
+
+def cp_number_unique_validator(number):
+    get_num_obj = student_contact_number.objects.filter(
+        cellphone_number=number)
+    if get_num_obj:
+        raise ValidationError(
+            "%s is no longer valid to add in your application form." % number)
+
+
 class loginForm(forms.Form):
     email = forms.EmailField(label="Email", max_length=50)
     password = forms.CharField(
@@ -105,17 +119,17 @@ class elementary_school_details(forms.Form):
     elem_pept_passer = forms.ChoiceField(
         label="Are you a passer of Philippine Educational Placement Test (PEPT) for Elementary Level?", choices=boolean_choices())
     elem_pept_date_completion = forms.DateField(label="Date Completed", validators=[
-                                                birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
+                                                birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}), required=False, help_text="Enter date completion if PEPT passer")
 
     elem_ae_passer = forms.ChoiceField(
         label="Are you a passer of Accreditation and Equivalency (A&E) Test for Elementary Level?", choices=boolean_choices())
     elem_ae_date_completion = forms.DateField(label="Date Completed", validators=[
-                                              birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
+                                              birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}), required=False, help_text="Enter date completion if A&E passer")
 
     elem_community_learning_center = forms.CharField(
-        label="Name of Community Learning Center", max_length=50)
+        label="Name of Community Learning Center", max_length=50, required=False, help_text="If applicable")
     elem_clc_address = forms.CharField(
-        label="Community Learning Center Address", max_length=50)
+        label="Community Learning Center Address", max_length=50, required=False, help_text="If applicable")
 
 
 class jhs_details(forms.Form):
@@ -129,14 +143,30 @@ class jhs_details(forms.Form):
     jhs_pept_passer = forms.ChoiceField(
         label="Are you a passer of Philippine Educational Placement Test (PEPT) for JHS Level?", choices=boolean_choices())
     jhs_pept_date_completion = forms.DateField(label="Date Completed", validators=[
-                                               birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
+                                               birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}), required=False, help_text="Enter date completion if PEPT passer")
 
     jhs_ae_passer = forms.ChoiceField(
         label="Are you a passer of Accreditation and Equivalency (A&E) Test for JHS Level?", choices=boolean_choices())
     jhs_ae_date_completion = forms.DateField(label="Date Completed", validators=[
-                                             birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
+                                             birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}), required=False, help_text="Enter date completion if A&E passer")
 
     jhs_community_learning_center = forms.CharField(
-        label="Name of Community Learning Center", max_length=50)
+        label="Name of Community Learning Center", max_length=50, required=False, help_text="If applicable")
     jhs_clc_address = forms.CharField(
-        label="Community Learning Center Address", max_length=50)
+        label="Community Learning Center Address", max_length=50, required=False, help_text="If applicable")
+
+
+class enrollment_form(forms.Form):
+    full_name = forms.CharField(
+        max_length=60, label='Full Name (Surname, First Name, Middle Name)')
+    selected_strand = forms.ChoiceField(label="Select Strand", choices=(
+        (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
+    ))
+    home_address = forms.CharField(max_length=50, label='Home address')
+    age = forms.IntegerField(label="Age", min_value=1, max_value=100)
+    contact_number = forms.CharField(
+        label="Contact Number", widget=forms.NumberInput, validators=[validate_cp_number, cp_number_unique_validator])
+    card = forms.ImageField(
+        label="Report card", help_text="Report card from previous year or quarter")
+    profile_image = forms.ImageField(
+        label="Student Photo", help_text="White background with no filters")

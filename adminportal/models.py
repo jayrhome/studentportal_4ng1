@@ -128,7 +128,7 @@ class student_report_card(models.Model):
     last_modified = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.card_image.url
+        return self.report_card.url
 
 
 class student_profile_image(models.Model):
@@ -167,8 +167,9 @@ class student_admission_details(models.Model):
     elem_pept_date_completion = models.DateField(null=True, blank=True)
     elem_ae_passer = models.BooleanField(default=False)
     elem_ae_date_completion = models.DateField(null=True, blank=True)
-    elem_community_learning_center = models.CharField(max_length=50)
-    elem_clc_address = models.CharField(max_length=50)
+    elem_community_learning_center = models.CharField(
+        max_length=50, null=True, blank=True)
+    elem_clc_address = models.CharField(max_length=50, null=True, blank=True)
 
     # Junior High school details
     jhs_name = models.CharField(max_length=50)
@@ -179,8 +180,9 @@ class student_admission_details(models.Model):
     jhs_pept_date_completion = models.DateField(null=True, blank=True)
     jhs_ae_passer = models.BooleanField(default=False)
     jhs_ae_date_completion = models.DateField(null=True, blank=True)
-    jhs_community_learning_center = models.CharField(max_length=50)
-    jhs_clc_address = models.CharField(max_length=50)
+    jhs_community_learning_center = models.CharField(
+        max_length=50, null=True, blank=True)
+    jhs_clc_address = models.CharField(max_length=50, null=True, blank=True)
 
     is_validated = models.BooleanField(default=False)  # if pending or accepted
     admission_sy = models.ForeignKey(

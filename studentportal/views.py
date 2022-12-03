@@ -385,9 +385,9 @@ class password_reset_form(FormView):
 
 
 admission_templates = {
-    "adm1": "studentportal/AdmissionAndEnrollment/admission_student_details.html",
-    "adm2": "studentportal/AdmissionAndEnrollment/admission_elementary_details.html",
-    "adm3": "studentportal/AdmissionAndEnrollment/admission_jhs_details.html",
+    "adm1": "studentportal/admission_HTMLs/admission_student_details.html",
+    "adm2": "studentportal/admission_HTMLs/admission_elementary_details.html",
+    "adm3": "studentportal/admission_HTMLs/admission_jhs_details.html",
 }
 
 
@@ -401,7 +401,62 @@ class admission_application(SessionWizardView):
         return [admission_templates[self.steps.current]]
 
     def done(self, form_list, **kwargs):
-        return render(self.request, "studentportal/AdmissionAndEnrollment/done.html", {'formdata': self.get_cleaned_data_for_step("adm1"), })
+        try:
+            adm1 = self.get_cleaned_data_for_step("adm1")
+            adm2 = self.get_cleaned_data_for_step("adm2")
+            adm3 = self.get_cleaned_data_for_step("adm3")
+
+            obj, created = student_admission_details.objects.update_or_create(
+                admission_owner=self.request.user,
+                defaults={
+                    'admission_owner': self.request.user,
+                    'first_name': adm1['first_name'],
+                    'middle_name': adm1['middle_name'],
+                    'last_name': adm1['last_name'],
+                    'sex': adm1['sex'],
+                    'date_of_birth': adm1['birth_date'],
+                    'birthplace': adm1['birthplace'],
+                    'nationality': adm1['nationality'],
+                    'first_chosen_strand': shs_strand.objects.get(id=adm1["first_chosen_strand"]),
+                    'second_chosen_strand': shs_strand.objects.get(id=adm1["second_chosen_strand"]),
+
+                    'elem_name': adm2['elem_name'],
+                    'elem_address': adm2['elem_address'],
+                    'elem_region': adm2['elem_region'],
+                    'elem_year_completed': adm2['elem_year_completed'],
+                    'elem_pept_passer': adm2['elem_pept_passer'],
+                    'elem_pept_date_completion': adm2['elem_pept_date_completion'] if adm2['elem_pept_passer'] else None,
+                    'elem_ae_passer': adm2['elem_ae_passer'],
+                    'elem_ae_date_completion': adm2['elem_ae_date_completion'] if adm2['elem_ae_passer'] else None,
+                    'elem_community_learning_center': adm2['elem_community_learning_center'],
+                    'elem_clc_address': adm2['elem_clc_address'],
+
+                    'jhs_name': adm3['jhs_name'],
+                    'jhs_address': adm3['jhs_address'],
+                    'jhs_region': adm3['jhs_region'],
+                    'jhs_year_completed': adm3['jhs_year_completed'],
+                    'jhs_pept_passer': adm3['jhs_pept_passer'],
+                    'jhs_pept_date_completion': adm3['jhs_pept_date_completion'] if adm3['jhs_pept_passer'] else None,
+                    'jhs_ae_passer': adm3['jhs_ae_passer'],
+                    'jhs_ae_date_completion': adm3['jhs_ae_date_completion'] if adm3['jhs_ae_passer'] else None,
+                    'jhs_community_learning_center': adm3['jhs_community_learning_center'],
+                    'jhs_clc_address': adm3['jhs_clc_address'],
+
+                    'admission_sy': school_year.objects.latest("date_created"),
+                    'is_validated': False,
+                    'is_late': False,
+                    'is_transferee': False,
+                    'is_denied': False
+                }
+            )
+
+            messages.success(
+                self.request, "Your admission application is submitted. Kindly wait for a response from the admin.")
+            return HttpResponseRedirect(reverse("studentportal:enrollment_application"))
+
+        except Exception as e:
+            messages.error(self.request, e)
+            return HttpResponseRedirect(reverse("studentportal:index"))
 
     def render_goto_step(self, goto_step, **kwargs):
         form = self.get_form(data=self.request.POST, files=self.request.FILES)
@@ -427,7 +482,25 @@ class admission_application(SessionWizardView):
                 if enb_ob:
                     enb_ob1 = enb_ob.first()
                     if enb_ob1.start_date <= date.today() and enb_ob1.end_date >= date.today() and enb_ob1.still_accepting:
-                        return super().dispatch(request, *args, **kwargs)
+                        # If enrollment and admission is ongoing
+
+                        get_user_admission_obj = student_admission_details.objects.filter(
+                            admission_owner__id=request.user.id)  # We will use this qs to check user admission
+
+                        if get_user_admission_obj:
+                            # If user have admission details submitted
+                            get_user_admission_obj_f1 = get_user_admission_obj.first()
+
+                            if get_user_admission_obj_f1.is_validated and not get_user_admission_obj_f1.is_denied:
+                                return HttpResponseRedirect(reverse("studentportal:enrollment_application"))
+                            else:
+                                if get_user_admission_obj_f1.admission_sy == sy:
+                                    return HttpResponseRedirect(reverse("studentportal:enrollment_application"))
+                                else:
+                                    return super().dispatch(request, *args, **kwargs)
+                        else:
+                            # If the looged-in user have no admission details. The user will redirect to the admission application form
+                            return super().dispatch(request, *args, **kwargs)
                     else:
                         return HttpResponseRedirect(reverse("studentportal:index"))
                 else:
@@ -435,7 +508,121 @@ class admission_application(SessionWizardView):
             else:
                 return HttpResponseRedirect(reverse("studentportal:index"))
 
+        except:
+            return HttpResponseRedirect(reverse("studentportal:index"))
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class submitted_admission_details(TemplateView):
+    template_name = "studentportal/admission_HTMLs/student_admission_details.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class enrollment_application(FormView):
+    form_class = enrollment_form
+    template_name = "studentportal/enrollment_HTMLs/enrollment_application_form.html"
+    success_url = "/Admission/Admission_details/"
+
+    def form_valid(self, form):
+        try:
+            student_enrollment_details.objects.create(
+                student_user=self.request.user,
+                admission_details=student_admission_details.objects.get(
+                    admission_owner__id=self.request.user.id),
+                selected_strand=shs_strand.objects.get(
+                    id=form.cleaned_data["selected_strand"]),
+                full_name=form.cleaned_data["full_name"],
+
+                home_address=student_address.objects.create(
+                    address_owner=self.request.user,
+                    permanent_home_address=form.cleaned_data["home_address"],
+                ),
+
+                age=form.cleaned_data["age"],
+                contact_number=student_contact_number.objects.create(
+                    contactnum_owner=self.request.user,
+                    cellphone_number=form.cleaned_data['contact_number']
+                ),
+
+                card=student_report_card.objects.create(
+                    report_card_owner=self.request.user,
+                    report_card=form.cleaned_data["card"]
+                ),
+
+                profile_image=student_profile_image.objects.create(
+                    image_user=self.request.user,
+                    user_image=form.cleaned_data["profile_image"]
+                ),
+
+                enrolled_schoolyear=school_year.objects.latest('date_created'),
+
+            )
+            messages.success(
+                self.request, "Enrollment is submitted successfully. Kindly wait for the validation status.")
+            return super().form_valid(form)
         except Exception as e:
-            messages.error(
-                request, e)
+            messages.error(self.request, e)
+            return self.form_invalid(form)
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            sy = school_year.objects.latest('date_created')
+            if validate_enrollmentSetup(request, sy):
+                enb_ob = enrollment_admission_setup.objects.exclude(Q(start_date__gt=date.today()) | Q(
+                    end_date__lt=date.today()) | Q(still_accepting=False)).filter(ea_setup_sy=sy)
+
+                if enb_ob:
+                    enb_ob1 = enb_ob.first()
+                    if enb_ob1.start_date <= date.today() and enb_ob1.end_date >= date.today() and enb_ob1.still_accepting:
+                        # If enrollment and admission is ongoing
+                        get_admission_obj = student_admission_details.objects.filter(
+                            admission_owner__id=request.user.id)
+                        if get_admission_obj:
+                            get_admission_obj_v1 = get_admission_obj.first()
+                            if get_admission_obj_v1.is_validated and not get_admission_obj_v1.is_denied:
+                                if self.no_existing_enrollment_details(sy):
+                                    return super().dispatch(request, *args, **kwargs)
+                                messages.warning(
+                                    request, "Only one enrollment per school year is valid.")
+                                return HttpResponseRedirect(reverse("studentportal:index"))
+                            else:
+                                if get_admission_obj_v1.admission_sy == sy:
+                                    if self.no_existing_enrollment_details(sy):
+                                        return super().dispatch(request, *args, **kwargs)
+                                    messages.warning(
+                                        request, "Only one enrollment per school year is valid.")
+                                    return HttpResponseRedirect(reverse("studentportal:index"))
+                                else:
+                                    messages.warning(
+                                        request, "You need to create a new admission before enrollment.")
+                                    return HttpResponseRedirect(reverse("studentportal:admission_application"))
+                        else:
+                            messages.warning(
+                                request, "You need to create an admission before enrollment.")
+                            return HttpResponseRedirect(reverse("studentportal:admission_application"))
+                    else:
+                        return HttpResponseRedirect(reverse("studentportal:index"))
+                else:
+                    return HttpResponseRedirect(reverse("studentportal:index"))
+            else:
+                return HttpResponseRedirect(reverse("studentportal:index"))
+        except Exception as e:
+            messages.error(request, e)
+            return HttpResponseRedirect(reverse("studentportal:index"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Enrollment Application"
+        return context
+
+    def no_existing_enrollment_details(self, sy):
+        try:
+            get_enrollment = student_enrollment_details.objects.filter(
+                student_user=self.request.user, enrolled_schoolyear=sy)
+            if get_enrollment:
+                return False
+            # Return False if the student already have enrollment for the latest school year
+            return True
+        except Exception as e:
+            messages.error(self.request, e)
             return HttpResponseRedirect(reverse("studentportal:index"))
