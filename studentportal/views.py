@@ -513,11 +513,6 @@ class admission_application(SessionWizardView):
 
 
 @method_decorator([login_required(login_url="studentportal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
-class submitted_admission_details(TemplateView):
-    template_name = "studentportal/admission_HTMLs/student_admission_details.html"
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
 class enrollment_application(FormView):
     form_class = enrollment_form
     template_name = "studentportal/enrollment_HTMLs/enrollment_application_form.html"
@@ -625,4 +620,182 @@ class enrollment_application(FormView):
             return True
         except Exception as e:
             messages.error(self.request, e)
+            return HttpResponseRedirect(reverse("studentportal:index"))
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class submitted_admission_details(FormView):
+    template_name = "studentportal/application_HTMLs/admission_application_details.html"
+    form_class = all_admission_forms
+    success_url = "/Admission/Admission_details/"
+
+    def form_valid(self, form):
+        try:
+            if form.has_changed():
+                stud_admission_obj = student_admission_details.objects.get(
+                    admission_owner=self.request.user)
+                if not stud_admission_obj.is_validated and stud_admission_obj.is_denied:
+                    count_reviews = for_review_admission.objects.filter(
+                        to_review=stud_admission_obj).count()
+                    if count_reviews > 0:
+                        list_of_fields = form.changed_data
+                        for field in list_of_fields:
+                            setattr(stud_admission_obj, field,
+                                    form.cleaned_data[field])
+                        stud_admission_obj.is_validated = False
+                        stud_admission_obj.is_denied = False
+                        stud_admission_obj.save()
+                        messages.success(
+                            self.request, "Submitted successfully")
+                        return super().form_valid(form)
+                    return self.form_invalid(form)
+                return self.form_invalid(form)
+            return super().form_valid(form)
+        except Exception as e:
+            messages.error(self.request, e)
+            return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        stud_admission_obj = student_admission_details.objects.filter(
+            admission_owner=self.request.user)
+        if stud_admission_obj:
+            stud_admission_obj_f1 = stud_admission_obj.first()
+            if (stud_admission_obj_f1.is_validated and not stud_admission_obj_f1.is_denied) or validate_enrollmentSetup(self.request, stud_admission_obj_f1.admission_sy):
+                # If admission is validated, if not, then the admission school year must be latest
+                initial["first_name"] = stud_admission_obj_f1.first_name
+                initial["middle_name"] = stud_admission_obj_f1.middle_name
+                initial["last_name"] = stud_admission_obj_f1.last_name
+                initial["sex"] = stud_admission_obj_f1.sex
+                initial["date_of_birth"] = stud_admission_obj_f1.date_of_birth
+                initial["birthplace"] = stud_admission_obj_f1.birthplace
+                initial["nationality"] = stud_admission_obj_f1.nationality
+                initial["first_chosen_strand"] = stud_admission_obj_f1.first_chosen_strand
+                initial["second_chosen_strand"] = stud_admission_obj_f1.second_chosen_strand
+
+                initial["elem_name"] = stud_admission_obj_f1.elem_name
+                initial["elem_address"] = stud_admission_obj_f1.elem_address
+                initial["elem_region"] = stud_admission_obj_f1.elem_region
+                initial["elem_year_completed"] = stud_admission_obj_f1.elem_year_completed
+                initial["elem_pept_passer"] = stud_admission_obj_f1.elem_pept_passer
+                initial["elem_pept_date_completion"] = stud_admission_obj_f1.elem_pept_date_completion
+                initial["elem_ae_passer"] = stud_admission_obj_f1.elem_ae_passer
+                initial["elem_ae_date_completion"] = stud_admission_obj_f1.elem_ae_date_completion
+                initial["elem_community_learning_center"] = stud_admission_obj_f1.elem_community_learning_center
+                initial["elem_clc_address"] = stud_admission_obj_f1.elem_clc_address
+
+                initial["jhs_name"] = stud_admission_obj_f1.jhs_name
+                initial["jhs_address"] = stud_admission_obj_f1.jhs_address
+                initial["jhs_region"] = stud_admission_obj_f1.jhs_region
+                initial["jhs_year_completed"] = stud_admission_obj_f1.jhs_year_completed
+                initial["jhs_pept_passer"] = stud_admission_obj_f1.jhs_pept_passer
+                initial["jhs_pept_date_completion"] = stud_admission_obj_f1.jhs_pept_date_completion
+                initial["jhs_ae_passer"] = stud_admission_obj_f1.jhs_ae_passer
+                initial["jhs_ae_date_completion"] = stud_admission_obj_f1.jhs_ae_date_completion
+                initial["jhs_community_learning_center"] = stud_admission_obj_f1.jhs_community_learning_center
+                initial["jhs_clc_address"] = stud_admission_obj_f1.jhs_clc_address
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Admission Details"
+
+        try:
+            stud_admission_obj = student_admission_details.objects.filter(
+                admission_owner=self.request.user)
+
+            if stud_admission_obj:
+                stud_admission_obj_f1 = stud_admission_obj.first()
+
+                if stud_admission_obj_f1.is_validated and not stud_admission_obj_f1.is_denied:
+                    # If admission is valid
+                    context["admission_status"] = "Validated"
+                else:
+                    if validate_enrollmentSetup(self.request, stud_admission_obj_f1.admission_sy):
+                        # If admission is invalid but the admission school year is latest
+
+                        count_reviews = for_review_admission.objects.filter(
+                            to_review=stud_admission_obj_f1).count()
+
+                        if not stud_admission_obj_f1.is_validated and stud_admission_obj_f1.is_denied and count_reviews > 0:
+                            # If denied with reviews
+                            context["admission_status"] = "For revison"
+                            context["admission_comments"] = for_review_admission.objects.values_list(
+                                'comment', flat=True).filter(to_review=stud_admission_obj_f1).order_by('-date_created')
+                        elif not stud_admission_obj_f1.is_validated and stud_admission_obj_f1.is_denied and count_reviews == 0:
+                            # If denied with no reviews
+                            context["admission_status"] = "Denied"
+                        else:
+                            context["admission_status"] = self.find_admission_status(
+                                stud_admission_obj_f1)
+                    else:
+                        # If admission is invalid and admission school year is not latest
+                        context['invalid_previous_admission'] = True
+            else:
+                context['no_admission'] = True
+                context['admission_status'] = False
+
+        except Exception as e:
+            # messages.error(self.request, e)
+            pass
+
+        return context
+
+    def find_admission_status(self, obj):
+        if not obj.is_validated and not obj.is_denied:
+            # If pending
+            return "Pending"
+        elif obj.is_validated and obj.is_denied:
+            return "On-hold"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class submitted_enrollment_details(FormView):
+    form_class = enrollment_form_revision
+    template_name = "studentportal/application_HTMLs/enrollment_application_details.html"
+    success_url = "/Enrollment/Enrollment_details/"
+
+    def get_initial(self):
+        initial = super().get_initial()
+
+        if "pk" in self.kwargs:
+            get_enrollment = student_enrollment_details.objects.select_related(
+                'selected_strand', 'home_address', 'contact_number', 'card', 'profile_image').get(id=self.kwargs["pk"])
+        else:
+            get_enrollment = student_enrollment_details.objects.select_related(
+                'selected_strand', 'home_address', 'contact_number', 'card', 'profile_image').filter(student_user=self.request.user).order_by('-date_created').first()
+
+        if get_enrollment:
+            initial["full_name"] = get_enrollment.full_name
+            initial["selected_strand"] = get_enrollment.selected_strand.id
+            initial["home_address"] = get_enrollment.home_address
+            initial["age"] = get_enrollment.age
+            initial["contact_number"] = get_enrollment.contact_number
+
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Enrollment Details"
+
+        context["enrolled_sy"] = student_enrollment_details.objects.values(
+            'enrolled_schoolyear__sy', 'id').filter(student_user=self.request.user).order_by('-date_created')
+
+        if context["enrolled_sy"]:
+            get_imgs = student_enrollment_details.objects.select_related('card', 'profile_image').filter(
+                student_user=self.request.user).order_by('-date_created').first()
+            context["card_url"] = get_imgs.card
+            context["photo_url"] = get_imgs.profile_image
+
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            if "pk" in self.kwargs:
+                if student_enrollment_details.objects.filter(student_user=request.user, id=self.kwargs["pk"]).exists():
+                    return super().dispatch(request, *args, **kwargs)
+                return HttpResponseRedirect(reverse("studentportal:enrollment_details"))
+            return super().dispatch(request, *args, **kwargs)
+        except Exception as e:
+            # messages.error(request, e)
             return HttpResponseRedirect(reverse("studentportal:index"))

@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from . views import *
 from . import views
 
@@ -24,5 +24,7 @@ urlpatterns = [
     path("Enrollment/", include([
         path("", enrollment_application.as_view(),
              name="enrollment_application"),
+        re_path(r"Enrollment_details/(?:(?P<pk>[0-9]+)/)?$",
+                submitted_enrollment_details.as_view(), name="enrollment_details"),
     ])),
 ]
