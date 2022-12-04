@@ -22,15 +22,15 @@
 
             {{ wizard.form.jhs_name.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.jhs_name.id_for_label }}" class="form-label"> {{ wizard.form.jhs_name.label }} </label>
-            {{ wizard.form.jhs_name|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.jhs_name|addclass:"form-control"}} <!-- Auto-fill junior high school name -->
             
             {{ wizard.form.jhs_address.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.jhs_address.id_for_label }}" class="form-label"> {{ wizard.form.jhs_address.label }} </label>
-            {{ wizard.form.jhs_address|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.jhs_address|addclass:"form-control"}} <!-- Auto-fill based on selected or entered jhs name -->
 
             {{ wizard.form.jhs_region.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.jhs_region.id_for_label }}" class="form-label"> {{ wizard.form.jhs_region.label }} </label>
-            {{ wizard.form.jhs_region|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.jhs_region|addclass:"form-control"}} <!-- Auto-fill based on selected or entered jhs name -->
 
             {{ wizard.form.jhs_year_completed.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.jhs_year_completed.id_for_label }}" class="form-label"> {{ wizard.form.jhs_year_completed.label }} </label>
@@ -67,7 +67,7 @@
             <br>
             {{ wizard.form.jhs_clc_address.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.jhs_clc_address.id_for_label }}" class="form-label"> {{ wizard.form.jhs_clc_address.label }} </label>
-            {{ wizard.form.jhs_clc_address|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.jhs_clc_address|addclass:"form-control"}} <!-- Auto-fill address -->
             {{ wizard.form.jhs_clc_address.help_text}}
         {% endif %}
         </table>

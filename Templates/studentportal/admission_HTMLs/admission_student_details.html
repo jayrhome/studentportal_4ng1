@@ -41,11 +41,11 @@
 
             {{ wizard.form.birthplace.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.birthplace.id_for_label }}" class="form-label"> {{ wizard.form.birthplace.label }} </label>
-            {{ wizard.form.birthplace|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.birthplace|addclass:"form-control"}} <!-- Auto fill address -->
 
             {{ wizard.form.nationality.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.nationality.id_for_label }}" class="form-label"> {{ wizard.form.nationality.label }} </label>
-            {{ wizard.form.nationality|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.nationality|addclass:"form-control"}} <!-- Auto-fill nationality -->
 
             {{ wizard.form.first_chosen_strand.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.first_chosen_strand.id_for_label }}" class="form-label"> {{ wizard.form.first_chosen_strand.label }} </label>

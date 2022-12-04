@@ -558,7 +558,7 @@ class enrollment_application(FormView):
 
             )
             messages.success(
-                self.request, "Enrollment is submitted successfully. Kindly wait for the validation status.")
+                self.request, "Enrollment is submitted successfully. Kindly wait for the next validation status.")
             return super().form_valid(form)
         except Exception as e:
             messages.error(self.request, e)

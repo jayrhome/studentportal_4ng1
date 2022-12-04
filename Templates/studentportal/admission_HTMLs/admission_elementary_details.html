@@ -20,15 +20,15 @@
 
             {{ wizard.form.elem_name.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.elem_name.id_for_label }}" class="form-label"> {{ wizard.form.elem_name.label }} </label>
-            {{ wizard.form.elem_name|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.elem_name|addclass:"form-control"}} <!-- Auto-fill -->
             
             {{ wizard.form.elem_address.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.elem_address.id_for_label }}" class="form-label"> {{ wizard.form.elem_address.label }} </label>
-            {{ wizard.form.elem_address|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.elem_address|addclass:"form-control"}} <!-- Auto-fill based on elem name -->
 
             {{ wizard.form.elem_region.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.elem_region.id_for_label }}" class="form-label"> {{ wizard.form.elem_region.label }} </label>
-            {{ wizard.form.elem_region|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.elem_region|addclass:"form-control"}} <!-- Auto-fill based on elem name -->
 
             {{ wizard.form.elem_year_completed.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.elem_year_completed.id_for_label }}" class="form-label"> {{ wizard.form.elem_year_completed.label }} </label>
@@ -65,7 +65,7 @@
             <br>
             {{ wizard.form.elem_clc_address.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.elem_clc_address.id_for_label }}" class="form-label"> {{ wizard.form.elem_clc_address.label }} </label>
-            {{ wizard.form.elem_clc_address|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.elem_clc_address|addclass:"form-control"}} <!-- Auto-fill location -->
             {{ wizard.form.elem_clc_address.help_text}}
         
         {% endif %}
