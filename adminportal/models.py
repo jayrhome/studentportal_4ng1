@@ -8,6 +8,7 @@ from django.contrib.postgres.fields import RangeOperators
 from django.db.models import Q
 from django.shortcuts import HttpResponseRedirect
 from django.urls import reverse
+from django.db import transaction
 
 User = get_user_model()
 
@@ -275,6 +276,8 @@ class student_enrollment_details(models.Model):
     enrolled_schoolyear = models.ForeignKey(
         school_year, on_delete=models.PROTECT, related_name="sy_enrolled")
 
+    # Add grade level, defaults to grade 11
+
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
 
@@ -344,3 +347,18 @@ class school_email(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class sample_mods(models.Model):
+    name = models.CharField(max_length=20)
+    date_created = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now_add=True)
+
+    def get_queryset(self):
+        return self.__class__.objects.filter(id=self.id)
+
+    @transaction.atomic()
+    def update_name(self, val):
+        obj = self.get_queryset().select_for_update().get()
+        obj.name = val
+        obj.save()

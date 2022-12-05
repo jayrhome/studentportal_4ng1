@@ -53,14 +53,6 @@ def validate_cp_number(number):
         raise ValidationError("Invalid Contact Number")
 
 
-def cp_number_unique_validator(number):
-    get_num_obj = student_contact_number.objects.filter(
-        cellphone_number=number)
-    if get_num_obj:
-        raise ValidationError(
-            "%s is no longer valid to add in your application form." % number)
-
-
 class loginForm(forms.Form):
     email = forms.EmailField(label="Email", max_length=50)
     password = forms.CharField(
@@ -165,7 +157,7 @@ class enrollment_form(forms.Form):
     home_address = forms.CharField(max_length=50, label='Home address')
     age = forms.IntegerField(label="Age", min_value=1, max_value=100)
     contact_number = forms.CharField(
-        label="Contact Number", widget=forms.NumberInput, validators=[validate_cp_number, cp_number_unique_validator])
+        label="Contact Number", widget=forms.NumberInput, validators=[validate_cp_number])
     card = forms.ImageField(
         label="Report card", help_text="Report card from previous year or quarter")
     profile_image = forms.ImageField(
@@ -235,13 +227,15 @@ class all_admission_forms(forms.Form):
 class enrollment_form_revision(forms.Form):
     full_name = forms.CharField(
         max_length=60, label='Full Name (Surname, First Name, Middle Name)')
-    selected_strand = forms.ChoiceField(label="Select Strand", choices=(
+    selected_strand = forms.TypedChoiceField(label="Select Strand", choices=(
         (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
-    ), required=False)
-    home_address = forms.CharField(max_length=50, label='Home address')
-    age = forms.IntegerField(label="Age", min_value=1, max_value=100)
+    ), coerce=str, required=False)
+    home_address = forms.CharField(
+        max_length=50, label='Home address')
+    age = forms.IntegerField(label="Age", min_value=1,
+                             max_value=100)
     contact_number = forms.CharField(
-        label="Contact Number", widget=forms.NumberInput, validators=[validate_cp_number, cp_number_unique_validator])
+        label="Contact Number", widget=forms.NumberInput, validators=[validate_cp_number])
     card = forms.ImageField(
         label="Report card", help_text="Report card from previous year or quarter", required=False)
     profile_image = forms.ImageField(

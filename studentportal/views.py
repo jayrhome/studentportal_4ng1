@@ -10,7 +10,7 @@ from django.views.generic import ListView, DetailView
 from django.views.generic.edit import FormView, CreateView
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, Count, Q
 from . forms import *
 from django.template.loader import render_to_string
@@ -519,45 +519,57 @@ class enrollment_application(FormView):
     success_url = "/Admission/Admission_details/"
 
     def form_valid(self, form):
-        try:
-            student_enrollment_details.objects.create(
-                student_user=self.request.user,
-                admission_details=student_admission_details.objects.get(
-                    admission_owner__id=self.request.user.id),
-                selected_strand=shs_strand.objects.get(
-                    id=form.cleaned_data["selected_strand"]),
-                full_name=form.cleaned_data["full_name"],
+        if not student_contact_number.objects.exclude(contactnum_owner=self.request.user, cellphone_number=form.cleaned_data["contact_number"]).filter(cellphone_number=form.cleaned_data["contact_number"]).exists():
+            try:
+                student_enrollment_details.objects.create(
+                    student_user=self.request.user,
+                    admission_details=student_admission_details.objects.get(
+                        admission_owner__id=self.request.user.id),
+                    selected_strand=shs_strand.objects.get(
+                        id=form.cleaned_data["selected_strand"]),
+                    full_name=form.cleaned_data["full_name"],
 
-                home_address=student_address.objects.create(
-                    address_owner=self.request.user,
-                    permanent_home_address=form.cleaned_data["home_address"],
-                ),
+                    home_address=student_address.objects.create(
+                        address_owner=self.request.user,
+                        permanent_home_address=form.cleaned_data["home_address"],
+                    ),
 
-                age=form.cleaned_data["age"],
-                contact_number=student_contact_number.objects.create(
-                    contactnum_owner=self.request.user,
-                    cellphone_number=form.cleaned_data['contact_number']
-                ),
+                    age=form.cleaned_data["age"],
+                    contact_number=self.validate_cp_num(
+                        form.cleaned_data['contact_number']),
 
-                card=student_report_card.objects.create(
-                    report_card_owner=self.request.user,
-                    report_card=form.cleaned_data["card"]
-                ),
+                    card=student_report_card.objects.create(
+                        report_card_owner=self.request.user,
+                        report_card=form.cleaned_data["card"]
+                    ),
 
-                profile_image=student_profile_image.objects.create(
-                    image_user=self.request.user,
-                    user_image=form.cleaned_data["profile_image"]
-                ),
+                    profile_image=student_profile_image.objects.create(
+                        image_user=self.request.user,
+                        user_image=form.cleaned_data["profile_image"]
+                    ),
 
-                enrolled_schoolyear=school_year.objects.latest('date_created'),
+                    enrolled_schoolyear=school_year.objects.latest(
+                        'date_created'),
 
-            )
-            messages.success(
-                self.request, "Enrollment is submitted successfully. Kindly wait for the next validation status.")
-            return super().form_valid(form)
-        except Exception as e:
-            messages.error(self.request, e)
+                )
+                messages.success(
+                    self.request, "Enrollment is submitted successfully. Kindly wait for the next validation status.")
+                return super().form_valid(form)
+            except Exception as e:
+                messages.error(self.request, e)
+                return self.form_invalid(form)
+        else:
+            messages.warning(self.request, "%s already taken." %
+                             form.cleaned_data["contact_number"])
             return self.form_invalid(form)
+
+    def validate_cp_num(self, num):
+        get_c = student_contact_number.objects.filter(
+            contactnum_owner=self.request.user, cellphone_number=num)
+        if get_c:
+            return get_c.first()
+        else:
+            return student_contact_number.objects.create(contactnum_owner=self.request.user, cellphone_number=num)
 
     def dispatch(self, request, *args, **kwargs):
         try:
@@ -755,6 +767,75 @@ class submitted_enrollment_details(FormView):
     template_name = "studentportal/application_HTMLs/enrollment_application_details.html"
     success_url = "/Enrollment/Enrollment_details/"
 
+    def form_valid(self, form):
+        # Function for revision
+        try:
+            if form.has_changed():
+                sy = school_year.objects.latest('date_created')
+                stud_enrollment_obj = student_enrollment_details.validObjects.select_related(
+                    'student_user', 'admission_details', 'selected_strand', 'contact_number', 'card', 'profile_image', 'enrolled_schoolyear').filter(student_user=self.request.user, enrolled_schoolyear=sy)
+                if stud_enrollment_obj:
+                    obj1 = stud_enrollment_obj.first()
+                    count_reviews = enrollment_review.objects.filter(
+                        to_review=obj1).count()
+                    if count_reviews > 0 and (not obj1.is_passed and obj1.is_denied):
+                        # if enrollment is for revision
+
+                        if "contact_number" in form.changed_data:
+                            if student_contact_number.objects.exclude(contactnum_owner=self.request.user, cellphone_number=form.cleaned_data["contact_number"]).filter(cellphone_number=form.cleaned_data["contact_number"]).exists():
+                                messages.warning(
+                                    self.request, "%s is already taken." % form.cleaned_data["contact_number"])
+                                return self.form_invalid(form)
+                            self.save_update(form, form.changed_data, sy)
+                        else:
+                            self.save_update(form, form.changed_data, sy)
+                        messages.success(
+                            self.request, "Enrollment will be validated again.")
+                        return super().form_valid(form)
+
+                    return self.form_invalid(form)
+                return self.form_invalid(form)
+            else:
+                return super().form_valid(form)
+        except Exception as e:
+            # messages.error(self.request, e)
+            return self.form_invalid(form)
+
+    def save_update(self, form, changed_fields, sy):
+        with transaction.atomic():
+            get_update = student_enrollment_details.validObjects.select_related('selected_strand', 'home_address', 'contact_number', 'card', 'profile_image').select_for_update(
+                of=('self', 'selected_strand', 'home_address', 'contact_number', 'card', 'profile_image')).get(student_user=self.request.user, enrolled_schoolyear=sy)
+            for field in changed_fields:
+                if field == "selected_strand":
+                    setattr(get_update, field, shs_strand.objects.get(
+                        id=int(form.cleaned_data[field])))
+                elif field == "home_address":
+                    setattr(get_update, field, student_address.objects.create(
+                        address_owner=self.request.user, permanent_home_address=form.cleaned_data[field]))
+                elif field == "contact_number":
+                    setattr(get_update, field, self.validate_cp_num(
+                        form.cleaned_data[field]))
+                elif field == "card":
+                    setattr(get_update, field, student_report_card.objects.create(
+                        report_card_owner=self.request.user, report_card=form.cleaned_data["card"]))
+                elif field == "profile_image":
+                    setattr(get_update, field, student_profile_image.objects.create(
+                        image_user=self.request.user, user_image=form.cleaned_data["profile_image"]))
+                else:
+                    setattr(get_update, field,
+                            form.cleaned_data[field])
+            get_update.is_passed = False
+            get_update.is_denied = False
+            get_update.save()
+
+    def validate_cp_num(self, num):
+        get_c = student_contact_number.objects.filter(
+            contactnum_owner=self.request.user, cellphone_number=num)
+        if get_c:
+            return get_c.first()
+        else:
+            return student_contact_number.objects.create(contactnum_owner=self.request.user, cellphone_number=num)
+
     def get_initial(self):
         initial = super().get_initial()
 
@@ -768,26 +849,98 @@ class submitted_enrollment_details(FormView):
         if get_enrollment:
             initial["full_name"] = get_enrollment.full_name
             initial["selected_strand"] = get_enrollment.selected_strand.id
-            initial["home_address"] = get_enrollment.home_address
-            initial["age"] = get_enrollment.age
-            initial["contact_number"] = get_enrollment.contact_number
+            initial["home_address"] = str(get_enrollment.home_address)
+            initial["age"] = int(get_enrollment.age)
+            initial["contact_number"] = str(get_enrollment.contact_number)
 
         return initial
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Enrollment Details"
+        try:
+            context["enrolled_sy"] = student_enrollment_details.objects.values(
+                'enrolled_schoolyear__sy', 'id').filter(student_user=self.request.user).order_by('-date_created')
 
-        context["enrolled_sy"] = student_enrollment_details.objects.values(
-            'enrolled_schoolyear__sy', 'id').filter(student_user=self.request.user).order_by('-date_created')
+            if "pk" in self.kwargs:
+                # If the user enter the enrollment id
+                get_imgs = student_enrollment_details.objects.select_related('card', 'profile_image').filter(
+                    student_user=self.request.user).order_by('-date_created').first()
+                context["card_url"] = get_imgs.card
+                context["photo_url"] = get_imgs.profile_image
 
-        if context["enrolled_sy"]:
-            get_imgs = student_enrollment_details.objects.select_related('card', 'profile_image').filter(
-                student_user=self.request.user).order_by('-date_created').first()
-            context["card_url"] = get_imgs.card
-            context["photo_url"] = get_imgs.profile_image
+                if validate_enrollmentSetup(self.request, get_imgs.enrolled_schoolyear):
+                    # If enrollment_sy is valid,
+                    count_review = enrollment_review.objects.filter(
+                        to_review=get_imgs).count()
+                    if count_review > 0 and (not get_imgs.is_passed and get_imgs.is_denied):
+                        # If enrollment status is denied and up for revision
+                        context['enrollment_reviews'] = enrollment_review.objects.values_list(
+                            'comment', flat=True).filter(to_review=get_imgs).order_by('-date_created')
+                        context["enrollment_status"] = "For revision"
+                    elif count_review == 0 and (not get_imgs.is_passed and get_imgs.is_denied):
+                        # If enrollment is denied
 
+                        # To display the follow-up button
+                        context['is_denied'] = True
+                        context['enrollment_status'] = "Denied"
+                    else:
+                        context['enrollment_status'] = self.enrollment_status(
+                            get_imgs)
+                else:
+                    context['enrollment_status'] = self.enrollment_status(
+                        get_imgs)
+
+            if not "pk" in self.kwargs and context["enrolled_sy"]:
+                # When user clicked the enrollment button from the application tab, and user has enrollment
+                # If the user logged-in is enrolled to any school year, and no pk in url
+
+                get_imgs = student_enrollment_details.objects.select_related('card', 'profile_image', 'enrolled_schoolyear').filter(
+                    student_user=self.request.user).order_by('-date_created').first()  # Get the latest enrollment of the student
+
+                context["card_url"] = get_imgs.card
+                context["photo_url"] = get_imgs.profile_image
+
+                if validate_enrollmentSetup(self.request, get_imgs.enrolled_schoolyear):
+                    # If enrollment_sy is valid,
+                    count_review = enrollment_review.objects.filter(
+                        to_review=get_imgs).count()
+                    if count_review > 0 and (not get_imgs.is_passed and get_imgs.is_denied):
+                        # If enrollment status is denied and up for revision
+                        context["enrollment_status"] = "For revision"
+                        context['enrollment_reviews'] = enrollment_review.objects.values_list(
+                            'comment', flat=True).filter(to_review=get_imgs).order_by('-date_created')
+                    elif count_review == 0 and (not get_imgs.is_passed and get_imgs.is_denied):
+                        # If enrollment is denied
+
+                        # To display the follow-up button
+                        context['is_denied'] = True
+                        context['enrollment_status'] = "Denied"
+                    else:
+                        context['enrollment_status'] = self.enrollment_status(
+                            get_imgs)
+                else:
+                    context['enrollment_status'] = self.enrollment_status(
+                        get_imgs)
+            else:
+                context["no_enrollment"] = True
+
+        except Exception as e:
+            # messages.error(self.request, e)
+            context["no_enrollment"] = True
         return context
+
+    def enrollment_status(self, enrollment):
+        if enrollment.is_passed and enrollment.is_denied:
+            return "Hold"
+        elif not enrollment.is_passed and enrollment.is_denied:
+            return "Denied"
+        elif enrollment.is_passed and not enrollment.is_denied:
+            return "Validated"
+        elif not enrollment.is_passed and not enrollment.is_denied:
+            return "Pending"
+        else:
+            return "No longer valid!"
 
     def dispatch(self, request, *args, **kwargs):
         try:
