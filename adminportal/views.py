@@ -1304,11 +1304,6 @@ class hold_admissionList(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class enrollment_details(DetailView):
-    pass
-
-
 def enrollment_not_existing_kwarg(request, qs, val):
     if not qs:
         # if qs = walang laman, then:
@@ -1651,3 +1646,72 @@ class hold_enrollment_lists(ListView):
         context = super().get_context_data(**kwargs)
         context["title"] = "Hold Enrollments"
         return context
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class enrollment_details(DetailView):
+    template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrollment_details.html"
+    context_object_name = "stud_enrollment_details"
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            student_enrollment_details.validObjects.get(id=self.kwargs["pk"])
+            return super().dispatch(request, *args, **kwargs)
+        except Exception as e:
+            messages.error(request, "Enrollment Details not found")
+            return HttpResponseRedirect(reverse("adminportal:pending_enrollment"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Enrollment Details"
+
+        # The following codes will be used to get the enrollment status and other data related to the status
+        try:
+            enrolled_obj = student_enrollment_details.validObjects.get(
+                id=self.kwargs["pk"])
+            count_enrollment_comments = enrollment_review.objects.filter(
+                to_review=enrolled_obj).count()
+            context["enrollment_status"] = self.get_enrollment_status(
+                enrolled_obj, count_enrollment_comments, enrolled_obj.enrolled_schoolyear)
+
+            context["valid_to_edit"] = validate_enrollmentSetup(
+                self.request, enrolled_obj.enrolled_schoolyear)
+
+            match context["enrollment_status"]:
+                case "Validated":
+                    context["back_btn"] = enrolled_obj.to_enrolledList()
+                    context["hold_enrollment"] = True if (
+                        date.today() - enrolled_obj.last_modified) == 7 else False
+                case "Pending":
+                    context["back_btn"] = enrolled_obj.to_pendingList()
+                case "Hold":
+                    context["back_btn"] = enrolled_obj.to_holdList()
+                case "For revision":
+                    context["back_btn"] = enrolled_obj.to_reviewList()
+                    context["enrollment_comments"] = enrollment_review.objects.values_list(
+                        'comment', flat=True).filter(to_review=enrolled_obj).order_by("-date_created")
+                case "Denied":
+                    context["back_btn"] = enrolled_obj.to_holdList()
+        except Exception as e:
+            # messages.error(self.request, e)
+            pass
+
+        return context
+
+    def get_enrollment_status(self, obj, count_reviews, sy):
+        if obj.is_passed and not obj.is_denied:
+            return "Validated"
+        elif not obj.is_passed and not obj.is_denied:
+            return "Pending"
+        elif obj.is_passed and obj.is_denied:
+            return "Hold"
+        else:
+            if not validate_enrollmentSetup(sy):
+                return "No longer valid"
+            elif count_reviews > 0:
+                return "For revision"
+            else:
+                return "Denied"
+
+    def get_queryset(self):
+        return student_enrollment_details.validObjects.all()

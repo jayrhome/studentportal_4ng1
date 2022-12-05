@@ -287,6 +287,21 @@ class student_enrollment_details(models.Model):
     def __str__(self):
         return self.full_name
 
+    def to_pendingList(self):
+        return reverse("adminportal:pending_enrollment")
+
+    def to_enrolledList(self):
+        return reverse("adminportal:enrolled_students")
+
+    def to_reviewList(self):
+        return reverse("adminportal:ForReviewEnrollmentLists")
+
+    def to_deniedList(self):
+        return reverse("adminportal:denied_enrollment_lists")
+
+    def to_holdList(self):
+        return reverse("adminportal:hold_enrollment_lists")
+
 
 class enrollment_admission_setup(models.Model):
     ea_setup_sy = models.OneToOneField(
@@ -347,18 +362,3 @@ class school_email(models.Model):
 
     def __str__(self):
         return self.email
-
-
-class sample_mods(models.Model):
-    name = models.CharField(max_length=20)
-    date_created = models.DateTimeField(auto_now=True)
-    last_modified = models.DateTimeField(auto_now_add=True)
-
-    def get_queryset(self):
-        return self.__class__.objects.filter(id=self.id)
-
-    @transaction.atomic()
-    def update_name(self, val):
-        obj = self.get_queryset().select_for_update().get()
-        obj.name = val
-        obj.save()

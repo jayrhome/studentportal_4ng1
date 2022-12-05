@@ -56,7 +56,7 @@
                     <td> {{review.is_repeater|yesno:"Yes,No"}} </td>
                     <td> {{review.date_created}} </td>
                     <td> {{review.last_modified}} </td>
-                    <td> <a href="#" class="btn btn-primary btn-sm"> View </a> </td>
+                    <td> <a href="{% url 'adminportal:enrollment_details' pk=review.id %}" class="btn btn-primary btn-sm"> View </a> </td>
                 </tr>
             {% empty %}
                 <tr>

@@ -13,8 +13,118 @@
 </div>
 {% endif %}
 
+
+<br>
 <div class="container col-md-12">
-    
+
+    {% if stud_enrollment_details %}
+
+        {% if review_contexts %}
+            <h6> Comments: </h6>
+            {% for review in review_contexts %}
+                <p> {{review.date_created}}: {{review.comment}} </p>
+            {% endfor %}
+        {% endif %}
+        
+        <form id="change_status" method="post">
+            {% csrf_token %}
+            <div class="row">
+                <p> {{enrollment_status}} </p>
+            </div>
+
+            {% for comment in enrollment_comments %}
+                <p> {{comment}} </p>
+            {% endfor %}
+
+            <p> Full name: {{stud_enrollment_details.full_name}} </p>
+            <p> Home address: {{stud_enrollment_details.home_address}} </p>
+            <p> Age: {{stud_enrollment_details.age}} </p>
+            <p> Contact number: {{stud_enrollment_details.contact_number}} </p>
+            <p> Report card: <img src="{{stud_enrollment_details.card}}" alt=""> </p>
+            <p> Late enrolled? {{stud_enrollment_details.is_late|yesno:"Yes,No"}} </p>
+            <p> Repeater? {{stud_enrollment_details.is_repeater|yesno:"Yes,No"}} </p>
+            <p> Student image: <img src="{{stud_enrollment_details.profile_image.user_image.url}}" alt=""> </p>
+            <p> Enrolled school year: {{stud_enrollment_details.enrolled_schoolyear}} </p>
+            
+            <!-- Change href to input type submit and button type submit -->
+            {% if valid_to_edit %}
+                {% if enrollment_status == "Pending" %}
+                    <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                    <button type="submit" name="pen_nxt_accept" class="btn btn-primary btn-block mb-4"> Accept and Next </button>
+                    <button type="button" class="btn btn-primary btn-block mb-4"> Denied </button> <!-- if clicked, Open pending_prompt -->
+
+                    <div id="pending_prompt">
+                        <!-- For pending -->
+                        <!-- Display after clicking the Denied button -->
+                        <p> Do you want to add review? </p>
+                        <button type="button" class="btn btn-primary btn-block mb-4"> Yes </button> <!-- If clicked, open the review area1 and hide this prompt -->
+                        <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> No </button> <!-- If clicked, hide this prompt -->
+                    </div>
+                    <div id="review_area">
+                        <!-- For pending -->
+                        <!-- Review area 1 -->
+                        <textarea name="review" id="review" cols="30" rows="10"></textarea>
+                        <button type="submit" name="submit_revs" class="btn btn-primary btn-block mb-4"> Submit </button>
+                        <button type="submit" name="pend_next_denied_with_revs" class="btn btn-primary btn-block mb-4"> Submit and Next </button>
+                    </div>
+
+                {% elif enrollment_status == "Validated" %}
+                    {% if hold_enrollment %}
+                        <button type="submit" name="hold" class="btn btn-primary btn-block mb-4"> Hold </button>
+                    {% endif %}
+                    
+                    <button type="submit" name="next_valid" class="btn btn-primary btn-block mb-4"> Next </button>
+
+                {% elif enrollment_status == "For revision" %}
+                    <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                    <button type="submit" name="rev_nxt_accept" class="btn btn-primary btn-block mb-4"> Accept and Next </button>
+                    <button type="submit" name="rev_next" class="btn btn-primary btn-block mb-4"> Next </button>
+
+                {% elif enrollment_status == "Denied" %}
+                    <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                    <button type="button" name="den_add_review" class="btn btn-primary btn-block mb-4"> Add Review </button> <!-- Open rev2 -->
+                    <button type="submit" name="nxt_denied" class="btn btn-primary btn-block mb-4"> Next </button>
+
+                    <div id="rev2">
+                        <!-- For full denied review -->
+                        <textarea name="review" id="review" cols="30" rows="10"></textarea>
+                        <button type="submit" name="submit_revs" class="btn btn-primary btn-block mb-4"> Submit </button>
+                        <button type="submit" name="next_denied_with_revs" class="btn btn-primary btn-block mb-4"> Submit and Next </button>
+                    </div>
+
+                {% elif enrollment_status == "Hold" %}
+                    <button type="submit" name="to_pending" class="btn btn-primary btn-block mb-4"> Pending </button>
+                    <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
+                    <button type="button" class="btn btn-primary btn-block mb-4"> Denied </button> <!-- If clicked, open rev3 -->
+
+                    <div id="rev3">
+                        <!-- For is_hold -->
+                        <!-- Display after clicking the Denied button -->
+                        <p> Do you want to add review? </p>
+                        <button type="button" class="btn btn-primary btn-block mb-4"> Yes </button> <!-- If clicked, open the review area2 and hide this prompt -->
+                        <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> No </button> <!-- If clicked, hide this prompt -->
+                    </div>
+                    <div id="review_area2">
+                        <!-- For is_hold -->
+                        <!-- Review area 2 -->
+                        <textarea name="review" id="review" cols="30" rows="10"></textarea>
+                        <button type="submit" name="submit_revs" class="btn btn-primary btn-block mb-4"> Submit </button>
+                        <button type="submit" name="hold_next_denied_with_revs" class="btn btn-primary btn-block mb-4"> Submit and Next </button>
+                    </div>
+                {% endif %}
+            {% endif %}
+
+
+        </form>
+        <a href="{{ back_btn }}" class="btn btn-primary"> Back </a>
+    {% else %}
+        <p> No data found. </p>
+        <br>
+        <a href="{% url 'adminportal:pending_enrollment' %}" class="btn btn-primary"> Back </a>
+    {% endif %}
+    <br>
 </div>
+
+<br>
 
 {% endblock content %}

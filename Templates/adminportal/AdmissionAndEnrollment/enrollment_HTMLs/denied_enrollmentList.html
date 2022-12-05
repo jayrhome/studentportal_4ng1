@@ -56,7 +56,7 @@
                     <td> {{denied_enrollment.is_repeater|yesno:"Yes,No"}} </td>
                     <td> {{denied_enrollment.date_created}} </td>
                     <td> {{denied_enrollment.last_modified}} </td>
-                    <td> <a href="#" class="btn btn-primary btn-sm"> Review </a> </td>
+                    <td> <a href="{% url 'adminportal:enrollment_details' pk=denied_enrollment.id %}" class="btn btn-primary btn-sm"> Review </a> </td>
                 </tr>
             {% empty %}
                 <tr>

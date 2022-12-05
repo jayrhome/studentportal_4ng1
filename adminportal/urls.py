@@ -56,6 +56,8 @@ urlpatterns = [
                     denied_enrollment_list.as_view(), name="denied_enrollment_lists"),
             re_path(r"Hold_enrollments/(?:(?P<dts>[a-zA-Z\d\s]+)/)?$",
                     hold_enrollment_lists.as_view(), name="hold_enrollment_lists"),
+            path("Enrollment_details/<pk>", enrollment_details.as_view(),
+                 name="enrollment_details"),
         ]))
     ])),
 
