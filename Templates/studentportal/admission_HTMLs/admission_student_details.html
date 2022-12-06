@@ -1,0 +1,74 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+{% load i18n %}
+{% load std_portal %}
+
+<h4> Student Details </h4>
+
+<div class="container col-md-8">
+    <form id="adm1" method="post">
+
+        {{ wizard.form.non_field_errors }}
+        {% csrf_token %}
+        <table>
+        {{ wizard.management_form }}
+        {% if wizard.form.forms %}
+            {{ wizard.form.management_form }}
+            {% for form in wizard.form.forms %}
+                {{ form }}
+            {% endfor %}
+        {% else %}
+
+            {{ wizard.form.first_name.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.first_name.id_for_label }}" class="form-label"> {{ wizard.form.first_name.label }} </label>
+            {{ wizard.form.first_name|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.middle_name.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.middle_name.id_for_label }}" class="form-label"> {{ wizard.form.middle_name.label }} </label>
+            {{ wizard.form.middle_name|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.last_name.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.last_name.id_for_label }}" class="form-label"> {{ wizard.form.last_name.label }} </label>
+            {{ wizard.form.last_name|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.sex.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.sex.id_for_label }}" class="form-label"> {{ wizard.form.sex.label }} </label>
+            {{ wizard.form.sex|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.birth_date.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.birth_date.id_for_label }}" class="form-label"> {{ wizard.form.birth_date.label }} </label>
+            {{ wizard.form.birth_date|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.birthplace.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.birthplace.id_for_label }}" class="form-label"> {{ wizard.form.birthplace.label }} </label>
+            {{ wizard.form.birthplace|addclass:"form-control"}} <!-- Auto fill address -->
+
+            {{ wizard.form.nationality.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.nationality.id_for_label }}" class="form-label"> {{ wizard.form.nationality.label }} </label>
+            {{ wizard.form.nationality|addclass:"form-control"}} <!-- Auto-fill nationality -->
+
+            {{ wizard.form.first_chosen_strand.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.first_chosen_strand.id_for_label }}" class="form-label"> {{ wizard.form.first_chosen_strand.label }} </label>
+            {{ wizard.form.first_chosen_strand|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.second_chosen_strand.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.second_chosen_strand.id_for_label }}" class="form-label"> {{ wizard.form.second_chosen_strand.label }} </label>
+            {{ wizard.form.second_chosen_strand|addclass:"form-control"}} <!-- Input Field -->
+
+        {% endif %}
+        </table>
+
+        <input type="submit" name="wizard_goto_step" value="Next" class="btn btn-primary btn-sm">
+
+    </form>
+</div>
+
+<p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+
+<script>
+    $('#adm1').one('submit', function() {
+        $(this).find('input[type="submit"]').attr('disabled','disabled');
+    }); 
+</script>
+
+{% endblock content %}
