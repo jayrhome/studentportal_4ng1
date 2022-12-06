@@ -1253,7 +1253,7 @@ class review_admissionList(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "For review"
+        context["title"] = "Admission for Revision"
         return context
 
 
@@ -1518,7 +1518,7 @@ class for_review_enrollmentList(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Review Enrollment Lists"
+        context["title"] = "Enrollment for Revision"
         return context
 
 
