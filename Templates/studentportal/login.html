@@ -13,69 +13,10 @@
 </div>
 {% endif %}
 
-<style>
-    body{
 
-    }
-    .main{
-        height: 100%;
-        min-height: 91.5vh;
-        background-image: url('/Media/adminportal_image/adminportal_image.jpeg');
-        background-repeat: no-repeat;
-        background-size: cover;
-        background-position: center 100%;
-        position: relative;        
-    }
-    .main .opacity{
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        height: 100%;
-        width: 100%;
-        background: rgba(0, 0, 0, 0.5);
-    }
-    #loginform{
-        margin-top: 50px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .card_login{
-        background: #fff;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        max-width: 450px;
-        padding:30px 20px ;
-        margin: 0 10px;
-    }
-    .card_login h4{
-        text-align: center;
-        padding-bottom: 20px;
-    }
 
-    .card_login input{
-        border-radius: 50px;
-    }
-    .card_login .btn_login{
-        background: rgba(10, 25, 56, 0.8);
-        border: none;
-        outline: none;
-        color: #fff;
-        padding: 8px;
-    }
-    .card_login a{
-        color: rgb(100, 100, 100);
-    }
-    .card_login a:hover{
-        color: rgb(48, 48, 48);
-    }
-</style>
 <div class="main">
-    <div class="opacity">
+    <div class="submain">
         <form id="loginform" method="post">
             {% csrf_token %}
         

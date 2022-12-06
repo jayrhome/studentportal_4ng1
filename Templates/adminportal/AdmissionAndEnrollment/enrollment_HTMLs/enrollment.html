@@ -1,7 +1,6 @@
 {% extends 'adminportal/AdmissionAndEnrollment/base1.html' %}
 {% block content %}
-{% load std_portal %}
-{% include 'adminportal/AdmissionAndEnrollment/admission_HTMLs/adm_menu.html' %}
+{% include 'adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrollment_menus.html' %}
 
 <!-- Message from messages framework / views.py -->
 {% if messages %}
@@ -13,39 +12,51 @@
     </ul>
 </div>
 {% endif %}
+
 <br>
+
 <div class="container col-md-12">
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="input-group">
+            <div class="form-outline">
+                <input type="search" name="search_this" id="search_this" class="form-control" placeholder="Student Name or ID" required/>
+            </div>
+            <input type="submit" value="Search" class="btn btn-primary mb-3">
+        </div>
+    </form>
 
     <table class="table">
         <thead class="thead-dark">
             <tr>
                 <th scope="col">Id</th>
                 <th scope="col">S.Y.</th>
-                <th scope="col">Email</th>
-                <th scope="col">Surname</th>
-                <th scope="col">Sex</th>
-                <th scope="col">First Strand</th>
-                <th scope="col">Second Strand</th>
-                <th scope="col">Applied On</th>
+                <th scope="col">Applicant Name</th>
+                <th scope="col">Address</th>
+                <th scope="col">Age</th>
+                <th scope="col">Late Applicant?</th>
+                <th scope="col">Is Repeater?</th>
+                <th scope="col">Date Applied</th>
                 <th scope="col">Action</th>
             </tr>
         </thead>
         <tbody>
-            {% for student in list_of_admitted %}
+            {% for enrollment in pending_enrollmentList %}
                 <tr>
-                    <th scope="row"> {{student.id}} </th>
-                    <td> {{student.admission_sy__sy}} </td>
-                    <td> {{student.admission_owner__email}} </td>
-                    <td> {{student.last_name}} </td>
-                    <td> {{student.sex}} </td>
-                    <td> {{student.first_chosen_strand__strand_name}} </td>
-                    <td> {{student.second_chosen_strand__strand_name}} </td>
-                    <td> {{student.date_created}} </td>
-                    <td> <a href="{% url 'adminportal:details' pk=student.id %}" class="btn btn-primary btn-sm"> View </a> </td>
+                    <th scope="row"> {{enrollment.id}} </th>
+                    <td> {{enrollment.enrolled_schoolyear}} </td>
+                    <td> {{enrollment.full_name|truncatewords:3}} </td>
+                    <td> {{enrollment.home_address__permanent_home_address|truncatewords:4}} </td>
+                    <td> {{enrollment.age}} </td>
+                    <td> {{enrollment.is_late|yesno:"Yes,No"}} </td>
+                    <td> {{enrollment.is_repeater|yesno:"Yes,No"}} </td>
+                    <td> {{enrollment.date_created}} </td>
+                    <td> <a href="{% url 'adminportal:enrollment_details' pk=enrollment.id %}" class="btn btn-primary btn-sm"> Review </a> </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td> No admitted students... </td>
+                    <td> No pending enrollment... </td>
                 </tr>
             {% endfor %}
         </tbody>
