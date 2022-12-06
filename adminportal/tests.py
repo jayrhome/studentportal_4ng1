@@ -6,6 +6,38 @@ from datetime import date, datetime
 
 User = get_user_model()
 
+adm_details = [
+    "Lorem",
+    "I.",
+    "Ipsum",
+    "F",
+    date.today(),
+    "Metro Manila",
+    "Filipino",
+
+    "Elem School",
+    "Elem Address Quezon City",
+    "NCR",
+    date.today(),
+    True,
+    date.today(),
+    False,
+    date.today(),
+    "NCR Learning Center",
+    "NCR Quezon City",
+
+    "jhs School",
+    "jhs Address Quezon City",
+    "NCR",
+    date.today(),
+    True,
+    date.today(),
+    False,
+    date.today(),
+    "NCR Learning Center",
+    "NCR Quezon City",
+]
+
 
 def convert_qs(obj):
     return obj
@@ -38,6 +70,11 @@ def make_students():
         ["vvi@gmail.com", "vvi", "vvigmail"],
         ["bbi@gmail.com", "bbi", "bbigmail"],
         ["nni@gmail.com", "nni", "nnigmail"],  # Hold
+        ["abc@gmail.com", "abc", "abcgmail"],
+        ["def@gmail.com", "def", "defgmail"],
+        ["ghi@gmail.com", "ghi", "ghigmail"],
+        ["jkl@gmail.com", "jkl", "jklgmail"],
+        ["mno@gmail.com", "mno", "mnogmail"],
     ]
 
     try:
@@ -56,6 +93,33 @@ def make_students():
         user_dict1 = list(map(convert_qs, user_dict))
 
         return print(json.dumps(user_dict1, indent=2, separators=(",", "=")))
+    except Exception as e:
+        return e
+
+
+def make_sy():
+    try:
+        school_year.objects.create(sy="2022 - 2023")
+    except Exception as e:
+        return e
+
+
+def make_scn():
+    try:
+        school_contact_number.objects.create(
+            contactnum_owner=User.objects.get(email="admin@gmail.com"),
+            cellphone_number="09123456789"
+        )
+    except Exception as e:
+        return e
+
+
+def make_scemail():
+    try:
+        school_email.objects.create(
+            email_from=User.objects.get(email="admin@gmail.com"),
+            email="schooladmin@gmail.com"
+        )
     except Exception as e:
         return e
 
@@ -85,38 +149,6 @@ def make_shs_track():
 
 def make_pending_admission():
     try:
-        adm_details = [
-            "Lorem",
-            "I.",
-            "Ipsum",
-            "F",
-            date.today(),
-            "Metro Manila",
-            "Filipino",
-
-            "Elem School",
-            "Elem Address Quezon City",
-            "NCR",
-            date.today(),
-            True,
-            date.today(),
-            False,
-            date.today(),
-            "NCR Learning Center",
-            "NCR Quezon City",
-
-            "jhs School",
-            "jhs Address Quezon City",
-            "NCR",
-            date.today(),
-            True,
-            date.today(),
-            False,
-            date.today(),
-            "NCR Learning Center",
-            "NCR Quezon City",
-        ]
-
         stud_user = [
             "aai@gmail.com",
             "ssi@gmail.com",
@@ -172,38 +204,6 @@ def make_pending_admission():
 
 def make_valid_admission():
     try:
-        adm_details = [
-            "Lorem",
-            "I.",
-            "Ipsum",
-            "F",
-            date.today(),
-            "Metro Manila",
-            "Filipino",
-
-            "Elem School",
-            "Elem Address Quezon City",
-            "NCR",
-            date.today(),
-            True,
-            date.today(),
-            False,
-            date.today(),
-            "NCR Learning Center",
-            "NCR Quezon City",
-
-            "jhs School",
-            "jhs Address Quezon City",
-            "NCR",
-            date.today(),
-            True,
-            date.today(),
-            False,
-            date.today(),
-            "NCR Learning Center",
-            "NCR Quezon City",
-        ]
-
         stud_user = [
             "hhi@gmail.com",
             "jji@gmail.com",
@@ -260,38 +260,6 @@ def make_valid_admission():
 
 def make_forReview_admission():
     try:
-        adm_details = [
-            "Lorem",
-            "I.",
-            "Ipsum",
-            "F",
-            date.today(),
-            "Metro Manila",
-            "Filipino",
-
-            "Elem School",
-            "Elem Address Quezon City",
-            "NCR",
-            date.today(),
-            True,
-            date.today(),
-            False,
-            date.today(),
-            "NCR Learning Center",
-            "NCR Quezon City",
-
-            "jhs School",
-            "jhs Address Quezon City",
-            "NCR",
-            date.today(),
-            True,
-            date.today(),
-            False,
-            date.today(),
-            "NCR Learning Center",
-            "NCR Quezon City",
-        ]
-
         stud_user = [
             "wwi@gmail.com",
             "eei@gmail.com",
@@ -359,38 +327,6 @@ def make_forReview_admission():
 
 def make_denied_admissions():
     try:
-        adm_details = [
-            "Lorem",
-            "I.",
-            "Ipsum",
-            "F",
-            date.today(),
-            "Metro Manila",
-            "Filipino",
-
-            "Elem School",
-            "Elem Address Quezon City",
-            "NCR",
-            date.today(),
-            True,
-            date.today(),
-            False,
-            date.today(),
-            "NCR Learning Center",
-            "NCR Quezon City",
-
-            "jhs School",
-            "jhs Address Quezon City",
-            "NCR",
-            date.today(),
-            True,
-            date.today(),
-            False,
-            date.today(),
-            "NCR Learning Center",
-            "NCR Quezon City",
-        ]
-
         stud_user = [
             "uui@gmail.com",
             "iii@gmail.com",
@@ -449,38 +385,6 @@ def make_denied_admissions():
 
 def make_hold_admissions():
     try:
-        adm_details = [
-            "Lorem",
-            "I.",
-            "Ipsum",
-            "F",
-            date.today(),
-            "Metro Manila",
-            "Filipino",
-
-            "Elem School",
-            "Elem Address Quezon City",
-            "NCR",
-            date.today(),
-            True,
-            date.today(),
-            False,
-            date.today(),
-            "NCR Learning Center",
-            "NCR Quezon City",
-
-            "jhs School",
-            "jhs Address Quezon City",
-            "NCR",
-            date.today(),
-            True,
-            date.today(),
-            False,
-            date.today(),
-            "NCR Learning Center",
-            "NCR Quezon City",
-        ]
-
         stud_user = [
             "xxi@gmail.com",
             "cci@gmail.com",

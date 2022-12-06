@@ -69,3 +69,44 @@ Step 5: Navigate to the appname.migrations folder and open the latest migration 
 Step 6: On the selected migration file, type from django.contrib.postgres.operations import UnaccentExtension on line 1 or 2.
 Step 7: Under the class Migration, enter UnaccentExtension() inside the operations variable.
 Step 8: Return to the vs code terminal window, now enter python manage.py migrate
+
+
+--- STEPS BEFORE MERGE ---
+Step 1: Delete the _pycache folder on all subfolders.
+		List of folders with _pycache inside: adminportal, studentportal, studentportal_4ng1, teachersportal, all migration folders, all templatetags folders
+
+Step 2: Delete all migrations files on all migration folders. Do not delete the migration folder and the __init__.py file inside it.
+Step 3: In settings.py from the studentportal_4ng1, inside DATABASES, remove the password and left it empty.
+Step 4: Empty the EMAIL_HOST_USER  and  EMAIL_HOST_PASSWORD in settings.py
+
+
+--- STEPS AFTER MERGE ---
+Step 1: Sync the changes from our remote repository to your local machine.
+Step 2: In settings.py from the studentportal_4ng1, inside DATABASES, enter the superuser password of your postgres.
+Step 3: Delete/drop the db4ng1 in your pgadmin4.
+Step 4: Create new database and name it db4ng1.
+Step 5: Using cmd, activate the environment, and makemigrations, then migrate.
+Step 6: Create a superuser using:
+		python manage.py createsuperuser and follow the next prompts. (admin@gmail.com  admin)
+
+Step 7: open the terminal from vs code
+Step 8: Enter this:
+		python manage.py shell
+		from adminportal.models import *
+		from adminportal.tests import *
+
+		make_sy()
+
+		make_scn()
+
+		make_scemail()
+
+		make_shs_track()
+
+		make_students()
+
+Step 9: Using cmd, use the runserver and open the localhost.
+Step 10: Login using admin account.
+Step 11: Add strand to any available tracks.
+Step 12: Return to vs code terminal, and enter make_admissions()
+Step 13: Report any errors
