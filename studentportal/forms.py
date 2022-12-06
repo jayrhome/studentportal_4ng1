@@ -92,12 +92,12 @@ class admission_personal_details(forms.Form):
                                  birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}))
     birthplace = forms.CharField(label="Place of birth", max_length=200)
     nationality = forms.CharField(label="Nationality", max_length=50)
-    # first_chosen_strand = forms.ChoiceField(label="Select First Strand", choices=(
-    #     (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
-    # ))
-    # second_chosen_strand = forms.ChoiceField(label="Select Second Strand", choices=(
-    #     (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
-    # ))
+    first_chosen_strand = forms.ChoiceField(label="Select First Strand", choices=(
+        (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
+    ))
+    second_chosen_strand = forms.ChoiceField(label="Select Second Strand", choices=(
+        (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
+    ))
 
 
 class elementary_school_details(forms.Form):
@@ -227,9 +227,9 @@ class all_admission_forms(forms.Form):
 class enrollment_form_revision(forms.Form):
     full_name = forms.CharField(
         max_length=60, label='Full Name (Surname, First Name, Middle Name)')
-    # selected_strand = forms.TypedChoiceField(label="Select Strand", choices=(
-    #     (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
-    # ), coerce=str, required=False)
+    selected_strand = forms.TypedChoiceField(label="Select Strand", choices=(
+        (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
+    ), coerce=str, required=False)
     home_address = forms.CharField(
         max_length=50, label='Home address')
     age = forms.IntegerField(label="Age", min_value=1,
