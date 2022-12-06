@@ -1,0 +1,88 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+{% load i18n %}
+{% load std_portal %}
+
+<h4> Elementary School Details </h4>
+
+<div class="container col-md-8">
+    <form id="adm2" method="post">
+        {{ wizard.form.non_field_errors }}
+        {% csrf_token %}
+        <table>
+        {{ wizard.management_form }}
+        {% if wizard.form.forms %}
+            {{ wizard.form.management_form }}
+            {% for form in wizard.form.forms %}
+                {{ form }}
+            {% endfor %}
+        {% else %}
+
+            {{ wizard.form.elem_name.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.elem_name.id_for_label }}" class="form-label"> {{ wizard.form.elem_name.label }} </label>
+            {{ wizard.form.elem_name|addclass:"form-control"}} <!-- Auto-fill -->
+            
+            {{ wizard.form.elem_address.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.elem_address.id_for_label }}" class="form-label"> {{ wizard.form.elem_address.label }} </label>
+            {{ wizard.form.elem_address|addclass:"form-control"}} <!-- Auto-fill based on elem name -->
+
+            {{ wizard.form.elem_region.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.elem_region.id_for_label }}" class="form-label"> {{ wizard.form.elem_region.label }} </label>
+            {{ wizard.form.elem_region|addclass:"form-control"}} <!-- Auto-fill based on elem name -->
+
+            {{ wizard.form.elem_year_completed.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.elem_year_completed.id_for_label }}" class="form-label"> {{ wizard.form.elem_year_completed.label }} </label>
+            {{ wizard.form.elem_year_completed|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.elem_pept_passer.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.elem_pept_passer.id_for_label }}" class="form-label"> {{ wizard.form.elem_pept_passer.label }} </label>
+            {{ wizard.form.elem_pept_passer|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.elem_pept_date_completion.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.elem_pept_date_completion.id_for_label }}" class="form-label"> {{ wizard.form.elem_pept_date_completion.label }} </label>
+            {{ wizard.form.elem_pept_date_completion|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.elem_pept_date_completion.help_text}}
+
+            <br>
+            <br>
+            {{ wizard.form.elem_ae_passer.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.elem_ae_passer.id_for_label }}" class="form-label"> {{ wizard.form.elem_ae_passer.label }} </label>
+            {{ wizard.form.elem_ae_passer|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.elem_ae_date_completion.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.elem_ae_date_completion.id_for_label }}" class="form-label"> {{ wizard.form.elem_ae_date_completion.label }} </label>
+            {{ wizard.form.elem_ae_date_completion|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.elem_ae_date_completion.help_text}}
+
+            <br>
+            <br>
+            {{ wizard.form.elem_community_learning_center.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.elem_community_learning_center.id_for_label }}" class="form-label"> {{ wizard.form.elem_community_learning_center.label }} </label>
+            {{ wizard.form.elem_community_learning_center|addclass:"form-control"}} <!-- Input Field -->
+            {{ wizard.form.elem_community_learning_center.help_text}}
+
+            <br>
+            <br>
+            {{ wizard.form.elem_clc_address.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.elem_clc_address.id_for_label }}" class="form-label"> {{ wizard.form.elem_clc_address.label }} </label>
+            {{ wizard.form.elem_clc_address|addclass:"form-control"}} <!-- Auto-fill location -->
+            {{ wizard.form.elem_clc_address.help_text}}
+        
+        {% endif %}
+        </table>
+
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-primary btn-sm">{% trans "Prev" %}</button>
+        <input type="submit" name="wizard_goto_step" value="Next" class="btn btn-primary btn-sm">
+
+    </form>
+</div>
+
+<p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+
+<script>
+    $('#adm2').one('submit', function() {
+        $(this).find('input[type="submit"]').attr('disabled','disabled');
+    }); 
+</script>
+
+{% endblock content %}

@@ -77,14 +77,14 @@
             {% if pending %}
                 <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
                 <button type="submit" name="pen_nxt_accept" class="btn btn-primary btn-block mb-4"> Accept and Next </button>
-                <button type="button" class="btn btn-primary btn-block mb-4"> Denied </button> <!-- Open pending_prompt -->
+                <button type="button" class="btn btn-primary btn-block mb-4"> Denied </button> <!-- if clicked, Open pending_prompt -->
 
                 <div id="pending_prompt">
                     <!-- For pending -->
                     <!-- Display after clicking the Denied button -->
                     <p> Do you want to add review? </p>
-                    <button type="button" class="btn btn-primary btn-block mb-4"> Yes </button> <!-- If yes, open the review area1 and hide this prompt -->
-                    <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> No </button> <!-- If no, hide this prompt -->
+                    <button type="button" class="btn btn-primary btn-block mb-4"> Yes </button> <!-- If clicked, open the review area1 and hide this prompt -->
+                    <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> No </button> <!-- If clicked, hide this prompt -->
                 </div>
                 <div id="review_area">
                     <!-- For pending -->
@@ -122,14 +122,14 @@
             {% if is_hold %}
                 <button type="submit" name="to_pending" class="btn btn-primary btn-block mb-4"> Pending </button>
                 <button type="submit" name="accept" class="btn btn-primary btn-block mb-4"> Accept </button>
-                <button type="button" class="btn btn-primary btn-block mb-4"> Denied </button> <!-- Open rev3 -->
+                <button type="button" class="btn btn-primary btn-block mb-4"> Denied </button> <!-- If clicked, open rev3 -->
 
                 <div id="rev3">
                     <!-- For is_hold -->
                     <!-- Display after clicking the Denied button -->
                     <p> Do you want to add review? </p>
-                    <button type="button" class="btn btn-primary btn-block mb-4"> Yes </button> <!-- If yes, open the review area2 and hide this prompt -->
-                    <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> No </button> <!-- If no, hide this prompt -->
+                    <button type="button" class="btn btn-primary btn-block mb-4"> Yes </button> <!-- If clicked, open the review area2 and hide this prompt -->
+                    <button type="submit" name="denied" class="btn btn-primary btn-block mb-4"> No </button> <!-- If clicked, hide this prompt -->
                 </div>
                 <div id="review_area2">
                     <!-- For is_hold -->

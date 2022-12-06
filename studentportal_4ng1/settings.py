@@ -26,6 +26,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
+    'formtools',
 
 
     'studentportal.apps.StudentportalConfig',
@@ -72,7 +74,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'db4ng1',
         'USER': 'postgres',
-        'PASSWORD': 'luke123',
+        'PASSWORD': '',
         'HOST': 'localhost'
     }
 }
@@ -97,6 +99,23 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Remove this in production
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'level': 'DEBUG',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+    }
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
@@ -125,8 +144,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'aaaa3@gmail.com'
-EMAIL_HOST_PASSWORD = 'asd'  # App password
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''  # App password
 
 
 PASSWORD_RESET_TIMEOUT = 180  # 20 Minutes
