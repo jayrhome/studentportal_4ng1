@@ -17,7 +17,7 @@
 <div class="container py-3 d-flex justify-content-end">
     <a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary" > Back </a>
 </div>
-<form id="AddStrands" class="p-3" method="post">
+<form id="AddStrands" class="px-2" method="post">
     {% csrf_token %}
     <!-- List of errors from forms.py -->
     {{ form.non_field_errors }}
