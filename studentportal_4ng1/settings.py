@@ -26,6 +26,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
+    'formtools',
 
 
     'studentportal.apps.StudentportalConfig',
@@ -97,6 +99,23 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Remove this in production
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'level': 'DEBUG',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+    }
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
