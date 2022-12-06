@@ -21,7 +21,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from .tokens import account_activation_token, password_reset_token
 from ratelimit.decorators import ratelimit
-from adminportal.models import school_year, shs_track, shs_strand, student_admission_details, student_enrollment_details
+from adminportal.models import *
 from formtools.wizard.views import SessionWizardView
 from datetime import date, datetime
 
