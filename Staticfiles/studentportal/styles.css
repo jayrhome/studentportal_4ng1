@@ -1,0 +1,203 @@
+
+
+.main{ 
+    height: 100%; 
+    min-height: 91.5vh;
+    background-image: url('/Media/back/tt.jpeg');
+    background-repeat: no-repeat; 
+    background-size: cover; 
+    background-position: center 100%; 
+    position: relative; 
+    } 
+    .main .submain{ 
+        position: absolute; 
+        top: 0; 
+        left: 0; 
+        bottom: 0; 
+        right: 0; 
+        height: 100%; 
+        width: 100%; 
+        background: rgba(0, 0, 0, 0.5); 
+        
+        } 
+
+        #reset_form 
+        { 
+            margin-top: 50px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+           
+            } 
+
+            .cards_reset{
+                background: #fff;
+                border-radius: 8px;
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                max-width: 450px;
+                padding:30px 20px ;
+                margin: 0 10px;
+            }
+            .cards_reset h4{
+                text-align: center;
+                padding-bottom: 20px;
+            }
+        
+            .cards_reset input{
+                border-radius: 50px;
+            }
+            .cards_reset .btnreset{
+                background: rgba(10, 25, 56, 0.8);
+                border: none;
+                outline: none;
+                color: #fff;
+                padding: 8px;
+                transition-duration: 0.4s;
+            }
+            
+            .btnreset:hover {
+                background-color: #4CAF50; /* Green */
+                color: white;
+            }
+
+
+            #create_user_form 
+            { 
+                margin-top: 50px; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+               
+                } 
+    
+                .cards_create{
+                    background: #fff;
+                    border-radius: 8px;
+                    display: flex;
+                    flex-direction: column;
+                    width: 100%;
+                    max-width: 450px;
+                    padding:30px 20px ;
+                    margin: 0 10px;
+                }
+                .cards_create h4{
+                    text-align: center;
+                    padding-bottom: 20px;
+                }
+            
+                .cards_create input{
+                    border-radius: 50px;
+                }
+                .cards_create .btn_create{
+                    background: rgba(10, 25, 56, 0.8);
+                    border: none;
+                    outline: none;
+                    color: #fff;
+                    padding: 8px;
+                    transition-duration: 0.4s;
+                }
+                
+                .btn_create:hover {
+                    background-color: #4CAF50; /* Green */
+                    color: white;
+                }
+    
+    
+                #password_reset_form
+                { 
+                    margin-top: 50px; 
+                    display: flex; 
+                    justify-content: center; 
+                    align-items: center; 
+                   
+                    } 
+        
+                    .cards_password_reset_form{
+                        background: #fff;
+                        border-radius: 8px;
+                        display: flex;
+                        flex-direction: column;
+                        width: 100%;
+                        max-width: 450px;
+                        padding:30px 20px ;
+                        margin: 0 10px;
+                    }
+                    .cards_password_reset_form h4{
+                        text-align: center;
+                        padding-bottom: 20px;
+                    }
+                
+                    .cards_password_reset_form input{
+                        border-radius: 50px;
+                    }
+                    .cards_password_reset_form .btnreset_form{
+                        background: rgba(10, 25, 56, 0.8);
+                        border: none;
+                        outline: none;
+                        color: #fff;
+                        padding: 8px;
+                        transition-duration: 0.4s;
+                    }
+                    
+                    .btnreset_form:hover {
+                        background-color: #4CAF50; /* Green */
+                        color: white;
+                    }
+                  
+
+                    #loginform{
+                        margin-top: 50px;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                    }
+                    .card_login{
+                        background: #fff;
+                        border-radius: 8px;
+                        display: flex;
+                        flex-direction: column;
+                        width: 100%;
+                        max-width: 450px;
+                        padding:30px 20px ;
+                        margin: 0 10px;
+                    }
+                    .card_login h4{
+                        text-align: center;
+                        padding-bottom: 20px;
+                    }
+                
+                    .card_login input{
+                        border-radius: 50px;
+                    }
+                    .card_login .btn_login{
+                        background: rgba(10, 25, 56, 0.8);
+                        border: none;
+                        outline: none;
+                        color: #fff;
+                        padding: 8px;
+                        transition-duration: 0.4s;
+                        
+                    }
+                     
+                    .btn_login:hover {
+                        background-color: #4CAF50; /* Green */
+                        color: white;
+                    }
+                    .card_login a{
+                        color: rgb(100, 100, 100);
+                    }
+                    .card_login a:hover{
+                        color: rgb(48, 48, 48);
+                    }
+
+
+
+
+
+
+             
+                          
+
+                                            
