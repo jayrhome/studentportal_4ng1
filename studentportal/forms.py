@@ -151,9 +151,9 @@ class jhs_details(forms.Form):
 class enrollment_form(forms.Form):
     full_name = forms.CharField(
         max_length=60, label='Full Name (Surname, First Name, Middle Name)')
-    # selected_strand = forms.ChoiceField(label="Select Strand", choices=(
-    #     (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
-    # ))
+    selected_strand = forms.ChoiceField(label="Select Strand", choices=(
+        (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
+    ))
     home_address = forms.CharField(max_length=50, label='Home address')
     age = forms.IntegerField(label="Age", min_value=1, max_value=100)
     contact_number = forms.CharField(
