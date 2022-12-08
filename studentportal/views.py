@@ -858,51 +858,35 @@ class submitted_enrollment_details(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Enrollment Details"
+
         try:
+            # Get the list of enrolled sy to display on a button
             context["enrolled_sy"] = student_enrollment_details.objects.values(
                 'enrolled_schoolyear__sy', 'id').filter(student_user=self.request.user).order_by('-date_created')
 
             if "pk" in self.kwargs:
                 # If the user enter the enrollment id
-                get_imgs = student_enrollment_details.objects.select_related('card', 'profile_image').filter(
-                    student_user=self.request.user).order_by('-date_created').first()
-                context["card_url"] = get_imgs.card
-                context["photo_url"] = get_imgs.profile_image
+                get_imgs = student_enrollment_details.objects.select_related('card', 'profile_image', 'enrolled_schoolyear').filter(
+                    student_user=self.request.user, id=int(self.kwargs["pk"])).first()
 
-                if validate_enrollmentSetup(self.request, get_imgs.enrolled_schoolyear):
-                    # If enrollment_sy is valid,
-                    count_review = enrollment_review.objects.filter(
-                        to_review=get_imgs).count()
-                    if count_review > 0 and (not get_imgs.is_passed and get_imgs.is_denied):
-                        # If enrollment status is denied and up for revision
-                        context['enrollment_reviews'] = enrollment_review.objects.values_list(
-                            'comment', flat=True).filter(to_review=get_imgs).order_by('-date_created')
-                        context["enrollment_status"] = "For revision"
-                    elif count_review == 0 and (not get_imgs.is_passed and get_imgs.is_denied):
-                        # If enrollment is denied
-
-                        # To display the follow-up button
-                        context['is_denied'] = True
-                        context['enrollment_status'] = "Denied"
-                    else:
-                        context['enrollment_status'] = self.enrollment_status(
-                            get_imgs)
-                else:
-                    context['enrollment_status'] = self.enrollment_status(
-                        get_imgs)
-
-            if not "pk" in self.kwargs and context["enrolled_sy"]:
-                # When user clicked the enrollment button from the application tab, and user has enrollment
+            elif not "pk" in self.kwargs:
+                # When user clicked the enrollment button from the application tab
                 # If the user logged-in is enrolled to any school year, and no pk in url
 
                 get_imgs = student_enrollment_details.objects.select_related('card', 'profile_image', 'enrolled_schoolyear').filter(
                     student_user=self.request.user).order_by('-date_created').first()  # Get the latest enrollment of the student
 
+            else:
+                pass
+
+            if get_imgs:
+                # If user has enrollment
                 context["card_url"] = get_imgs.card
                 context["photo_url"] = get_imgs.profile_image
 
                 if validate_enrollmentSetup(self.request, get_imgs.enrolled_schoolyear):
-                    # If enrollment_sy is valid,
+                    # To display the enrollment status and follow-up or submit buttons.
+                    # If the enrollment_sy is valid, the status and a designated buttons will be displayed.
                     count_review = enrollment_review.objects.filter(
                         to_review=get_imgs).count()
                     if count_review > 0 and (not get_imgs.is_passed and get_imgs.is_denied):
@@ -920,10 +904,11 @@ class submitted_enrollment_details(FormView):
                         context['enrollment_status'] = self.enrollment_status(
                             get_imgs)
                 else:
+                    # To display the status only, if the enrollment_sy is no longer valid
                     context['enrollment_status'] = self.enrollment_status(
                         get_imgs)
             else:
-                context["no_enrollment"] = True
+                context['no_enrollment'] = True
 
         except Exception as e:
             # messages.error(self.request, e)

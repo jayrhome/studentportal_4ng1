@@ -1653,6 +1653,18 @@ class enrollment_details(DetailView):
     template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrollment_details.html"
     context_object_name = "stud_enrollment_details"
 
+    def post(self, request, *args, **kwargs):
+        try:
+            get_enrollment = student_enrollment_details.validObjects.get(
+                id=self.kwargs["pk"])
+
+        except Exception as e:
+            messages.error(request, e)
+            return HttpResponseRedirect(reverse('adminportal:Admission_and_enrollment'))
+
+    def next_pending_enrollment(self, id):
+        pass
+
     def dispatch(self, request, *args, **kwargs):
         try:
             student_enrollment_details.validObjects.get(id=self.kwargs["pk"])
