@@ -58,8 +58,15 @@ urlpatterns = [
                     hold_enrollment_lists.as_view(), name="hold_enrollment_lists"),
             path("Enrollment_details/<pk>", enrollment_details.as_view(),
                  name="enrollment_details"),
-        ]))
+        ])),
     ])),
 
+    path("School_events/", include([
+        path("", upcoming_school_events.as_view(), name="upcomingschoolevents"),
+        path("Ongoing_events/", ongoing_school_events.as_view(),
+             name="ongoingschoolevents"),
+        path("Previous_events/", previous_school_events.as_view(),
+             name="previousschoolevents"),
+    ])),
 
 ]

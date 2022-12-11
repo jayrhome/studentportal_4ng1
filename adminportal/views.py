@@ -11,7 +11,7 @@ from django.urls import reverse
 from datetime import date, datetime
 from . forms import *
 from . models import *
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.contrib import messages
 from django.db.models import Q, FilteredRelation, Prefetch, Count
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -1655,12 +1655,94 @@ class enrollment_details(DetailView):
 
     def post(self, request, *args, **kwargs):
         try:
-            get_enrollment = student_enrollment_details.validObjects.get(
-                id=self.kwargs["pk"])
+            # get_enrollment will retrieved the object with valid admission using get() method.
+            get_enrollment = student_enrollment_details.validObjects.only(
+                'id', 'enrolled_schoolyear').get(id=self.kwargs["pk"])
+
+            if validate_enrollmentSetup(request, get_enrollment.enrolled_schoolyear):
+                # If enrollment sy is latest
+
+                if "accept_pending" in request.POST:
+                    self.accept_enrollment()
+                    return HttpResponseRedirect(get_enrollment.to_pendingList())
+                elif "denied_pending" in request.POST:
+                    self.denied_enrollment()
+                    return HttpResponseRedirect(get_enrollment.to_pendingList())
+                elif "denied_pending_withreview" in request.POST:
+                    if not request.POST.get('review'):
+                        messages.warning(
+                            request, "You must add a comment if denied for revision.")
+                        return HttpResponseRedirect(reverse("adminportal:enrollment_details"), kwargs={"pk": self.kwargs["pk"]})
+                    self.denied_enrollment()
+                    self.save_comment(request.POST.get('review'))
+                    return HttpResponseRedirect(get_enrollment.to_pendingList())
+
+                elif "accept_revision" in request.POST:
+                    self.accept_enrollment()
+                    return HttpResponseRedirect(get_enrollment.to_reviewList())
+
+                elif "accept_denied" in request.POST:
+                    self.accept_enrollment()
+                    return HttpResponseRedirect(get_enrollment.to_deniedList())
+                elif "denied_withrevision_submit" in request.POST:
+                    if not request.POST.get('review'):
+                        messages.warning(
+                            request, "You must add a comment if denied for revision.")
+                        return HttpResponseRedirect(reverse("adminportal:enrollment_details"), kwargs={"pk": self.kwargs["pk"]})
+                    self.denied_enrollment()
+                    self.save_comment(request.POST.get('review'))
+                    return HttpResponseRedirect(get_enrollment.to_deniedList())
+
+                elif "re_validate" in request.POST:
+                    self.accept_enrollment()
+                    return HttpResponseRedirect(get_enrollment.to_holdList())
+                elif "denied_hold" in request.POST:
+                    self.denied_enrollment()
+                    return HttpResponseRedirect(get_enrollment.to_holdList())
+                elif "hold_withrevision_submit" in request.POST:
+                    if not request.POST.get('review'):
+                        messages.warning(
+                            request, "You must add a comment if denied for revision.")
+                        return HttpResponseRedirect(reverse("adminportal:enrollment_details"), kwargs={"pk": self.kwargs["pk"]})
+                    self.denied_enrollment()
+                    self.save_comment(request.POST.get('review'))
+                    return HttpResponseRedirect(get_enrollment.to_holdList())
+
+                else:
+                    messages.warning(request, "Features will add soon.")
+                    return HttpResponseRedirect(reverse("adminportal:pending_enrollment"))
+
+            else:
+                messages.warning(
+                    request, "%s is no longer editable." % get_enrollment.id)
+                return HttpResponseRedirect(reverse('adminportal:Admission_and_enrollment'))
 
         except Exception as e:
             messages.error(request, e)
             return HttpResponseRedirect(reverse('adminportal:Admission_and_enrollment'))
+
+    def save_comment(self, comment):
+        create_review = enrollment_review.objects.create(
+            to_review=student_enrollment_details.validObjects.get(
+                id=int(self.kwargs["pk"])),
+            comment=comment
+        )
+
+    def denied_enrollment(self):
+        with transaction.atomic():
+            get_enrollment = student_enrollment_details.validObjects.select_for_update().get(
+                id=int(self.kwargs["pk"]))
+            get_enrollment.is_passed = False
+            get_enrollment.is_denied = True
+            get_enrollment.save()
+
+    def accept_enrollment(self):
+        with transaction.atomic():
+            get_enrollment = student_enrollment_details.validObjects.select_for_update().get(
+                id=int(self.kwargs["pk"]))
+            get_enrollment.is_passed = True
+            get_enrollment.is_denied = False
+            get_enrollment.save()
 
     def next_pending_enrollment(self, id):
         pass
@@ -1727,3 +1809,57 @@ class enrollment_details(DetailView):
 
     def get_queryset(self):
         return student_enrollment_details.validObjects.all()
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class upcoming_school_events(ListView):
+    # Get the list of upcoming school events, order by start_date and date_created
+    template_name = "adminportal/school_events_HTMLs/upcoming_school_events.html"
+    allow_empty = True
+    context_object_name = "event_lists"
+    paginate_by = 10
+
+    def get_queryset(self):
+        # Return a querysets of school events where the start date is greater than the date today
+        return school_events.validObjects.filter(event_start_date__gt=date.today()).prefetch_related(Prefetch("event_photo", queryset=event_img.validObjects.all(), to_attr="event_pictures")).order_by('event_start_date', 'last_modified')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Upcoming Events"
+        return context
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class ongoing_school_events(ListView):
+    # Get the list of ongoing school events, order by start_date and date_created
+    template_name = "adminportal/school_events_HTMLs/ongoing_school_events.html"
+    allow_empty = True
+    context_object_name = "ongoing_events"
+    paginate_by = 10
+
+    def get_queryset(self):
+        # Return a querysets of school events where the start date is greater than the date today
+        return school_events.validObjects.filter(event_start_date__lte=date.today(), event_date_until__gte=date.today()).prefetch_related(Prefetch("event_photo", queryset=event_img.validObjects.all(), to_attr="event_pictures")).order_by('event_start_date', 'last_modified')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Ongoing Events"
+        return context
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class previous_school_events(ListView):
+    # Get the list of ongoing school events, order by start_date and date_created
+    template_name = "adminportal/school_events_HTMLs/previous_school_events.html"
+    allow_empty = True
+    context_object_name = "previous_events"
+    paginate_by = 10
+
+    def get_queryset(self):
+        # Return a querysets of school events where the start date is greater than the date today
+        return school_events.validObjects.filter(event_date_until__lt=date.today()).prefetch_related(Prefetch("event_photo", queryset=event_img.validObjects.all(), to_attr="event_pictures")).order_by('event_start_date', 'last_modified')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Previous Events"
+        return context

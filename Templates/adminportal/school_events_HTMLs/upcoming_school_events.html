@@ -1,0 +1,57 @@
+{% extends 'adminportal/school_events_HTMLs/base1.html' %}
+{% block content %}
+
+<!-- Message from messages framework / views.py -->
+{% if messages %}
+<div class="container col-md-3">
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+
+{% for event in event_lists %}
+    <h4> {{event.event_name}} </h4>
+    <p> {{event.event_details|truncatewords:10}} </p>
+    <p> {{event.organizers}} </p>
+    <p> {{event.event_start_date|date:"l M j Y"}} until {{event.event_date_until|date:"l M j Y"}} </p>
+    {% for photo in event.event_pictures %}
+        <img src="{{photo.url}}">
+    {% endfor %}
+    <a href="#"> Edit </a>
+    <a href="#"> Cancel </a>
+{% empty %}
+    <h4> No event... </h4>
+{% endfor %}
+
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm"> Prev </a>
+        {% endif %}
+
+        {% block pagination %}
+            {% for page_number in page_obj.paginator.get_elided_page_range %}
+                {% if page_number == page_obj.paginator.ELLIPSIS %}
+                    {{page_number}}
+                {% else %}
+                    <a href="?page={{page_number}}" class="btn btn-secondary btn-sm"> {{page_number}} </a>
+                {% endif %}
+            {% endfor %}
+        {% endblock %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm"> Next </a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+    </span>
+</div>
+
+{% endblock content %}
