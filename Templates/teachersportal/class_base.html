@@ -9,7 +9,7 @@
     {% if title %}
     <title> {{title}} </title>
     {% else %}
-    <title> Teachers </title>
+    <title> Class </title>
     {% endif %}
 
     <!-- Bootstrap -->
@@ -38,7 +38,16 @@
                             <a href="{% url 'teachersportal:index' %}" class="nav-link"> Home </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#" class="nav-link"> Events </a>
+                            <a href="{% url 'teachersportal:classassessments' %}" class="nav-link"> Assessments </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'teachersportal:classrecord' %}" class="nav-link"> Records </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'teachersportal:class_learningmaterials' %}" class="nav-link"> Learning Materials </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'teachersportal:class_chatbox' %}" class="nav-link"> Chat </a>
                         </li>
                         <li class="nav-item">
                             <a href="{% url 'studentportal:logout' %}" class="nav-link"> Logout </a>
