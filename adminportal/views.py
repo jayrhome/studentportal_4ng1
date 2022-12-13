@@ -1863,3 +1863,63 @@ class previous_school_events(ListView):
         context = super().get_context_data(**kwargs)
         context["title"] = "Previous Events"
         return context
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class add_event(TemplateView):
+    template_name = "adminportal/school_events_HTMLs/add_events.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class valid_student_accounts(TemplateView):
+    template_name = "adminportal/account_HTMLs/valid_student_accounts.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class invalid_student_accounts(TemplateView):
+    template_name = "adminportal/account_HTMLs/invalid_student_accounts.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class honor_students(TemplateView):
+    template_name = "adminportal/account_HTMLs/honor_students.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class get_subject_lists(TemplateView):
+    template_name = "adminportal/subjects_HTMLs/subject_lists.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class add_subject(TemplateView):
+    template_name = "adminportal/subjects_HTMLs/add_subject.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class update_subject(TemplateView):
+    template_name = "adminportal/subjects_HTMLs/update_subject.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class assign_subject_teachers(TemplateView):
+    template_name = "adminportal/subjects_HTMLs/assign_subject_teachers.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class get_section_lists(TemplateView):
+    template_name = "adminportal/section_HTMLs/section_list.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class add_section(TemplateView):
+    template_name = "adminportal/section_HTMLs/add_section.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class school_teachers(TemplateView):
+    template_name = "adminportal/system_users/teacher_list.html"
+
+
+@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class grade_formula(TemplateView):
+    template_name = "adminportal/grades/grade_formula.html"

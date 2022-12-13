@@ -1,0 +1,20 @@
+{% extends 'adminportal/subjects_HTMLs/subject_base.html' %}
+{% block content %}
+
+<!-- Message from messages framework / views.py -->
+{% if messages %}
+<div class="container col-md-3">
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="container col-md-8 p-5">
+    <p> Subject Teachers </p>
+</div>
+
+
+{% endblock content %}

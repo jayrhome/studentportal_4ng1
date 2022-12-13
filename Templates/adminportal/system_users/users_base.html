@@ -9,7 +9,7 @@
     {% if title %}
         <title> {{title}} </title>
     {% else %}
-        <title> School Events </title>
+        <title> School Teachers </title>
     {% endif %}
 
     <!-- Bootstrap -->
@@ -37,16 +37,10 @@
                             <a href="{% url 'adminportal:index' %}" class="nav-link"> Home </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{% url 'adminportal:upcomingschoolevents' %}" class="nav-link"> Upcoming Events </a>
+                            <a href="{% url 'adminportal:schoolteachers' %}" class="nav-link"> Teachers </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{% url 'adminportal:ongoingschoolevents' %}" class="nav-link"> Ongoing Events </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'adminportal:previousschoolevents' %}" class="nav-link"> Previous Events </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'adminportal:addschoolevents' %}" class="nav-link"> Add event </a>
+                            <a href="#" class="nav-link"> Create </a>
                         </li>
                         <li class="nav-item">
                             <a href="{% url 'studentportal:logout' %}" class="nav-link"> Logout </a>
