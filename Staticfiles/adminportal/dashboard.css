@@ -9,7 +9,8 @@ font-family: 'Poppins', sans-serif !important;
 z-index: 999;
 }
 .navbar .navbar-brand{
-font-weight: bold;
+font-weight: 600;
+color: #173979;
 }
 
 .adming_portal_landing{
@@ -60,7 +61,7 @@ height: 130px;
 color: #fff;
 display: grid;
 /* background: #2FB47D; */
-background: #25c784;
+background: #173979;
 /* background: rgb(47, 85, 255) !important; */
 font-family: 'Poppins', sans-serif;
 border-radius: 5px;
@@ -68,7 +69,7 @@ box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 transition: 0.3s ease;
 }
 .adming_portal_landing .o .admin_portal_function .a_p_card:hover{
-    background: #2FB47D;
+    background: #13326d;
 }
 .adming_portal_landing .o .admin_portal_function .a_p_card i{
 color: #F0F9FF;

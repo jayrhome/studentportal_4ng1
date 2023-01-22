@@ -74,7 +74,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'db4ng1',
         'USER': 'postgres',
-        'PASSWORD': '',
+        'PASSWORD': 'luke123',
         'HOST': 'localhost'
     }
 }
@@ -144,8 +144,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''  # App password
+EMAIL_HOST_USER = 'lukeadrian9@gmail.com'
+EMAIL_HOST_PASSWORD = 'ribkaignqipfdocj'  # App password
 
 
 PASSWORD_RESET_TIMEOUT = 180  # 20 Minutes

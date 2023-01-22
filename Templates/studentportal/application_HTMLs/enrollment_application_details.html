@@ -5,6 +5,7 @@
 
 
 <!-- Message from messages framework / views.py -->
+<div class="container mt-3">
 {% if messages %}
 <div class="container col-md-3">
     <ul class="messages">
@@ -92,7 +93,7 @@
 {% if no_enrollment %}
     <p> You have no enrollment. </p>
 {% endif %}
-
+</div>
 <script>
     $('#enrollment_form').one('submit', function() {
         $(this).find('input[type="submit"]').attr('disabled','disabled');

@@ -34,18 +34,18 @@
 
 
 <div class="container pt-5 d-flex flex-column">
-    <a href="{% url 'adminportal:add_track' %}" class="add_track"><i class="bi bi-plus-lg"></i> Add Track </a>
+    <a href="{% url 'adminportal:add_track' %}" class="add_track btn-success"><i class="bi bi-plus-lg"></i> Add Track </a>
     {% for track in courses %}
         <div class="track_parent p-3 mt-3 mb-2 bg-white text-dark border rounded">
-            <div class="track d-flex">
+            <div class="track d-flex justify-content-between">
                 <div class="track">
                     <h3> {{track.track_name}} </h3>
                     <p> {{track.definition}} </p>
                 </div>
                 <div class="action d-flex justify-content-center align-items-start ms-2">
-                    <a href="{% url 'adminportal:edit_track' track_id=track.id %}" class="btn btn-primary "> Edit </a>
+                    <a href="{% url 'adminportal:edit_track' track_id=track.id %}" class="btn btn-primary text-white" > Edit </a>
                     <a href="{% url 'adminportal:delete_track' pk=track.id %}" class="btn btn-danger ms-2"> 
-                        <i class="fa fa-trash" aria-hidden="true"></i>
+                      Delete
                      </a>
                 </div>
             </div>
@@ -53,21 +53,22 @@
             <div class="accordion">
                 <div class="accordion-item">
                   <h2 class="accordion-header" id="headingOne">
-                    <button class="accordion-button d-flex " type="button" data-bs-toggle="collapse" data-bs-target="" aria-expanded="true" aria-controls="collapseOne">
-                      <h4 class=" mb-0 me-3 flex-1">Strand</h4>
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="" aria-expanded="true" aria-controls="collapseOne">
+                      <h4 class=" mb-0 me-3 flex-1" style="color: #173979;">Strand</h4>
                     </button>
                   </h2>
-                  <div id="number" class="accordion-collapse collapse fade" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                    <div class="accordion-body">
+                  <div id="number" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                    <div class="accordion-body" style="transition: 0.3s ease;">
                       <a href="{% url 'adminportal:add_strand' track_id=track.id %}" class="btn btn-primary mb-3"><i class="bi bi-person-plus"></i> Add Strand </a>
                       {% for strand in track.strands %}
-                      <div class="strand rounded" style="background:#fff; ">
-                              <h6 class=""> {{strand.strand_name}} </h6>
+                      <div class="strand rounded border-bottom border-2 pb-3 mb-3" style="background:#fff; ">
+                              <h6 class="text-bold"> {{strand.strand_name}} </h6>
                               <p> {{strand.definition}} </p>
                               <div class="d-flex">
-                                  <a href="{% url 'adminportal:edit_strand' strand_id=strand.id %}" class="edit_btn btn ms-auto me-2"> Edit </a>
-                                  <a href="{% url 'adminportal:delete_strand' pk=strand.id %}" class="btn btn-danger"> 
-                                      <i class="fa fa-trash" aria-hidden="true"></i>    
+                                  <a href="{% url 'adminportal:edit_strand' strand_id=strand.id %}" class="btn ms-auto me-2 text-white btn-primary"> Edit </a>
+                                  <a href="{% url 'adminportal:delete_strand' pk=strand.id %}" class="btn btn-danger" > 
+                                      <!-- <i class="fa fa-trash" aria-hidden="true"></i>     -->
+                                      Delete
                                   </a>
           
                               </div>

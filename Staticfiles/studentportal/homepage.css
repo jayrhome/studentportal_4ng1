@@ -1,0 +1,250 @@
+
+    html{
+        font-family: 'Poppins', sans-serif !important;
+    }
+    .navbar{
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+    }
+    .navbar .navbar-brand{
+        font-style: italic;
+        font-size: 30px;
+        color: #173979;
+    }
+    .nav-link{
+        color: rgb(202, 202, 202) !important;
+        transition: 0.3s ease;
+        font-family: 'Poppins', sans-serif !important;
+    }
+    .nav-link:hover{
+        color: #fff !important;
+    }
+    .logo{
+        margin-right: 10px;
+        height: 50px;
+        width: 50px;
+        border-radius: 100px;
+        background: #173979;
+        display: grid;
+        place-items: center;
+        color: #fff;
+    }
+
+
+    .landing{
+        /* min-height: 400px; */
+        min-height: 90vh;
+        height: 100%;
+
+        background-image: url('/Media/back/tt.jpeg');   
+        background-position: center center;
+        background-size: cover;
+        position: relative;
+    }
+    .landing .landing_o{
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0,0,0.5);
+    }
+    .landing .newfangled_title{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    
+    }
+    .landing .newfangled_title .logo{
+        height: 100px;
+        width: 100px;
+        border-radius: 100px;
+        background: #173979;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        border: 2px solid #fff;
+    }
+    .landing .newfangled_title .landing_title{
+        font-size: 50px;
+        font-family: 'Poppins', sans-serif !important;
+        color: #fff;
+    }
+    .track_strand h3{
+        color: #000;
+        font-family: 'Poppins', sans-serif !important;
+    }
+    /* .track_strand .strand_box{
+        background: #fff;
+        width: 100%;
+        max-width: 350px;
+        border-radius: 6px;
+    } */
+    .track_and_strand_wrapper .grid{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        width: 100%;
+        /* background: red; */
+    }
+    @media screen and (max-width: 768px){
+        .track_and_strand_wrapper .grid{
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            width: 100%;
+            /* background: red; */
+        }   
+    }
+    .track_strand{
+        /* margin-bottom: 20px; */
+        background: #fff;
+        width: 100%;
+        /* max-width: 300px !important; */
+        border-radius: 6px;
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    }
+    .track_and_strand_wrapper h3{
+        /* background: red; */
+        margin: 0;
+        padding: 10px 0;
+    }
+    .tracks_strand_date h3{
+        color: #000;
+        font-family: 'Poppins', sans-serif !important;
+
+    }
+    /* .strand_box{
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    } */
+    .strand_box h5 {
+        font-family: 'Poppins', sans-serif !important;
+    }
+    .strand_box .strand p {
+        margin: 0;
+    }
+    .strand_box .strand{
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .strand_box .strand i{
+        margin-right: 10px;
+    }
+    .about{
+        border-top: 3px solid rgba(10, 25, 56, 0.8);
+        /* box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; */
+    }
+    .about h3{
+        font-family: 'Poppins', sans-serif !important;
+        color: rgba(10, 25, 56, 0.8);
+        font-style: italic;
+    }
+    .about p{
+        font-family: 'Poppins', sans-serif !important;
+    }
+
+
+
+    /* application */
+    .div{
+        /* height: 100vh; */
+    }
+    .div .admission{
+        text-align: center;        
+    }
+    .div .admission h3{
+        font-size: 40px;
+    }
+    .div .admission span{
+        display: block;
+        height: 6px;
+        width: 140px;
+        background: #173979;
+        margin: 0 auto;
+    }
+
+
+    /* student */
+    .background{
+        background-image: url('/Media/back/tt.jpeg');  
+        min-height: 350px;
+        /* background: red; */
+        width: 100%;
+        position: relative;
+    }
+    .application_about{
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+
+        background: rgba(0, 0,0,0.5);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+    .application_about h3{
+        padding-bottom: 15px;
+        color: #fff;
+        font-size: 35px;
+    }
+    .application_about p{
+        width: 100%;
+        max-width: 850px;
+        color: #fff;
+        font-weight: 400;
+        font-size: 19px;
+    }
+    .application_about button{
+        padding: 15px;
+        height: 50px;
+        width: 200px;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        /* background: #2FB47D; */
+        background: #173979;
+        /* background: rgb(47, 85, 255) !important; */
+        font-family: 'Poppins', sans-serif;
+        border-radius: 5px;
+        box-shadow: rgb(0 0 0 / 24%) 0px 3px 8px;
+        transition: 0.3s ease;
+        text-decoration: none;
+        border: none;
+    }
+    .application_about button:hover{
+        background: #1e4388;
+    }
+    .div .admission .application_parent{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+
+    }
+    .div .admission .application_parent .button{
+        padding: 15px;
+        height: 50px;
+        width: 200px;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        /* background: #2FB47D; */
+        background: #173979;
+        /* background: rgb(47, 85, 255) !important; */
+        font-family: 'Poppins', sans-serif;
+        border-radius: 5px;
+        box-shadow: rgb(0 0 0 / 24%) 0px 3px 8px;
+        transition: 0.3s ease;
+        text-decoration: none;
+    }
+    .div .admission .application_parent .button:hover{
+        background: #1e4388;
+    }
