@@ -18,6 +18,7 @@
     <form id="postpone" method="post">
         {% csrf_token %}
         <input type="submit" value="Confirm" class="btn btn-primary btn-block mb-4">
+        <a href="{% url 'adminportal:admission_and_enrollment' %}" class="btn btn-primary btn-block mb-4" > Back </a>
     </form>
 
 </div>

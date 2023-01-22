@@ -104,6 +104,18 @@ def make_sy():
         return e
 
 
+def make_enrollment_setup():
+    try:
+        enrollment_admission_setup.objects.create(
+            ea_setup_sy=school_year.objects.latest("date_created"),
+            start_date=date.today(),
+            end_date=datetime.datetime.strptime(
+                "2023-01-01", "%Y-%m-%d").date()
+        )
+    except Exception as e:
+        return e
+
+        
 def make_scn():
     try:
         school_contact_number.objects.create(
