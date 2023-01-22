@@ -24,6 +24,7 @@ from ratelimit.decorators import ratelimit
 from adminportal.models import *
 from formtools.wizard.views import SessionWizardView
 from datetime import date, datetime
+from smtplib import SMTPException
 
 
 User = get_user_model()
@@ -250,12 +251,19 @@ def send_activation_link(request, user, email):
     })
     email = EmailMessage(mail_subject, message, to=[email])
 
-    if email.send():
+    try:
+        email.send(fail_silently=False)
         messages.success(
             request, f"Hi {user.display_name}, we sent a confirmation link to {user.email}. You can click the link to activate your account.")
-    else:
-        messages.error(
-            request, f"Your activation link is not sent to {user.email}! Try again.")
+        messages.error(request, email)
+    except SMTPException as e:
+        messages.error(request, e)
+    # if email.send():
+    #     messages.success(
+    #         request, f"Hi {user.display_name}, we sent a confirmation link to {user.email}. You can click the link to activate your account.")
+    # else:
+    #     messages.error(
+    #         request, f"Your activation link is not sent to {user.email}! Try again.")
 
 
 # When user click the activation link from email message
