@@ -114,6 +114,8 @@ def make_enrollment_setup():
         )
     except Exception as e:
         return e
+
+
 def make_scn():
     try:
         school_contact_number.objects.create(

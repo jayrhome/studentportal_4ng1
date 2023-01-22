@@ -3,6 +3,11 @@
 {% load std_portal %}
 
 <!-- Message from messages framework / views.py -->
+
+
+  
+
+
 {% if messages %}
 <div class="container col-md-3">
     <ul class="messages">
@@ -34,10 +39,12 @@
         </div>
 
         <input type="submit" value="Submit" class="btn btn-primary btn-block mb-4">
+        <a href="{% url 'adminportal:admission_and_enrollment' %}" class="btn btn-primary btn-block mb-4"" > Back </a>
+
     </div>
 
 </form>
-<a href="{% url 'adminportal:admission_and_enrollment' %}" class="btn btn-primary" > Back </a>
+
 
 <script>
     $('#add_setupdetails').one('submit', function() {

@@ -34,10 +34,11 @@
         </div>
 
         <input type="submit" value="Update" class="btn btn-primary btn-block mb-4">
+        <a href="{% url 'adminportal:admission_and_enrollment' %}" class="btn btn-primary btn-block mb-4" > Back </a>
     </div>
 
 </form>
-<a href="{% url 'adminportal:admission_and_enrollment' %}" class="btn btn-primary" > Back </a>
+
 
 <script>
     $('#edit_setupdetails').one('submit', function() {
