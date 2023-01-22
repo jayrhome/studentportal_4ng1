@@ -10,7 +10,7 @@
     {% csrf_token %}
     <!-- List of errors from forms.py -->
     {{ form.non_field_errors }}
-    <div class="container col-md-8">
+    <div class="container col-md-8 p-3 bg-white box_shadow">
         <div class="form-outline mb-4">
             <h4> Do you want to delete {{strand_name}} from {{track}}? </h4>
             <p> {{definition}} </p>

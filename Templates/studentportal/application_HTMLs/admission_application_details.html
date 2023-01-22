@@ -3,6 +3,9 @@
 {% include 'studentportal/application_HTMLs/adm_enr_menu.html' %}
 {% load std_portal %}
 
+<div class="container mt-3 enroll">
+
+
 <!-- Message from messages framework / views.py -->
 {% if messages %}
 <div class="container col-md-3">
@@ -15,6 +18,7 @@
 {% endif %}
 
 {% if admission_status %}
+
     <div class="container col-md-8">
         <h4> Admission Details </h4>
         <p> Status: {{admission_status}} </p> 
@@ -54,7 +58,7 @@
     <a href="{% url 'studentportal:admission_details' %}" class="btn btn-primary btn-sm"> Enroll Now </a>
 {% endif %}
 
-
+</div>
 <script>
     $('#admission_form').one('submit', function() {
         $(this).find('input[type="submit"]').attr('disabled','disabled');
