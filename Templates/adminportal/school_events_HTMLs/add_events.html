@@ -1,4 +1,4 @@
-{% extends 'teachersportal/base1.html' %}
+{% extends 'adminportal/school_events_HTMLs/base1.html' %}
 {% block content %}
 
 <!-- Message from messages framework / views.py -->
@@ -13,10 +13,8 @@
 {% endif %}
 
 <div class="container col-md-8 p-5">
-    <p> Teacher Dashboard </p>
-    
-    <a href="{% url 'teachersportal:classlist' %}" class="btn btn-primary"> Class List </a>
-    <a href="#" class="btn btn-primary"> Grade </a>
+    <p> Add event form </p>
 </div>
+
 
 {% endblock content %}

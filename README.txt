@@ -97,6 +97,8 @@ Step 8: Enter this:
 
 		make_sy()
 
+		make_enrollment_setup()
+
 		make_scn()
 
 		make_scemail()

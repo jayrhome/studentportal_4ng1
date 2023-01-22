@@ -58,8 +58,45 @@ urlpatterns = [
                     hold_enrollment_lists.as_view(), name="hold_enrollment_lists"),
             path("Enrollment_details/<pk>", enrollment_details.as_view(),
                  name="enrollment_details"),
-        ]))
+        ])),
     ])),
 
+    path("school_events/", include([
+        path("", upcoming_school_events.as_view(), name="upcomingschoolevents"),
+        path("ongoing_events/", ongoing_school_events.as_view(),
+             name="ongoingschoolevents"),
+        path("previous_events/", previous_school_events.as_view(),
+             name="previousschoolevents"),
+        path("add_events/", add_event.as_view(), name="addschoolevents"),
+
+    ])),
+
+    path("students/", include([
+        path("", valid_student_accounts.as_view(), name="validstudentaccounts"),
+        path("invalid_accounts/", invalid_student_accounts.as_view(),
+             name="invalidstudentaccounts"),
+        path("honor_students/", honor_students.as_view(), name="honorstudents"),
+    ])),
+
+    path("subjects/", include([
+        path("", get_subject_lists.as_view(), name="getsubjects"),
+        path("add_subject/", add_subject.as_view(), name="addsubjects"),
+        path("update_subject/", update_subject.as_view(), name="updatesubject"),
+        path("assign_subject_teachers/",
+             assign_subject_teachers.as_view(), name="assignsubjectteachers"),
+    ])),
+
+    path("sections/", include([
+        path("", get_section_lists.as_view(), name="getsectionlist"),
+        path("add_section/", add_section.as_view(), name="addsection"),
+    ])),
+
+    path("teachers/", include([
+        path("", school_teachers.as_view(), name="schoolteachers"),
+    ])),
+
+    path("grade_computation/", include([
+        path("", grade_formula.as_view(), name="gradeformula"),
+    ]))
 
 ]
