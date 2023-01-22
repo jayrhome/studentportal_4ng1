@@ -13,10 +13,11 @@
 {% endif %}
 
 <div class="container col-md-8 p-5">
-    <p> Teacher Dashboard </p>
-    
-    <a href="{% url 'teachersportal:classlist' %}" class="btn btn-primary"> Class List </a>
-    <a href="#" class="btn btn-primary"> Grade </a>
+    <p> Class List </p>
+    <a href="{% url 'teachersportal:classassessments' %}" class="btn btn-primary"> ICT - A </a>
+    <a href="{% url 'teachersportal:classassessments' %}" class="btn btn-primary"> ICT - B </a>
+    <a href="{% url 'teachersportal:classassessments' %}" class="btn btn-primary"> ICT - C </a>
 </div>
+
 
 {% endblock content %}
