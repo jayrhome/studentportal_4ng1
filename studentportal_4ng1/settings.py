@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'studentportal.apps.StudentportalConfig',
     'adminportal.apps.AdminportalConfig',
     'teachersportal.apps.TeachersportalConfig',
+    'usersPortal.apps.UsersportalConfig',
 ]
 
 MIDDLEWARE = [
@@ -79,7 +80,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = "studentportal.User"
+AUTH_USER_MODEL = "usersPortal.User"
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -122,11 +123,11 @@ LOGGING = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Manila'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False  # Defaults to True
 
 
 # Static files (CSS, JavaScript, Images)
