@@ -9,6 +9,7 @@ urlpatterns = [
     path('', include("studentportal.urls")),
     path('School_admin/', include("adminportal.urls")),
     path('Teachers/', include("teachersportal.urls")),
+    path('users/', include("usersPortal.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

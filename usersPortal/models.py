@@ -61,7 +61,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_student = models.BooleanField(default=False)
     is_registrar = models.BooleanField(default=False)
     validator_account = models.BooleanField(default=False)
-    last_user_token_request = models.DateTimeField(default=timezone.now())
+    last_user_token_request = models.DateTimeField(default=timezone.now)
     last_password_changed_date = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = 'email'
@@ -87,6 +87,22 @@ class User(AbstractBaseUser, PermissionsMixin):
     def clean(self):
         try:
             validate_email(self.email)
+
+            if self.is_student and not (self.is_staff or self.is_superuser or self.is_registrar or self.validator_account):
+                pass
+            elif self.is_staff and not (self.is_student or self.is_registrar or self.validator_account):
+                pass
+            elif self.is_superuser and not (self.is_student or self.is_registrar or self.validator_account):
+                pass
+            elif self.is_registrar and not (self.is_staff or self.is_superuser or self.is_student or self.validator_account):
+                pass
+            elif self.validator_account and not (self.is_staff or self.is_superuser or self.is_student or self.is_registrar):
+                pass
+            else:
+                raise ValidationError(
+                    {'invalid_usertype': _(
+                        'You are not allowed to have this kind of user type.')}
+                )
         except EmailNotValidError as e:
             raise ValidationError(
                 {'invalid_email': _('Email is invalid. Try again.')}
@@ -149,4 +165,5 @@ class user_profile(models.Model):
         return self.first_name
 
     def user_age(self):
-        return relativedelta(date.today(), self.birth_date).years
+        if self.birth_date:
+            return relativedelta(date.today(), self.birth_date).years
