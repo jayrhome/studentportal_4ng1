@@ -8,6 +8,10 @@ from email_validator import validate_email, EmailNotValidError
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta
+from datetime import date, datetime
+from django.conf import settings
 
 
 def createAccount_activationLink(request, user_instance):
@@ -17,6 +21,7 @@ def createAccount_activationLink(request, user_instance):
         "domain": get_current_site(request).domain,
         "uid": urlsafe_base64_encode(force_bytes(user_instance.pk)),
         "token": account_activation_token.make_token(user_instance),
+        "expiration_date": (timezone.now() + relativedelta(seconds=settings.PASSWORD_RESET_TIMEOUT)).strftime("%A, %B %d, %Y - %I:%M: %p"),
     })
     email = EmailMessage(mail_subject, message, to=[user_instance.email])
 

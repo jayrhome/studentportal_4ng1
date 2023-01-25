@@ -89,24 +89,24 @@ class create_useraccount(FormView):
         return context
 
 
-# When user click the activation link from email message
-# @user_passes_test(not_authenticated_user, login_url="studentportal:index")
-# def activate_account(request, uidb64, token):
-#     try:
-#         uid = force_str(urlsafe_base64_decode(uidb64))
-#         user = User.objects.get(pk=uid)
-#     except(TypeError, ValueError, OverflowError, User.DoesNotExist):
-#         user = None
+# When user click the email authentication link
+@user_passes_test(not_authenticated_user, login_url="studentportal:index")
+def activate_account(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
 
-#     if user is not None and account_activation_token.check_token(user, token):
-#         user.is_active = True
-#         user.save()
+    if user is not None and account_activation_token.check_token(user, token):
+        user.last_user_token_request = timezone.now()
+        user.save()
 
-#         messages.success(request, "Your account is now activated.")
-#     else:
-#         messages.error(request, "Activation link is no longer valid!")
+        messages.success(request, "Your account is now activated.")
+    else:
+        messages.error(request, "Activation link is no longer valid!")
 
-#     return HttpResponseRedirect(reverse("studentportal:login"))
+    return HttpResponseRedirect(reverse("studentportal:login"))
 
 
 # @method_decorator([user_passes_test(not_authenticated_user, login_url="studentportal:index"), ratelimit(key='ip', rate='0/s')], name="dispatch")
