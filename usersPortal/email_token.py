@@ -34,3 +34,25 @@ def createAccount_activationLink(request, user_instance):
         raise ValidationError(
             {'emailToken_failed': _(e)}
         )
+
+
+def forgotPassword_resetLink(request, user_instance):
+    mail_subject = "Password Reset Link"
+    message = render_to_string("usersPortal/email_templates/newPasswordForm.html", {
+        "user_name": user_instance.display_name,
+        "domain": get_current_site(request).domain,
+        "uid": urlsafe_base64_encode(force_bytes(user_instance.pk)),
+        "token": password_reset_token.make_token(user_instance),
+        "expiration_date": (timezone.now() + relativedelta(seconds=settings.PASSWORD_RESET_TIMEOUT)).strftime("%A, %B %d, %Y - %I:%M: %p"),
+    })
+    email = EmailMessage(mail_subject, message, to=[user_instance.email])
+
+    try:
+        email.send()
+        messages.success(
+            request, f"Hi {user_instance.display_name}, your password reset link is sent to {user_instance.email}. Click it to change your password.")
+        return True
+    except Exception as e:
+        raise ValidationError(
+            {'emailToken_failed': _(e)}
+        )

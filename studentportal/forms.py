@@ -48,24 +48,6 @@ def validate_cp_number(number):
         raise ValidationError("Invalid Contact Number")
 
 
-class loginForm(forms.Form):
-    email = forms.EmailField(label="Email", max_length=50)
-    password = forms.CharField(
-        label="Password", widget=forms.PasswordInput)
-
-
-class resetaccountForm(forms.Form):
-    email = forms.EmailField(
-        label="Email", max_length=50, validators=[validate_email_chars])
-
-
-class resetpasswordForm(forms.Form):
-    password = forms.CharField(
-        label="Password", widget=forms.PasswordInput)
-    confirmpassword = forms.CharField(
-        label="Confirm Password", widget=forms.PasswordInput)
-
-
 class admission_personal_details(forms.Form):
     first_name = forms.CharField(label="First Name", max_length=20)
     middle_name = forms.CharField(label="Middle Name", max_length=20)

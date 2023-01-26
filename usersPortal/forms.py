@@ -40,12 +40,12 @@ class loginForm(forms.Form):
         label="Password", widget=forms.PasswordInput)
 
 
-class resetaccountForm(forms.Form):
+class forgotPasswordForm(forms.Form):
     email = forms.EmailField(
         label="Email", max_length=50)
 
 
-class resetpasswordForm(forms.Form):
+class makeNewPasswordForm(forms.Form):
     password = forms.CharField(
         label="Password", widget=forms.PasswordInput)
     confirmpassword = forms.CharField(

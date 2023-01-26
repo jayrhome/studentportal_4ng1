@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -115,6 +115,29 @@ class User(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
+
+    @classmethod
+    def update_lastUserTokenRequest(cls, userInstance):
+        try:
+            with transaction.atomic():
+                get_userInstance = cls.objects.select_for_update().get(pk=userInstance.id)
+                get_userInstance.last_user_token_request = timezone.now()
+                get_userInstance.save()
+            # return (get_userInstance.last_user_token_request).strftime("%A, %B %d, %Y - %I:%M: %p")
+            return True
+        except Exception as e:
+            return False
+
+    @classmethod
+    def user_changePassword(cls, userInstance, raw_password):
+        try:
+            with transaction.atomic():
+                get_userInstance = cls.objects.select_for_update().get(pk=userInstance.id)
+                get_userInstance.set_password(raw_password)
+                get_userInstance.save()
+            return True
+        except Exception as e:
+            return False
 
 
 class user_address(models.Model):
