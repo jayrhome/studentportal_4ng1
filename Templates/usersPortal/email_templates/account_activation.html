@@ -7,5 +7,5 @@
     Click the link below to activate your account.
     Note: The activation link will expire on {{expiration_date}}.
 
-    https://{{domain}}{% url "studentportal:activate_account" uidb64=uid token=token %}
+    http://{{domain}}{% url "usersPortal:activate_account" uidb64=uid token=token %}
 {% endautoescape %}

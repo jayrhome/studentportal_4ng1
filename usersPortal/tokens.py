@@ -17,7 +17,7 @@ class PasswordResetTokenGenerator(PasswordResetTokenGenerator):
             six.text_type(user.pk) + six.text_type(timestamp) +
             six.text_type(user.last_password_changed_date) +
             six.text_type(user.last_user_token_request) +
-            six.text_type(user.last_password_changed_date)
+            six.text_type(user.is_active)
         )
 
 

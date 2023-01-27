@@ -25,6 +25,8 @@ from adminportal.models import *
 from datetime import date, datetime
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from studentportal.views import student_access_only
+from . models import *
 
 
 User = get_user_model()
@@ -78,6 +80,7 @@ class create_useraccount(FormView):
         except Exception as e:
             messages.warning(
                 self.request, "An error has occurred while submitting your data. Try again.")
+            # messages.error(self.request, e)
             return self.form_invalid(form)
 
     def form_invalid(self, form):
@@ -181,9 +184,8 @@ class request_newAccountActivationToken(FormView):
                 if not User.update_lastUserTokenRequest(User.objects.get(email=email)):
                     pass
 
-                # createAccount_activationLink(self.request, user.objects.get(email=email))
-                messages.success(
-                    self.request, "The new authentication link has been sent to your account.")
+                # createAccount_activationLink(
+                #     self.request, User.objects.get(email=email))
                 return super().form_valid(form)
             messages.warning(
                 self.request, "Incorrect email or password. Try again.")
@@ -244,7 +246,7 @@ class forgotPassword(FormView):
 # When user click the password reset link
 @method_decorator([user_passes_test(not_authenticated_user, login_url="studentportal:index"), ratelimit(key='ip', rate='0/s')], name="dispatch")
 class passwordReset(FormView):
-    template_name = "studentportal/password_reset_form.html"
+    template_name = "usersPortal/forgotPassword/makeNewPassword.html"
     form_class = makeNewPasswordForm
     success_url = "/users/login/"
 
@@ -296,3 +298,27 @@ class passwordReset(FormView):
             else:
                 messages.error(self.request, "Reset token is no longer valid.")
                 return super().form_valid(form)
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class userAccountProfile(TemplateView):
+    template_name = "usersPortal/profile/profileDetails.html"
+    http_method_names = ["get"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Profile"
+
+        get_userDetails = user_profile.get_userProfile(self.request.user)
+        context["userDetails"] = {
+            "first_name": get_userDetails.first_name,
+            "middle_name": get_userDetails.middle_name,
+            "last_name": get_userDetails.last_name,
+            "birth_date": get_userDetails.birth_date,
+            "sex": get_userDetails.sex,
+            "image": get_userDetails.profilePic[0] if get_userDetails.profilePic else None,
+            "image": get_userDetails.userContact[0] if get_userDetails.userContact else None,
+            "image": get_userDetails.userAddress[0] if get_userDetails.userAddress else None,
+        }
+
+        return context

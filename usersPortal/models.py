@@ -7,6 +7,7 @@ from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from email_validator import validate_email, EmailNotValidError
 from django.utils import timezone
+from django.db.models import Prefetch
 
 
 class AccountManager(BaseUserManager):
@@ -146,6 +147,9 @@ class user_address(models.Model):
         "user_profile", on_delete=models.RESTRICT, related_name="address")
     date_created = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["-date_created"]
+
     def __str__(self):
         return self.address
 
@@ -158,6 +162,9 @@ class user_contactNumber(models.Model):
         max_length=11, unique=True, validators=[cp_number_regex])
     date_created = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ["-date_created"]
+
     def __str__(self):
         return self.cellphone_number
 
@@ -168,6 +175,12 @@ class user_photo(models.Model):
     image = models.ImageField(
         default="user_images/default_male.png", upload_to="user_images/%Y/%m/%d/")
     date_created = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date_created"]
+
+    def __str__(self):
+        return self.photo_of.first_name
 
 
 class user_profile(models.Model):
@@ -190,3 +203,15 @@ class user_profile(models.Model):
     def user_age(self):
         if self.birth_date:
             return relativedelta(date.today(), self.birth_date).years
+
+    @classmethod
+    def get_userProfile(cls, userInstance):
+        obj = cls.objects.filter(user__id=userInstance.id).prefetch_related(
+            Prefetch("user_pic", queryset=user_photo.objects.only(
+                "image"), to_attr="profilePic"),
+            Prefetch("contactNumber", queryset=user_contactNumber.objects.only(
+                "cellphone_number"), to_attr="userContact"),
+            Prefetch("address", queryset=user_address.objects.only(
+                "address"), to_attr="userAddress"),
+        )
+        return obj.first()

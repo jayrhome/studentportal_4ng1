@@ -15,4 +15,7 @@ urlpatterns = [
     path("ForgotPassword/", forgotPassword.as_view(), name="forgotpassword"),
     path("PasswordReset/<uidb64>/<token>",
          passwordReset.as_view(), name="password_reset"),
+    path("Profile/", include([
+        path("", userAccountProfile.as_view(), name="account_profile"),
+    ])),
 ]
