@@ -26,7 +26,7 @@ def validate_username(name):
 
     if not res:
         raise ValidationError(
-            "Username should be a plain texts. Spaces are allowed.")
+            "Username must be a plain texts. Spaces are allowed.")
 
 
 def birthdate_validator(dt):

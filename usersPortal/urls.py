@@ -17,5 +17,9 @@ urlpatterns = [
          passwordReset.as_view(), name="password_reset"),
     path("Profile/", include([
         path("", userAccountProfile.as_view(), name="account_profile"),
+        path("Edit/", updateAccountProfile.as_view(),
+             name="updateAccountProfile"),
+        path("Change_password/", userChangePassword.as_view(),
+             name="changepassword"),
     ])),
 ]

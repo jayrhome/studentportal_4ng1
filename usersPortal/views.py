@@ -23,7 +23,7 @@ from .tokens import account_activation_token, password_reset_token
 from ratelimit.decorators import ratelimit
 from adminportal.models import *
 from datetime import date, datetime
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.db import IntegrityError
 from studentportal.views import student_access_only
 from . models import *
@@ -310,15 +310,159 @@ class userAccountProfile(TemplateView):
         context["title"] = "Profile"
 
         get_userDetails = user_profile.get_userProfile(self.request.user)
-        context["userDetails"] = {
-            "first_name": get_userDetails.first_name,
-            "middle_name": get_userDetails.middle_name,
-            "last_name": get_userDetails.last_name,
-            "birth_date": get_userDetails.birth_date,
-            "sex": get_userDetails.sex,
-            "image": get_userDetails.profilePic[0] if get_userDetails.profilePic else None,
-            "image": get_userDetails.userContact[0] if get_userDetails.userContact else None,
-            "image": get_userDetails.userAddress[0] if get_userDetails.userAddress else None,
-        }
+        if get_userDetails:
+            context["userDetails"] = {
+                "first_name": get_userDetails.first_name,
+                "middle_name": get_userDetails.middle_name,
+                "last_name": get_userDetails.last_name,
+                "birth_date": get_userDetails.birth_date,
+                "sex": get_userDetails.get_sex_display(),
+                "userimage": get_userDetails.profilePic[0] if get_userDetails.profilePic else "",
+                "contactnum": get_userDetails.userContact[0] if get_userDetails.userContact else "",
+                "useraddress": get_userDetails.userAddress[0] if get_userDetails.userAddress else "",
+            }
 
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class updateAccountProfile(FormView):
+    template_name = "usersPortal/profile/profileUpdate.html"
+    success_url = "/users/Profile/"
+    form_class = profileDetailsForm
+
+    def get_initial(self):
+        initial = super().get_initial()
+
+        get_userprofile = user_profile.get_userProfile(self.request.user)
+
+        if get_userprofile:
+            get_userprofile.userContact = get_userprofile.userContact[
+                0] if get_userprofile.userContact else ""
+            get_userprofile.userAddress = get_userprofile.userAddress[
+                0] if get_userprofile.userAddress else ""
+
+        for index, fieldname in enumerate(list(self.form_class().declared_fields.keys())):
+            match fieldname:
+                case ("userContact" | "userAddress"):
+                    initial[fieldname] = str(
+                        getattr(get_userprofile, fieldname, ""))
+                case "image":
+                    pass
+                case _:
+                    initial[fieldname] = getattr(
+                        get_userprofile, fieldname, "")
+        return initial
+
+    def form_valid(self, form):
+        try:
+            if form.has_changed():
+                userProfile, is_created = user_profile.objects.get_or_create(
+                    user=self.request.user)
+
+                if is_created:
+                    userProfile = user_profile.objects.get(
+                        user=self.request.user)
+
+                for index, field in enumerate(form.changed_data):
+                    match field:
+                        case "userContact":
+                            try:
+                                contact, isContactCreated = user_contactNumber.objects.get_or_create(
+                                    contactNumber_of=userProfile, cellphone_number=form.cleaned_data[field])
+                                if not isContactCreated:
+                                    contact.save()
+                            except (IntegrityError, Exception) as e:
+                                messages.error(
+                                    self.request, f"Contact Number {form.cleaned_data[field]} is already in use.")
+                                return self.form_invalid(form)
+
+                        case "userAddress":
+                            try:
+                                address, isAddressCreated = user_address.objects.get_or_create(
+                                    location_of=userProfile, address=form.cleaned_data[field])
+                                if not isAddressCreated:
+                                    address.save()
+                            except (IntegrityError, Exception) as e:
+                                return self.form_invalid(form)
+
+                        case "image":
+                            image, isImageCreated = user_photo.objects.get_or_create(
+                                photo_of=userProfile, image=form.cleaned_data[field])
+                            if not isImageCreated:
+                                image.save()
+
+                        case _:
+                            setattr(userProfile, field,
+                                    form.cleaned_data[field])
+                userProfile.save()
+                return super().form_valid(form)
+
+            return super().form_valid(form)
+        except ValidationError as e:
+            match list(e.message_dict.keys())[0]:
+                # case ("photo_tooBig") as get_error_message:
+                #     messages.error(
+                #         self.request, e.message_dict[get_error_message][0])
+                #     return self.form_invalid(form)
+                case _:
+                    messages.error(
+                        self.request, "Failed to update your profile. Please try again.")
+                    return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, "tangina")
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Edit Profile"
+
+        try:
+            a = user_profile.objects.get(user=self.request.user)
+            context["userimage"] = a.user_pic.first()
+        except:
+            pass
+
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class userChangePassword(FormView):
+    template_name = "usersPortal/profile/changePassword.html"
+    success_url = "/users/Profile/"
+    form_class = changePasswordForm
+
+    def form_valid(self, form):
+        try:
+            oldpassword = form.cleaned_data["oldpassword"]
+            newpassword = form.cleaned_data["newpassword"]
+            confirmpassword = form.cleaned_data["confirmpassword"]
+
+            if newpassword == confirmpassword:
+                if self.request.user.check_password(oldpassword):
+                    self.request.user.set_password(newpassword)
+                    self.request.user.save()
+                    self.request.user.refresh_from_db()
+                    messages.success(
+                        self.request, "Password is changed successfully.")
+                    return super().form_valid(form)
+
+                messages.warning(self.request, "Old password is incorrect.")
+                return self.form_invalid(form)
+            messages.warning(
+                self.request, "New password and confirm new password did not match. Try again.")
+            return self.form_invalid(form)
+
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Change Password"
         return context

@@ -1,6 +1,6 @@
 from django.db import models, transaction
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.core.validators import RegexValidator
 from django.utils.translation import gettext_lazy as _
 from datetime import date, datetime
@@ -89,21 +89,21 @@ class User(AbstractBaseUser, PermissionsMixin):
         try:
             validate_email(self.email)
 
-            if self.is_student and not (self.is_staff or self.is_superuser or self.is_registrar or self.validator_account):
-                pass
-            elif self.is_staff and not (self.is_student or self.is_registrar or self.validator_account):
-                pass
-            elif self.is_superuser and not (self.is_student or self.is_registrar or self.validator_account):
-                pass
-            elif self.is_registrar and not (self.is_staff or self.is_superuser or self.is_student or self.validator_account):
-                pass
-            elif self.validator_account and not (self.is_staff or self.is_superuser or self.is_student or self.is_registrar):
-                pass
-            else:
-                raise ValidationError(
-                    {'invalid_usertype': _(
-                        'You are not allowed to have this kind of user type.')}
-                )
+            # if self.is_student and not (self.is_staff or self.is_superuser or self.is_registrar or self.validator_account):
+            #     pass
+            # elif self.is_staff and not (self.is_student or self.is_registrar or self.validator_account):
+            #     pass
+            # elif self.is_superuser and not (self.is_student or self.is_registrar or self.validator_account):
+            #     pass
+            # elif self.is_registrar and not (self.is_staff or self.is_superuser or self.is_student or self.validator_account):
+            #     pass
+            # elif self.validator_account and not (self.is_staff or self.is_superuser or self.is_student or self.is_registrar):
+            #     pass
+            # else:
+            #     raise ValidationError(
+            #         {'invalid_usertype': _(
+            #             'You are not allowed to have this kind of user type.')}
+            #     )
         except EmailNotValidError as e:
             raise ValidationError(
                 {'invalid_email': _('Email is invalid. Try again.')}
@@ -149,6 +149,7 @@ class user_address(models.Model):
 
     class Meta:
         ordering = ["-date_created"]
+        unique_together = ['address', 'location_of']
 
     def __str__(self):
         return self.address
@@ -181,6 +182,22 @@ class user_photo(models.Model):
 
     def __str__(self):
         return self.photo_of.first_name
+
+    # def clean(self):
+    #     try:
+    #         if self.image.size > 2*1024*1024:
+    #             raise ValidationError(
+    #                 {'photo_tooBig': _(
+    #                     "File size is too large. 2mb is the maximum allowed size.")}
+    #             )
+    #     except Exception as e:
+    #         raise ValidationError(
+    #             {'photo_validationError_failed': _(e)}
+    #         )
+
+    # def save(self, *args, **kwargs):
+    #     self.full_clean()
+    #     return super().save(*args, **kwargs)
 
 
 class user_profile(models.Model):
