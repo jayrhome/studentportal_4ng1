@@ -24,6 +24,7 @@ from django.db import IntegrityError
 from studentportal.views import student_access_only
 from . models import *
 from adminportal.views import superuser_only
+from registrarportal.views import registrar_only
 
 
 User = get_user_model()
@@ -603,7 +604,7 @@ class create_registrarAccount(FormView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(registrar_only, login_url="studentportal:index")], name="dispatch")
 class create_validatorAccount(FormView):
     template_name = "usersPortal/accountRegistration.html"
     success_url = "/users/create_validatorAccount/"

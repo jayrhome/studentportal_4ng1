@@ -403,3 +403,22 @@ class school_events(models.Model):
 
     def __str__(self):
         return self.event_name
+
+
+class manager_studentDocument(models.Manager):
+    # Return active documents
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
+class studentDocument(models.Model):
+    documentName = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
+    date_created = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now_add=True)
+
+    objects = models.Manager()
+    activeObjects = manager_studentDocument()
+
+    def __str__(self):
+        return self.documentName
