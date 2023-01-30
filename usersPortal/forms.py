@@ -69,6 +69,6 @@ class changePasswordForm(forms.Form):
     oldpassword = forms.CharField(
         label="Old Password", widget=forms.PasswordInput)
     newpassword = forms.CharField(
-        label="New Password", widget=forms.PasswordInput(attrs={"onchange": "np()"}))
+        label="New Password", widget=forms.PasswordInput(attrs={"onkeydown": "np(this)"}))
     confirmpassword = forms.CharField(
-        label="Confirm New Password", widget=forms.PasswordInput(attrs={"onchange": "cp()"}))
+        label="Confirm New Password", widget=forms.PasswordInput(attrs={"onkeydown": "cp(this)"}))

@@ -50,6 +50,7 @@
                 </div>
 
                 <input type="submit" value="Create" class="btn_create btn-block mb-3">
+                {% if user.is_superuser %} <a href="{% url 'adminportal:index' %}" class="btn_create btn-block mb-3" > Back </a> {% endif %}
             </div>
 
         </form>

@@ -42,52 +42,54 @@
 
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark p-0 d-flex flex-column">
-        <div class="container py-3 justify-content-start">
-            <div class="logo">logo</div>
-            <a class="navbar-brand" href="#">Newfangled</a>
-        </div>
-        <div class="container-fluid" style="background: #173979">
-            <div class="container px-0 px-md-2 py-2 py-md-1" >
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon">
-                        
-                    </span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav w-100 mb-2 mb-lg-0 d-flex">
-                        <li class="nav-item">
-                            <a href="{% url 'studentportal:index' %}" class="nav-link"> Home </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#" class="nav-link"> Courses </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#" class="nav-link"> About Us </a> <!-- redirect to about us page -->
-                        </li>
-    
-                        <li class="nav-item ms-auto d-flex">
-                            {% if user.is_authenticated %}
-                            <a href="#" class="nav-link text-white"> {{user.display_name|truncatewords:1}} </a>
-                            <a href="{% url 'studentportal:admission_details' %}" class="nav-link"> Applications </a>
-                            <a href="{% url 'usersPortal:account_profile' %}" class="nav-link"> Profile </a>
-                            <a href="{% url 'usersPortal:logout' %}" class="nav-link"> Logout </a> &nbsp;
-                            {% else %}
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'usersPortal:login' %}" class="nav-link"> Login </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{% url 'usersPortal:create_useraccount' %}" class="nav-link"> Create Account </a>
-                            {% endif %}
-                        </li>
-                        
-                    </ul>
-                </div>
+    {% if not user.is_authenticated or user.is_student %}
+        <nav class="navbar navbar-expand-lg navbar-dark p-0 d-flex flex-column">
+            <div class="container py-3 justify-content-start">
+                <div class="logo">logo</div>
+                <a class="navbar-brand" href="#">Newfangled</a>
             </div>
+            <div class="container-fluid" style="background: #173979">
+                <div class="container px-0 px-md-2 py-2 py-md-1" >
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon">
+                            
+                        </span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="navbar-nav w-100 mb-2 mb-lg-0 d-flex">
+                            <li class="nav-item">
+                                <a href="{% url 'studentportal:index' %}" class="nav-link"> Home </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link"> Courses </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link"> About Us </a> <!-- redirect to about us page -->
+                            </li>
+        
+                            <li class="nav-item ms-auto d-flex">
+                                {% if user.is_authenticated and user.is_student %}
+                                <a href="#" class="nav-link text-white"> {{user.display_name|truncatewords:1}} </a>
+                                <a href="{% url 'studentportal:admission_details' %}" class="nav-link"> Applications </a>
+                                <a href="{% url 'usersPortal:account_profile' %}" class="nav-link"> Profile </a>
+                                <a href="{% url 'usersPortal:logout' %}" class="nav-link"> Logout </a> &nbsp;
+                                {% else %}
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'usersPortal:login' %}" class="nav-link"> Login </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'usersPortal:create_useraccount' %}" class="nav-link"> Create Account </a>
+                                {% endif %}
+                            </li>
+                            
+                        </ul>
+                    </div>
+                </div>
 
-        </div>
-    </nav>
+            </div>
+        </nav>
+    {% endif %}
 
     {% block content %}{% endblock content %}
           

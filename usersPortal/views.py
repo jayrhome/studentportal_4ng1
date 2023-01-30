@@ -27,6 +27,7 @@ from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.db import IntegrityError
 from studentportal.views import student_access_only
 from . models import *
+from adminportal.views import superuser_only
 
 
 User = get_user_model()
@@ -429,11 +430,22 @@ class updateAccountProfile(FormView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+@method_decorator(login_required(login_url="usersPortal:login"), name="dispatch")
 class userChangePassword(FormView):
     template_name = "usersPortal/profile/changePassword.html"
     success_url = "/users/Profile/"
     form_class = changePasswordForm
+
+    def get_success_url(self):
+        # Custom redirection according to user type
+        if self.request.user.is_superuser:
+            return "/School_admin/"
+        elif self.request.user.is_registrar:
+            return super().get_success_url()
+        elif self.request.user.validator_account:
+            return super().get_success_url()
+        else:
+            return super().get_success_url()
 
     def form_valid(self, form):
         try:
@@ -466,3 +478,133 @@ class userChangePassword(FormView):
         context = super().get_context_data(**kwargs)
         context["title"] = "Change Password"
         return context
+
+
+@method_decorator(login_required(login_url="usersPortal:login"), name="dispatch")
+class authenticatedUser_resetPassword(TemplateView):
+    template_name = "usersPortal/forgotPassword/passwordReset.html"
+    http_method_names = ["get", "post"]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            if not User.update_lastUserTokenRequest(self.request.user):
+                messages.error(
+                    request, "Reset Password has failed! Please try again.")
+                return HttpResponseRedirect(reverse("usersPortal:resetpassword"))
+            self.request.user.refresh_from_db()
+            # forgotPassword_resetLink(self.request, user)
+            return HttpResponseRedirect(reverse("usersPortal:logout"))
+        except Exception as e:
+            messages.error(
+                request, "Reset Password has failed! Please try again.")
+            return HttpResponseRedirect(reverse("usersPortal:resetpassword"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Password Reset"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class create_adminAccount(FormView):
+    template_name = "usersPortal/accountRegistration.html"
+    success_url = "/users/create_adminAccount/"
+    form_class = accountRegistrationForm
+
+    def form_valid(self, form):
+        try:
+            email = form.cleaned_data["email"]
+            display_name = form.cleaned_data["display_name"]
+            password = form.cleaned_data["password"]
+            confirmpassword = form.cleaned_data["confirmpassword"]
+
+            if password == confirmpassword:
+                admin_user = User.objects.create_superuser(
+                    email=email,
+                    display_name=display_name,
+                    password=password
+                )
+                messages.success(
+                    self.request, f"{email} is successfully created.")
+                return super().form_valid(form)
+            else:
+                messages.warning(
+                    self.request, "Password and Confirm Password did not match.")
+                return self.form_invalid(form)
+        except ValidationError as e:
+            match list(e.message_dict.keys())[0]:
+                case ("invalid_email") as get_error_message:
+                    messages.error(
+                        self.request, e.message_dict[get_error_message][0])
+                    return self.form_invalid(form)
+                case _:
+                    messages.error(
+                        self.request, "An error has occurred. Please try again.")
+                    return self.form_invalid(form)
+        except Exception as e:
+            messages.warning(
+                self.request, "An error has occurred while submitting your data. Try again.")
+            # messages.error(self.request, e)
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Create Admin Account"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+class create_registrarAccount(FormView):
+    template_name = "usersPortal/accountRegistration.html"
+    success_url = "/users/create_registrarAccount/"
+    form_class = accountRegistrationForm
+
+    def form_valid(self, form):
+        try:
+            email = form.cleaned_data["email"]
+            display_name = form.cleaned_data["display_name"]
+            password = form.cleaned_data["password"]
+            confirmpassword = form.cleaned_data["confirmpassword"]
+
+            if password == confirmpassword:
+                admin_user = User.objects.create_registrarAccount(
+                    email=email,
+                    display_name=display_name,
+                    password=password
+                )
+                messages.success(
+                    self.request, f"{email} is successfully created.")
+                return super().form_valid(form)
+            else:
+                messages.warning(
+                    self.request, "Password and Confirm Password did not match.")
+                return self.form_invalid(form)
+        except ValidationError as e:
+            match list(e.message_dict.keys())[0]:
+                case ("invalid_email") as get_error_message:
+                    messages.error(
+                        self.request, e.message_dict[get_error_message][0])
+                    return self.form_invalid(form)
+                case _:
+                    messages.error(
+                        self.request, "An error has occurred. Please try again.")
+                    return self.form_invalid(form)
+        except Exception as e:
+            messages.warning(
+                self.request, "An error has occurred while submitting your data. Try again.")
+            # messages.error(self.request, e)
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Create Registrar Account"
+        return context
+
+
+# Add CBV to create a validator account
