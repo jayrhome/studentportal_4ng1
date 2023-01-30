@@ -11,6 +11,8 @@ urlpatterns = [
              name="create_adminAccount"),
         path("create_registrarAccount/", create_registrarAccount.as_view(),
              name="create_registrarAccount"),
+        path("create_validatorAccount/", create_validatorAccount.as_view(),
+             name="create_validatorAccount"),
     ])),
 
     path("Activate_account/<uidb64>/<token>",

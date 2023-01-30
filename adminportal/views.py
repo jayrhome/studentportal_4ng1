@@ -39,12 +39,12 @@ def compute_schoolyear(year):
     return sy
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class index(TemplateView):
     template_name = "adminportal/dashboard.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class shs_courses(TemplateView):
     # View courses
     template_name = "adminportal/Shs_courses/courses.html"
@@ -58,7 +58,7 @@ class shs_courses(TemplateView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class add_shs_track_cbv(FormView):
     template_name = "adminportal/Shs_courses/create_track.html"
     form_class = add_shs_track
@@ -113,7 +113,7 @@ class add_shs_track_cbv(FormView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class edit_track(FormView):
     template_name = "adminportal/Shs_courses/edit_track.html"
     form_class = add_shs_track
@@ -184,7 +184,7 @@ class edit_track(FormView):
             return super().dispatch(request, *args, **kwargs)
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class delete_track(TemplateView):
     template_name = "adminportal/Shs_courses/delete_track.html"
 
@@ -225,7 +225,7 @@ class delete_track(TemplateView):
             return super().dispatch(request, *args, **kwargs)
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class add_strand(FormView):
     success_url = "/School_admin/Courses/"
     form_class = add_strand_form
@@ -333,7 +333,7 @@ def strand_dispatch_func(request, strand_id):
         return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class edit_strand(FormView):
     template_name = "adminportal/Shs_courses/edit_strand.html"
     form_class = edit_strand_form
@@ -391,7 +391,7 @@ class edit_strand(FormView):
             return strand_dispatch_func(request, strand_id)
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class delete_strand(TemplateView):
     template_name = "adminportal/Shs_courses/delete_strand.html"
 
@@ -436,7 +436,7 @@ def validate_enrollmentSetup(request, sy):
         return False
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class admission_and_enrollment(TemplateView):
     # Used to create admission and enrollment form, then create the school year
     # Add Features to check if the given dates are properly set, if not, then it should inform the user/admin
@@ -527,7 +527,7 @@ class admission_and_enrollment(TemplateView):
         return school_year.objects.filter(id=sy.id).annotate(enrolled_students=enrolled_count, pending_enrollment=pending_enrollment_count, admitted_students=admission_count, pending_admission=pending_admission_count).first()
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class update_enrollment(FormView):
     # If enrollment and admission will start soon
     form_class = ea_setup_form
@@ -593,7 +593,7 @@ class update_enrollment(FormView):
         return force_str(urlsafe_base64_decode(uid))
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class extend_enrollment(FormView):
     # for extend button
     # still_accepting will set to True
@@ -670,7 +670,7 @@ class extend_enrollment(FormView):
         return force_str(urlsafe_base64_decode(uid))
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class postpone_enrollment(TemplateView):
     template_name = "adminportal/AdmissionAndEnrollment/postpone_enrollment.html"
 
@@ -723,7 +723,7 @@ class postpone_enrollment(TemplateView):
         return force_str(urlsafe_base64_decode(uid))
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class open_enrollment_admission(FormView):
     template_name = "adminportal/AdmissionAndEnrollment/setup_enrollment.html"
     form_class = ea_setup_form
@@ -817,7 +817,7 @@ class open_enrollment_admission(FormView):
             return super().dispatch(request, *args, **kwargs)
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class adm_details(DetailView):
     # Get the admission details of any admission status
     template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/adm_details.html"
@@ -1182,7 +1182,7 @@ class adm_details(DetailView):
             return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class admission(ListView):
     # Get the list of pending admission using the latest school year
     template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/admission.html"
@@ -1211,7 +1211,7 @@ class admission(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class admitted_students(ListView):
     # Get the list of admitted students from all school year
     template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/admitted.html"
@@ -1234,7 +1234,7 @@ class admitted_students(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class review_admissionList(ListView):
     # Get the list of for review admission from all school year
     template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/for_reviewList.html"
@@ -1257,7 +1257,7 @@ class review_admissionList(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class denied_admissionList(ListView):
     # Get the list of denied admissions with no reviews from all school year
     template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/denied_admissions.html"
@@ -1280,7 +1280,7 @@ class denied_admissionList(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class hold_admissionList(ListView):
     # Get the list of hold admission, applicable to validated and denied = True admission.
     # Applicable to admission with validated status and no valid enrollment status.
@@ -1329,7 +1329,7 @@ def dts_to_list(val):
         return False
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class pending_enrollment_list(ListView):
     # Get the list of pending enrollment, applicable to valid admissions only.
     template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrollment.html"
@@ -1396,7 +1396,7 @@ class pending_enrollment_list(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class enrolled_students(ListView):
     # Get the list of enrolled students from all school year
     template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrolled_students.html"
@@ -1459,7 +1459,7 @@ class enrolled_students(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class for_review_enrollmentList(ListView):
     # Get the list of enrollments for review from all school year
     template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/for_review_enrollments.html"
@@ -1522,7 +1522,7 @@ class for_review_enrollmentList(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class denied_enrollment_list(ListView):
     # Get the list of denied enrollments with no reviews
     template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/denied_enrollmentList.html"
@@ -1585,7 +1585,7 @@ class denied_enrollment_list(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class hold_enrollment_lists(ListView):
     # Get the list of hold enrollments
     template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/hold_enrollmentList.html"
@@ -1648,7 +1648,7 @@ class hold_enrollment_lists(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class enrollment_details(DetailView):
     template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrollment_details.html"
     context_object_name = "stud_enrollment_details"
@@ -1811,7 +1811,7 @@ class enrollment_details(DetailView):
         return student_enrollment_details.validObjects.all()
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class upcoming_school_events(ListView):
     # Get the list of upcoming school events, order by start_date and date_created
     template_name = "adminportal/school_events_HTMLs/upcoming_school_events.html"
@@ -1829,7 +1829,7 @@ class upcoming_school_events(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class ongoing_school_events(ListView):
     # Get the list of ongoing school events, order by start_date and date_created
     template_name = "adminportal/school_events_HTMLs/ongoing_school_events.html"
@@ -1847,7 +1847,7 @@ class ongoing_school_events(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class previous_school_events(ListView):
     # Get the list of ongoing school events, order by start_date and date_created
     template_name = "adminportal/school_events_HTMLs/previous_school_events.html"
@@ -1865,61 +1865,61 @@ class previous_school_events(ListView):
         return context
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class add_event(TemplateView):
     template_name = "adminportal/school_events_HTMLs/add_events.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class valid_student_accounts(TemplateView):
     template_name = "adminportal/account_HTMLs/valid_student_accounts.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class invalid_student_accounts(TemplateView):
     template_name = "adminportal/account_HTMLs/invalid_student_accounts.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class honor_students(TemplateView):
     template_name = "adminportal/account_HTMLs/honor_students.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class get_subject_lists(TemplateView):
     template_name = "adminportal/subjects_HTMLs/subject_lists.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class add_subject(TemplateView):
     template_name = "adminportal/subjects_HTMLs/add_subject.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class update_subject(TemplateView):
     template_name = "adminportal/subjects_HTMLs/update_subject.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class assign_subject_teachers(TemplateView):
     template_name = "adminportal/subjects_HTMLs/assign_subject_teachers.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class get_section_lists(TemplateView):
     template_name = "adminportal/section_HTMLs/section_list.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class add_section(TemplateView):
     template_name = "adminportal/section_HTMLs/add_section.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class school_teachers(TemplateView):
     template_name = "adminportal/system_users/teacher_list.html"
 
 
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class grade_formula(TemplateView):
     template_name = "adminportal/grades/grade_formula.html"
