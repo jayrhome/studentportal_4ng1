@@ -14,5 +14,9 @@ class documentRequest(models.Model):
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["scheduled_date"]
+        unique_together = ["document", "scheduled_date"]
+
     def __str__(self):
         return f"{self.document.documentName} Request by - {self.request_by.display_name}"

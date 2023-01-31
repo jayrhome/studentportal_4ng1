@@ -18,4 +18,11 @@ urlpatterns = [
         re_path(r"Enrollment_details/(?:(?P<pk>[0-9]+)/)?$",
                 submitted_enrollment_details.as_view(), name="enrollment_details"),
     ])),
+
+    path("DocumentRequests/", include([
+        path("", view_myDocumentRequest.as_view(),
+             name="view_myDocumentRequest"),
+        path("requestdocument/", create_documentRequest.as_view(),
+             name="create_documentRequest"),
+    ])),
 ]

@@ -11,7 +11,7 @@ from django.views.generic.edit import FormView, CreateView
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.db import IntegrityError, transaction
-from django.db.models import Prefetch, Count, Q
+from django.db.models import Prefetch, Count, Q, Case, When, Value
 from . forms import *
 from django.template.loader import render_to_string
 from django.conf import settings
@@ -25,6 +25,8 @@ from formtools.wizard.views import SessionWizardView
 from datetime import date, datetime
 from smtplib import SMTPException
 from usersPortal.models import user_photo
+from . models import *
+from . email_token import *
 
 User = get_user_model()
 
@@ -726,3 +728,62 @@ class submitted_enrollment_details(FormView):
         except Exception as e:
             # messages.error(request, e)
             return HttpResponseRedirect(reverse("studentportal:index"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class view_myDocumentRequest(TemplateView):
+    template_name = "studentportal/documentRequests/requestedDocuments.html"
+    http_method_names = ["get"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Requested Documents"
+
+        context["requestedDocuments"] = documentRequest.objects.annotate(
+            can_resched=Case(
+                When(scheduled_date__gte=date.today(), then=Value(True)),
+                default=Value(False),
+            )
+        ).filter(request_by=self.request.user).only("document", "scheduled_date", "last_modified")
+
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class create_documentRequest(FormView):
+    template_name = "studentportal/documentRequests/makeDocumentRequest.html"
+    form_class = makeDocumentRequestForm
+    success_url = "/DocumentRequests/"
+
+    def form_valid(self, form):
+        try:
+            checkDocu = documentRequest.objects.filter(document__id=int(
+                form.cleaned_data["documents"]), scheduled_date__gte=date.today()).first()
+            if checkDocu:
+                messages.warning(
+                    self.request, f"You have an upcoming schedule to claim your {checkDocu.document.documentName} on {(checkDocu.scheduled_date).strftime('%A, %B %d, %Y')}.")
+                return self.form_invalid(form)
+            documentRequest.objects.create(
+                document=studentDocument.objects.get(
+                    pk=int(form.cleaned_data["documents"])),
+                request_by=self.request.user,
+                scheduled_date=form.cleaned_data["scheduled_date"]
+            )
+            # email_requestDocument(self.request, self.request.user, {"type": form.cleaned_data["documents"], "schedule": (
+            #     form.cleaned_data["scheduled_date"]).strftime("%A, %B %d, %Y")})
+            messages.success(self.request, "Document request is sent.")
+            return super().form_valid(form)
+
+        except IntegrityError:
+            messages.error(
+                self.request, "Invalid to request same document at the same time.")
+            return self.form_invalid(form)
+
+        except Exception as e:
+            messages.error(self.request, e)
+            return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Request a Document"
+        return context

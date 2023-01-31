@@ -48,6 +48,11 @@ def validate_cp_number(number):
         raise ValidationError("Invalid Contact Number")
 
 
+def validate_schedule(dt):
+    if dt <= date.today():
+        raise ValidationError("Invalid Date.")
+
+
 class admission_personal_details(forms.Form):
     first_name = forms.CharField(label="First Name", max_length=20)
     middle_name = forms.CharField(label="Middle Name", max_length=20)
@@ -206,3 +211,10 @@ class enrollment_form_revision(forms.Form):
         label="Report card", help_text="Report card from previous year or quarter", required=False)
     profile_image = forms.ImageField(
         label="Student Photo", help_text="White background with no filters", required=False)
+
+
+class makeDocumentRequestForm(forms.Form):
+    documents = forms.TypedChoiceField(
+        label="Document Type", choices=studentDocument.activeObjects.values_list("pk", "documentName"), coerce=str)
+    scheduled_date = forms.DateField(label="Schedule", validators=[
+                                     validate_schedule], widget=forms.DateInput(attrs={'type': 'date'}))
