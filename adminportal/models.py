@@ -412,7 +412,7 @@ class manager_studentDocument(models.Manager):
 
 
 class studentDocument(models.Model):
-    documentName = models.CharField(max_length=50)
+    documentName = models.CharField(max_length=50, unique=True)
     is_active = models.BooleanField(default=True)
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
@@ -422,3 +422,6 @@ class studentDocument(models.Model):
 
     def __str__(self):
         return self.documentName
+
+    class Meta:
+        ordering = ["documentName", "-date_created", "-last_modified"]

@@ -52,3 +52,7 @@ class ea_setup_form(forms.Form):
 class extend_enrollment(forms.Form):
     end_date = forms.DateField(label="End Date", validators=[
                                setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
+
+
+class makeDocument(forms.Form):
+    documentName = forms.CharField(label="Document Name", max_length=50)

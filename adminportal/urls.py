@@ -97,6 +97,13 @@ urlpatterns = [
 
     path("grade_computation/", include([
         path("", grade_formula.as_view(), name="gradeformula"),
-    ]))
+    ])),
+
+    path("schoolDocuments/", include([
+        path("", view_schoolDocuments_canRequest.as_view(), name="schoolDocuments"),
+        re_path(r"AddOrEdit/(?:(?P<docuId>[0-9]+)/)?$",
+                addEditDocument.as_view(), name="addEditDocument"),
+        path("hideDocument/<pk>/", hideDocument.as_view(), name="hideDocument"),
+    ])),
 
 ]

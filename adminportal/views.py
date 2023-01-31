@@ -1923,3 +1923,113 @@ class school_teachers(TemplateView):
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class grade_formula(TemplateView):
     template_name = "adminportal/grades/grade_formula.html"
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class view_schoolDocuments_canRequest(TemplateView):
+    template_name = "adminportal/schoolDocuments/ListOfDocuments.html"
+    http_method_names = ["get"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "School Documents Available"
+
+        context["availableDocuments"] = studentDocument.activeObjects.values(
+            "documentName", "id")
+
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class addEditDocument(FormView):
+    template_name = "adminportal/schoolDocuments/documentDetails.html"
+    success_url = "/School_admin/schoolDocuments/"
+    form_class = makeDocument
+
+    def form_valid(self, form):
+        documentName = form.cleaned_data["documentName"]
+        try:
+            if "docuId" in self.kwargs:
+                # If editing the document
+                self.docuObj.documentName = documentName
+                self.docuObj.save()
+                messages.success(self.request, "Updated Successfully.")
+                return super().form_valid(form)
+
+            else:
+                # if adding a document
+                self.docuObj = studentDocument.objects.filter(
+                    documentName=documentName, is_active=False).first()
+                if self.docuObj:
+                    # If the document name exist but no longer active, then reactivate it.
+                    self.docuObj.is_active = True
+                    self.docuObj.save()
+                else:
+                    # if the document name does not exist or unique, then insert it.
+                    studentDocument.objects.create(documentName=documentName)
+                messages.success(self.request, "Added successfully.")
+                return super().form_valid(form)
+        except IntegrityError:
+            messages.error(self.request, f"{documentName} already exist.")
+            return self.form_invalid(form)
+        except Exception as e:
+            messages.error(
+                self.request, "Error has occurred while saving. Please try again.")
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if "docuId" in self.kwargs:
+            initial["documentName"] = self.docuObj.documentName
+        return initial
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            if "docuId" in self.kwargs:
+                self.docuObj = studentDocument.activeObjects.filter(
+                    pk=int(self.kwargs["docuId"])).first()
+                if self.docuObj:
+                    return super().dispatch(request, *args, **kwargs)
+                messages.warning(request, "Document does not exist.")
+                return HttpResponseRedirect(reverse("adminportal:schoolDocuments"))
+            return super().dispatch(request, *args, **kwargs)
+        except Exception as e:
+            return HttpResponseRedirect(reverse("adminportal:schoolDocuments"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Add/Edit Document"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class hideDocument(TemplateView):
+    template_name = "adminportal/schoolDocuments/hideDocumentConfirmation.html"
+    http_method_names = ["get", "post"]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            self.hideThisObj.is_active = False
+            self.hideThisObj.save()
+            messages.success(request, "Document is now hidden.")
+            return HttpResponseRedirect(reverse("adminportal:schoolDocuments"))
+        except Exception as e:
+            messages.warning(request, e)
+            return HttpResponseRedirect(reverse("adminportal:schoolDocuments"))
+
+    def dispatch(self, request, *args, **kwargs):
+        if studentDocument.activeObjects.filter(pk=int(self.kwargs["pk"])).exists():
+            self.hideThisObj = studentDocument.objects.get(
+                pk=int(self.kwargs["pk"]))
+            return super().dispatch(request, *args, **kwargs)
+        messages.warning(request, "Document does not exist.")
+        return HttpResponseRedirect(reverse("adminportal:schoolDocuments"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Hide Document"
+        context["documentName"] = self.hideThisObj.documentName
+        return context
