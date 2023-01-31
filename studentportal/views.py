@@ -24,9 +24,18 @@ from adminportal.models import *
 from formtools.wizard.views import SessionWizardView
 from datetime import date, datetime
 from smtplib import SMTPException
-
+from usersPortal.models import user_photo
 
 User = get_user_model()
+
+
+def load_userPic(user):
+    try:
+        user_profilePicture = user_photo.objects.filter(
+            photo_of=user.profile).only("image").first()
+    except Exception as e:
+        user_profilePicture = ""
+    return user_profilePicture
 
 
 def not_authenticated_user(user):
@@ -65,28 +74,34 @@ class index(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Newfangled Senior High School"
+
         context["courses"] = shs_track.objects.filter(is_deleted=False).prefetch_related(Prefetch(
             "track_strand", queryset=shs_strand.objects.filter(is_deleted=False).order_by("strand_name"), to_attr="strands")).order_by("track_name")
+
         context["contacts"] = school_contact_number.objects.filter(
             is_deleted=False).first()
+
         context["emails"] = school_email.objects.filter(
             is_deleted=False).first()
 
-        context["enroll_now"] = self.enroll_now(self.request)
+        # context["enroll_now"] = self.enroll_now(self.request)
 
-        context["sy"] = "S.Y. %s" % self.determine_valid_sy(
-        ) if self.determine_valid_sy() else False
+        # context["sy"] = "S.Y. %s" % self.determine_valid_sy(
+        # ) if self.determine_valid_sy() else False
 
-        if context["sy"]:
-            # if the latest school year is valid
-            if context["enroll_now"] == "enroll":
-                context["end_date_enrollment"] = enrollment_admission_setup.objects.get(
-                    ea_setup_sy__sy=self.determine_valid_sy())
-            elif context["enroll_now"] == "start_soon":
-                context["start_date_enrollment"] = enrollment_admission_setup.objects.get(
-                    ea_setup_sy__sy=self.determine_valid_sy())
-            else:
-                pass
+        # if context["sy"]:
+        #     # if the latest school year is valid
+        #     if context["enroll_now"] == "enroll":
+        #         context["end_date_enrollment"] = enrollment_admission_setup.objects.get(
+        #             ea_setup_sy__sy=self.determine_valid_sy())
+        #     elif context["enroll_now"] == "start_soon":
+        #         context["start_date_enrollment"] = enrollment_admission_setup.objects.get(
+        #             ea_setup_sy__sy=self.determine_valid_sy())
+        #     else:
+        #         pass
+
+        context["user_profilePicture"] = load_userPic(
+            self.request.user) if self.request.user.is_authenticated else ""
 
         return context
 
@@ -232,6 +247,10 @@ class admission_application(SessionWizardView):
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form, **kwargs)
         context['title'] = "Student Admission"
+
+        context["user_profilePicture"] = load_userPic(
+            self.request.user) if self.request.user.is_authenticated else ""
+
         return context
 
     def dispatch(self, request, *args, **kwargs):
@@ -382,6 +401,8 @@ class enrollment_application(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = "Enrollment Application"
+        context["user_profilePicture"] = load_userPic(
+            self.request.user) if self.request.user.is_authenticated else ""
         return context
 
     def no_existing_enrollment_details(self, sy):
@@ -473,6 +494,9 @@ class submitted_admission_details(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = "Admission Details"
+
+        context["user_profilePicture"] = load_userPic(
+            self.request.user) if self.request.user.is_authenticated else ""
 
         try:
             stud_admission_obj = student_admission_details.objects.filter(
@@ -620,6 +644,9 @@ class submitted_enrollment_details(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Enrollment Details"
+
+        context["user_profilePicture"] = load_userPic(
+            self.request.user) if self.request.user.is_authenticated else ""
 
         try:
             # Get the list of enrolled sy to display on a button

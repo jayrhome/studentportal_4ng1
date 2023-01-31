@@ -64,15 +64,23 @@
                                 <a href="#" class="nav-link"> Courses </a>
                             </li>
                             <li class="nav-item">
-                                <a href="#" class="nav-link"> About Us </a> <!-- redirect to about us page -->
+                                <a href="#" class="nav-link"> Contact Us </a> <!-- redirect to about us page -->
                             </li>
         
                             <li class="nav-item ms-auto d-flex">
                                 {% if user.is_authenticated and user.is_student %}
-                                <a href="#" class="nav-link text-white"> {{user.display_name|truncatewords:1}} </a>
-                                <a href="{% url 'studentportal:admission_details' %}" class="nav-link"> Applications </a>
-                                <a href="{% url 'usersPortal:account_profile' %}" class="nav-link"> Profile </a>
-                                <a href="{% url 'usersPortal:logout' %}" class="nav-link"> Logout </a> &nbsp;
+                                    <a href="{% url 'studentportal:admission_details' %}" class="nav-link"> Applications </a>
+                                    <a href="#" class="nav-link"> Classes </a>
+                                    <a href="#" class="nav-link"> Documents </a>
+                                    <a href="{% url 'usersPortal:logout' %}" class="nav-link"> Logout </a> &nbsp;
+                                    <a href="{% url 'usersPortal:account_profile' %}" class="nav-link text-white">
+                                        {% if user_profilePicture %}
+                                            <img src="{{user_profilePicture.image.url}}" class="nav-link avatar" alt="" id="" height="70">
+                                        {% else %}
+                                            <img src="Media/user_images/default_male.png" class="nav-link avatar" alt="" id="">
+                                        {% endif %}
+                                        {{user.display_name|truncatewords:1}}
+                                    </a>
                                 {% else %}
                             </li>
                             <li class="nav-item">

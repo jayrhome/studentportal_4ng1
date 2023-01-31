@@ -34,6 +34,15 @@ def not_authenticated_user(user):
     return not user.is_authenticated
 
 
+def load_userPic(user):
+    try:
+        user_profilePicture = user_photo.objects.filter(
+            photo_of=user.profile).only("image").first()
+    except Exception as e:
+        user_profilePicture = ""
+    return user_profilePicture
+
+
 @login_required(login_url="usersPortal:login")
 def logout_user(request):
     auth_logout(request)
@@ -307,6 +316,9 @@ class userAccountProfile(TemplateView):
         context = super().get_context_data(**kwargs)
         context["title"] = "Profile"
 
+        context["user_profilePicture"] = load_userPic(
+            self.request.user) if self.request.user.is_authenticated else ""
+
         get_userDetails = user_profile.get_userProfile(self.request.user)
         if get_userDetails:
             context["userDetails"] = {
@@ -417,6 +429,9 @@ class updateAccountProfile(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Edit Profile"
+
+        context["user_profilePicture"] = load_userPic(
+            self.request.user) if self.request.user.is_authenticated else ""
 
         try:
             a = user_profile.objects.get(user=self.request.user)
