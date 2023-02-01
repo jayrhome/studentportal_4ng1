@@ -24,5 +24,7 @@ urlpatterns = [
              name="view_myDocumentRequest"),
         path("requestdocument/", create_documentRequest.as_view(),
              name="create_documentRequest"),
+        path("resched/<pk>", reschedDocumentRequest.as_view(),
+             name="reschedDocumentRequest"),
     ])),
 ]

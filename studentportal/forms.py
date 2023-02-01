@@ -218,3 +218,9 @@ class makeDocumentRequestForm(forms.Form):
         label="Document Type", choices=studentDocument.activeObjects.values_list("pk", "documentName"), coerce=str)
     scheduled_date = forms.DateField(label="Schedule", validators=[
                                      validate_schedule], widget=forms.DateInput(attrs={'type': 'date'}))
+
+
+class makeDocumentRequestForm(forms.Form):
+    documents = forms.CharField(max_length=50, disabled=True)
+    scheduled_date = forms.DateField(label="Schedule", validators=[
+                                     validate_schedule], widget=forms.DateInput(attrs={'type': 'date'}))

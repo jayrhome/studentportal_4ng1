@@ -743,6 +743,10 @@ class view_myDocumentRequest(TemplateView):
             can_resched=Case(
                 When(scheduled_date__gte=date.today(), then=Value(True)),
                 default=Value(False),
+            ),
+            is_cancelled=Case(
+                When(is_cancelledByRegistrar=True, then=Value(True)),
+                default=Value(False),
             )
         ).filter(request_by=self.request.user).only("document", "scheduled_date", "last_modified")
 
@@ -787,3 +791,42 @@ class create_documentRequest(FormView):
         context = super().get_context_data(**kwargs)
         context["title"] = "Request a Document"
         return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class reschedDocumentRequest(FormView):
+    template_name = "studentportal/documentRequests/reschedRequest.html"
+    form_class = makeDocumentRequestForm
+    success_url = "/DocumentRequests/"
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["documents"] = self.obj.document.documentName
+        initial["scheduled_date"] = self.obj.scheduled_date
+        return initial
+
+    def form_valid(self, form):
+        if form.has_changed():
+            with transaction.atomic():
+                update_request = documentRequest.objects.select_for_update().get(pk=self.obj.id)
+                update_request.scheduled_date = form.cleaned_data["scheduled_date"]
+                if update_request.is_cancelledByRegistrar:
+                    update_request.is_cancelledByRegistrar = False
+                update_request.save()
+
+            # email_requestDocument(self.request, self.request.user, {"type": form.cleaned_data["documents"], "schedule": (
+            #     form.cleaned_data["scheduled_date"]).strftime("%A, %B %d, %Y")})
+            return super().form_valid(form)
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Reschedule of Request"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        self.obj = documentRequest.objects.filter(
+            pk=int(self.kwargs["pk"]), scheduled_date__gte=date.today()).first()
+        if self.obj:
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseRedirect(reverse("studentportal:view_myDocumentRequest"))

@@ -12,7 +12,10 @@
             <p> Document: {{document.document}} </p>
             <p> Date Scheduled: {{document.scheduled_date|date:"l, M d, o"}}  </p>
             <p> Date Created: {{document.last_modified|date:"l, M d, o"}} </p>
-            {% if document.can_resched %} <a href="#" class="btn btn-primary btn-sm"> Re-schedule </a> {% endif %}
+            {% if document.can_resched %}
+                {% if document.is_cancelled %} <p> Registrar has cancelled your request. You can resched it to request again. </p> {% endif %}
+                <a href="{% url 'studentportal:reschedDocumentRequest' pk=document.id %}" class="btn btn-primary btn-sm"> Re-schedule </a>
+            {% endif %}
             <br>
         {% empty %}
             <p> No requested documents... </p>

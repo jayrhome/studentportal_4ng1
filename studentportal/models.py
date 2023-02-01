@@ -13,6 +13,7 @@ class documentRequest(models.Model):
     scheduled_date = models.DateField()
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
+    is_cancelledByRegistrar = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["scheduled_date"]
