@@ -748,7 +748,7 @@ class view_myDocumentRequest(TemplateView):
                 When(is_cancelledByRegistrar=True, then=Value(True)),
                 default=Value(False),
             )
-        ).filter(request_by=self.request.user).only("document", "scheduled_date", "last_modified")
+        ).filter(request_by=self.request.user).only("document", "scheduled_date")
 
         return context
 
