@@ -739,7 +739,7 @@ class view_myDocumentRequest(TemplateView):
         context = super().get_context_data(**kwargs)
         context["title"] = "Requested Documents"
 
-        context["requestedDocuments"] = documentRequest.objects.annotate(
+        ongoing_requests = documentRequest.objects.annotate(
             can_resched=Case(
                 When(scheduled_date__gte=date.today(), then=Value(True)),
                 default=Value(False),
@@ -748,7 +748,13 @@ class view_myDocumentRequest(TemplateView):
                 When(is_cancelledByRegistrar=True, then=Value(True)),
                 default=Value(False),
             )
-        ).filter(request_by=self.request.user).only("document", "scheduled_date")
+        ).filter(request_by=self.request.user, scheduled_date__gte=date.today()).only("document", "scheduled_date")
+
+        previous_requests = documentRequest.objects.annotate(can_resched=Case(default=Value(False)), is_cancelled=Case(
+            default=Value(False))).filter(request_by=self.request.user, scheduled_date__lt=date.today()).only("document", "scheduled_date")
+
+        context["requestedDocuments"] = ongoing_requests.union(
+            previous_requests, all=True)
 
         return context
 
