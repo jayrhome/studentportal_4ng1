@@ -97,23 +97,23 @@ def make_students():
         return e
 
 
-def make_sy():
-    try:
-        school_year.objects.create(sy="2022 - 2023")
-    except Exception as e:
-        return e
+# def make_sy():
+#     try:
+#         school_year.objects.create(sy="2022 - 2023")
+#     except Exception as e:
+#         return e
 
 
-def make_enrollment_setup():
-    try:
-        enrollment_admission_setup.objects.create(
-            ea_setup_sy=school_year.objects.latest("date_created"),
-            start_date=date.today(),
-            end_date=datetime.datetime.strptime(
-                "2023-01-01", "%Y-%m-%d").date()
-        )
-    except Exception as e:
-        return e
+# def make_enrollment_setup():
+#     try:
+#         enrollment_admission_setup.objects.create(
+#             ea_setup_sy=school_year.objects.latest("date_created"),
+#             start_date=date.today(),
+#             end_date=datetime.datetime.strptime(
+#                 "2023-01-01", "%Y-%m-%d").date()
+#         )
+#     except Exception as e:
+#         return e
 
 
 def make_scn():
@@ -159,309 +159,309 @@ def make_shs_track():
         return e
 
 
-def make_pending_admission():
-    try:
-        stud_user = [
-            "aai@gmail.com",
-            "ssi@gmail.com",
-            "ddi@gmail.com",
-            "ffi@gmail.com",
-            "ggi@gmail.com"
-        ]
-        sy = school_year.objects.latest("date_created")
-        s1 = shs_strand.objects.get(id=1)
-        s2 = shs_strand.objects.get(id=2)
+# def make_pending_admission():
+#     try:
+#         stud_user = [
+#             "aai@gmail.com",
+#             "ssi@gmail.com",
+#             "ddi@gmail.com",
+#             "ffi@gmail.com",
+#             "ggi@gmail.com"
+#         ]
+#         sy = school_year.objects.latest("date_created")
+#         s1 = shs_strand.objects.get(id=1)
+#         s2 = shs_strand.objects.get(id=2)
 
-        for user in stud_user:
-            student_admission_details.objects.create(
-                admission_owner=User.objects.get(email=user),
-                first_name=adm_details[0],
-                middle_name=adm_details[1],
-                last_name=adm_details[2],
-                sex=adm_details[3],
-                date_of_birth=adm_details[4],
-                birthplace=adm_details[5],
-                nationality=adm_details[6],
+#         for user in stud_user:
+#             student_admission_details.objects.create(
+#                 admission_owner=User.objects.get(email=user),
+#                 first_name=adm_details[0],
+#                 middle_name=adm_details[1],
+#                 last_name=adm_details[2],
+#                 sex=adm_details[3],
+#                 date_of_birth=adm_details[4],
+#                 birthplace=adm_details[5],
+#                 nationality=adm_details[6],
 
-                elem_name=adm_details[7],
-                elem_address=adm_details[8],
-                elem_region=adm_details[9],
-                elem_year_completed=adm_details[10],
-                elem_pept_passer=adm_details[11],
-                elem_pept_date_completion=adm_details[12],
-                elem_ae_passer=adm_details[13],
-                elem_ae_date_completion=adm_details[14],
-                elem_community_learning_center=adm_details[15],
-                elem_clc_address=adm_details[16],
+#                 elem_name=adm_details[7],
+#                 elem_address=adm_details[8],
+#                 elem_region=adm_details[9],
+#                 elem_year_completed=adm_details[10],
+#                 elem_pept_passer=adm_details[11],
+#                 elem_pept_date_completion=adm_details[12],
+#                 elem_ae_passer=adm_details[13],
+#                 elem_ae_date_completion=adm_details[14],
+#                 elem_community_learning_center=adm_details[15],
+#                 elem_clc_address=adm_details[16],
 
-                jhs_name=adm_details[17],
-                jhs_address=adm_details[18],
-                jhs_region=adm_details[19],
-                jhs_year_completed=adm_details[20],
-                jhs_pept_passer=adm_details[21],
-                jhs_pept_date_completion=adm_details[22],
-                jhs_ae_passer=adm_details[23],
-                jhs_ae_date_completion=adm_details[24],
-                jhs_community_learning_center=adm_details[25],
-                jhs_clc_address=adm_details[26],
+#                 jhs_name=adm_details[17],
+#                 jhs_address=adm_details[18],
+#                 jhs_region=adm_details[19],
+#                 jhs_year_completed=adm_details[20],
+#                 jhs_pept_passer=adm_details[21],
+#                 jhs_pept_date_completion=adm_details[22],
+#                 jhs_ae_passer=adm_details[23],
+#                 jhs_ae_date_completion=adm_details[24],
+#                 jhs_community_learning_center=adm_details[25],
+#                 jhs_clc_address=adm_details[26],
 
-                admission_sy=sy,
-                first_chosen_strand=s1,
-                second_chosen_strand=s2,
-            )
-        return student_admission_details.objects.filter(admission_owner__email__in=stud_user)
-    except Exception as e:
-        return e
-
-
-def make_valid_admission():
-    try:
-        stud_user = [
-            "hhi@gmail.com",
-            "jji@gmail.com",
-            "kki@gmail.com",
-            "lli@gmail.com",
-            "qqi@gmail.com"
-        ]
-        sy = school_year.objects.latest("date_created")
-        s1 = shs_strand.objects.get(id=1)
-        s2 = shs_strand.objects.get(id=2)
-
-        for user in stud_user:
-            student_admission_details.objects.create(
-                admission_owner=User.objects.get(email=user),
-                first_name=adm_details[0],
-                middle_name=adm_details[1],
-                last_name=adm_details[2],
-                sex=adm_details[3],
-                date_of_birth=adm_details[4],
-                birthplace=adm_details[5],
-                nationality=adm_details[6],
-
-                elem_name=adm_details[7],
-                elem_address=adm_details[8],
-                elem_region=adm_details[9],
-                elem_year_completed=adm_details[10],
-                elem_pept_passer=adm_details[11],
-                elem_pept_date_completion=adm_details[12],
-                elem_ae_passer=adm_details[13],
-                elem_ae_date_completion=adm_details[14],
-                elem_community_learning_center=adm_details[15],
-                elem_clc_address=adm_details[16],
-
-                jhs_name=adm_details[17],
-                jhs_address=adm_details[18],
-                jhs_region=adm_details[19],
-                jhs_year_completed=adm_details[20],
-                jhs_pept_passer=adm_details[21],
-                jhs_pept_date_completion=adm_details[22],
-                jhs_ae_passer=adm_details[23],
-                jhs_ae_date_completion=adm_details[24],
-                jhs_community_learning_center=adm_details[25],
-                jhs_clc_address=adm_details[26],
-
-                is_validated=True,
-                admission_sy=sy,
-                first_chosen_strand=s1,
-                second_chosen_strand=s2,
-            )
-        return student_admission_details.objects.filter(admission_owner__email__in=stud_user)
-    except Exception as e:
-        return e
+#                 admission_sy=sy,
+#                 first_chosen_strand=s1,
+#                 second_chosen_strand=s2,
+#             )
+#         return student_admission_details.objects.filter(admission_owner__email__in=stud_user)
+#     except Exception as e:
+#         return e
 
 
-def make_forReview_admission():
-    try:
-        stud_user = [
-            "wwi@gmail.com",
-            "eei@gmail.com",
-            "rri@gmail.com",
-            "tti@gmail.com",
-            "yyi@gmail.com"
-        ]
-        sy = school_year.objects.latest("date_created")
-        s1 = shs_strand.objects.get(id=1)
-        s2 = shs_strand.objects.get(id=2)
+# def make_valid_admission():
+#     try:
+#         stud_user = [
+#             "hhi@gmail.com",
+#             "jji@gmail.com",
+#             "kki@gmail.com",
+#             "lli@gmail.com",
+#             "qqi@gmail.com"
+#         ]
+#         sy = school_year.objects.latest("date_created")
+#         s1 = shs_strand.objects.get(id=1)
+#         s2 = shs_strand.objects.get(id=2)
 
-        for user in stud_user:
-            student_admission_details.objects.create(
-                admission_owner=User.objects.get(email=user),
-                first_name=adm_details[0],
-                middle_name=adm_details[1],
-                last_name=adm_details[2],
-                sex=adm_details[3],
-                date_of_birth=adm_details[4],
-                birthplace=adm_details[5],
-                nationality=adm_details[6],
+#         for user in stud_user:
+#             student_admission_details.objects.create(
+#                 admission_owner=User.objects.get(email=user),
+#                 first_name=adm_details[0],
+#                 middle_name=adm_details[1],
+#                 last_name=adm_details[2],
+#                 sex=adm_details[3],
+#                 date_of_birth=adm_details[4],
+#                 birthplace=adm_details[5],
+#                 nationality=adm_details[6],
 
-                elem_name=adm_details[7],
-                elem_address=adm_details[8],
-                elem_region=adm_details[9],
-                elem_year_completed=adm_details[10],
-                elem_pept_passer=adm_details[11],
-                elem_pept_date_completion=adm_details[12],
-                elem_ae_passer=adm_details[13],
-                elem_ae_date_completion=adm_details[14],
-                elem_community_learning_center=adm_details[15],
-                elem_clc_address=adm_details[16],
+#                 elem_name=adm_details[7],
+#                 elem_address=adm_details[8],
+#                 elem_region=adm_details[9],
+#                 elem_year_completed=adm_details[10],
+#                 elem_pept_passer=adm_details[11],
+#                 elem_pept_date_completion=adm_details[12],
+#                 elem_ae_passer=adm_details[13],
+#                 elem_ae_date_completion=adm_details[14],
+#                 elem_community_learning_center=adm_details[15],
+#                 elem_clc_address=adm_details[16],
 
-                jhs_name=adm_details[17],
-                jhs_address=adm_details[18],
-                jhs_region=adm_details[19],
-                jhs_year_completed=adm_details[20],
-                jhs_pept_passer=adm_details[21],
-                jhs_pept_date_completion=adm_details[22],
-                jhs_ae_passer=adm_details[23],
-                jhs_ae_date_completion=adm_details[24],
-                jhs_community_learning_center=adm_details[25],
-                jhs_clc_address=adm_details[26],
+#                 jhs_name=adm_details[17],
+#                 jhs_address=adm_details[18],
+#                 jhs_region=adm_details[19],
+#                 jhs_year_completed=adm_details[20],
+#                 jhs_pept_passer=adm_details[21],
+#                 jhs_pept_date_completion=adm_details[22],
+#                 jhs_ae_passer=adm_details[23],
+#                 jhs_ae_date_completion=adm_details[24],
+#                 jhs_community_learning_center=adm_details[25],
+#                 jhs_clc_address=adm_details[26],
 
-                admission_sy=sy,
-                first_chosen_strand=s1,
-                second_chosen_strand=s2,
-
-                is_denied=True
-            )
-
-        for_review_objs = student_admission_details.objects.filter(
-            admission_owner__email__in=stud_user)
-
-        for admission in for_review_objs:
-            for_review_admission.objects.create(
-                to_review=admission,
-                comment="Unknown School"
-            )
-
-        return student_admission_details.objects.filter(admission_owner__email__in=stud_user)
-    except Exception as e:
-        return e
+#                 is_validated=True,
+#                 admission_sy=sy,
+#                 first_chosen_strand=s1,
+#                 second_chosen_strand=s2,
+#             )
+#         return student_admission_details.objects.filter(admission_owner__email__in=stud_user)
+#     except Exception as e:
+#         return e
 
 
-def make_denied_admissions():
-    try:
-        stud_user = [
-            "uui@gmail.com",
-            "iii@gmail.com",
-            "ooi@gmail.com",
-            "ppi@gmail.com",
-            "zzi@gmail.com"
-        ]
-        sy = school_year.objects.latest("date_created")
-        s1 = shs_strand.objects.get(id=1)
-        s2 = shs_strand.objects.get(id=2)
+# def make_forReview_admission():
+#     try:
+#         stud_user = [
+#             "wwi@gmail.com",
+#             "eei@gmail.com",
+#             "rri@gmail.com",
+#             "tti@gmail.com",
+#             "yyi@gmail.com"
+#         ]
+#         sy = school_year.objects.latest("date_created")
+#         s1 = shs_strand.objects.get(id=1)
+#         s2 = shs_strand.objects.get(id=2)
 
-        for user in stud_user:
-            student_admission_details.objects.create(
-                admission_owner=User.objects.get(email=user),
-                first_name=adm_details[0],
-                middle_name=adm_details[1],
-                last_name=adm_details[2],
-                sex=adm_details[3],
-                date_of_birth=adm_details[4],
-                birthplace=adm_details[5],
-                nationality=adm_details[6],
+#         for user in stud_user:
+#             student_admission_details.objects.create(
+#                 admission_owner=User.objects.get(email=user),
+#                 first_name=adm_details[0],
+#                 middle_name=adm_details[1],
+#                 last_name=adm_details[2],
+#                 sex=adm_details[3],
+#                 date_of_birth=adm_details[4],
+#                 birthplace=adm_details[5],
+#                 nationality=adm_details[6],
 
-                elem_name=adm_details[7],
-                elem_address=adm_details[8],
-                elem_region=adm_details[9],
-                elem_year_completed=adm_details[10],
-                elem_pept_passer=adm_details[11],
-                elem_pept_date_completion=adm_details[12],
-                elem_ae_passer=adm_details[13],
-                elem_ae_date_completion=adm_details[14],
-                elem_community_learning_center=adm_details[15],
-                elem_clc_address=adm_details[16],
+#                 elem_name=adm_details[7],
+#                 elem_address=adm_details[8],
+#                 elem_region=adm_details[9],
+#                 elem_year_completed=adm_details[10],
+#                 elem_pept_passer=adm_details[11],
+#                 elem_pept_date_completion=adm_details[12],
+#                 elem_ae_passer=adm_details[13],
+#                 elem_ae_date_completion=adm_details[14],
+#                 elem_community_learning_center=adm_details[15],
+#                 elem_clc_address=adm_details[16],
 
-                jhs_name=adm_details[17],
-                jhs_address=adm_details[18],
-                jhs_region=adm_details[19],
-                jhs_year_completed=adm_details[20],
-                jhs_pept_passer=adm_details[21],
-                jhs_pept_date_completion=adm_details[22],
-                jhs_ae_passer=adm_details[23],
-                jhs_ae_date_completion=adm_details[24],
-                jhs_community_learning_center=adm_details[25],
-                jhs_clc_address=adm_details[26],
+#                 jhs_name=adm_details[17],
+#                 jhs_address=adm_details[18],
+#                 jhs_region=adm_details[19],
+#                 jhs_year_completed=adm_details[20],
+#                 jhs_pept_passer=adm_details[21],
+#                 jhs_pept_date_completion=adm_details[22],
+#                 jhs_ae_passer=adm_details[23],
+#                 jhs_ae_date_completion=adm_details[24],
+#                 jhs_community_learning_center=adm_details[25],
+#                 jhs_clc_address=adm_details[26],
 
-                admission_sy=sy,
-                first_chosen_strand=s1,
-                second_chosen_strand=s2,
+#                 admission_sy=sy,
+#                 first_chosen_strand=s1,
+#                 second_chosen_strand=s2,
 
-                is_denied=True
-            )
+#                 is_denied=True
+#             )
 
-        return student_admission_details.objects.filter(admission_owner__email__in=stud_user)
-    except Exception as e:
-        return e
+#         for_review_objs = student_admission_details.objects.filter(
+#             admission_owner__email__in=stud_user)
 
+#         for admission in for_review_objs:
+#             for_review_admission.objects.create(
+#                 to_review=admission,
+#                 comment="Unknown School"
+#             )
 
-def make_hold_admissions():
-    try:
-        stud_user = [
-            "xxi@gmail.com",
-            "cci@gmail.com",
-            "vvi@gmail.com",
-            "bbi@gmail.com",
-            "nni@gmail.com"
-        ]
-        sy = school_year.objects.latest("date_created")
-        s1 = shs_strand.objects.get(id=1)
-        s2 = shs_strand.objects.get(id=2)
-
-        for user in stud_user:
-            student_admission_details.objects.create(
-                admission_owner=User.objects.get(email=user),
-                first_name=adm_details[0],
-                middle_name=adm_details[1],
-                last_name=adm_details[2],
-                sex=adm_details[3],
-                date_of_birth=adm_details[4],
-                birthplace=adm_details[5],
-                nationality=adm_details[6],
-
-                elem_name=adm_details[7],
-                elem_address=adm_details[8],
-                elem_region=adm_details[9],
-                elem_year_completed=adm_details[10],
-                elem_pept_passer=adm_details[11],
-                elem_pept_date_completion=adm_details[12],
-                elem_ae_passer=adm_details[13],
-                elem_ae_date_completion=adm_details[14],
-                elem_community_learning_center=adm_details[15],
-                elem_clc_address=adm_details[16],
-
-                jhs_name=adm_details[17],
-                jhs_address=adm_details[18],
-                jhs_region=adm_details[19],
-                jhs_year_completed=adm_details[20],
-                jhs_pept_passer=adm_details[21],
-                jhs_pept_date_completion=adm_details[22],
-                jhs_ae_passer=adm_details[23],
-                jhs_ae_date_completion=adm_details[24],
-                jhs_community_learning_center=adm_details[25],
-                jhs_clc_address=adm_details[26],
-
-                is_validated=True,
-
-                admission_sy=sy,
-                first_chosen_strand=s1,
-                second_chosen_strand=s2,
-
-                is_denied=True
-            )
-
-        return student_admission_details.objects.filter(admission_owner__email__in=stud_user)
-    except Exception as e:
-        return e
+#         return student_admission_details.objects.filter(admission_owner__email__in=stud_user)
+#     except Exception as e:
+#         return e
 
 
-def make_admissions():
-    try:
-        make_pending_admission()
-        make_valid_admission()
-        make_forReview_admission()
-        make_denied_admissions()
-        make_hold_admissions()
-        return student_admission_details.objects.values('id', 'is_validated', 'is_denied')
-    except Exception as e:
-        return e
+# def make_denied_admissions():
+#     try:
+#         stud_user = [
+#             "uui@gmail.com",
+#             "iii@gmail.com",
+#             "ooi@gmail.com",
+#             "ppi@gmail.com",
+#             "zzi@gmail.com"
+#         ]
+#         sy = school_year.objects.latest("date_created")
+#         s1 = shs_strand.objects.get(id=1)
+#         s2 = shs_strand.objects.get(id=2)
+
+#         for user in stud_user:
+#             student_admission_details.objects.create(
+#                 admission_owner=User.objects.get(email=user),
+#                 first_name=adm_details[0],
+#                 middle_name=adm_details[1],
+#                 last_name=adm_details[2],
+#                 sex=adm_details[3],
+#                 date_of_birth=adm_details[4],
+#                 birthplace=adm_details[5],
+#                 nationality=adm_details[6],
+
+#                 elem_name=adm_details[7],
+#                 elem_address=adm_details[8],
+#                 elem_region=adm_details[9],
+#                 elem_year_completed=adm_details[10],
+#                 elem_pept_passer=adm_details[11],
+#                 elem_pept_date_completion=adm_details[12],
+#                 elem_ae_passer=adm_details[13],
+#                 elem_ae_date_completion=adm_details[14],
+#                 elem_community_learning_center=adm_details[15],
+#                 elem_clc_address=adm_details[16],
+
+#                 jhs_name=adm_details[17],
+#                 jhs_address=adm_details[18],
+#                 jhs_region=adm_details[19],
+#                 jhs_year_completed=adm_details[20],
+#                 jhs_pept_passer=adm_details[21],
+#                 jhs_pept_date_completion=adm_details[22],
+#                 jhs_ae_passer=adm_details[23],
+#                 jhs_ae_date_completion=adm_details[24],
+#                 jhs_community_learning_center=adm_details[25],
+#                 jhs_clc_address=adm_details[26],
+
+#                 admission_sy=sy,
+#                 first_chosen_strand=s1,
+#                 second_chosen_strand=s2,
+
+#                 is_denied=True
+#             )
+
+#         return student_admission_details.objects.filter(admission_owner__email__in=stud_user)
+#     except Exception as e:
+#         return e
+
+
+# def make_hold_admissions():
+#     try:
+#         stud_user = [
+#             "xxi@gmail.com",
+#             "cci@gmail.com",
+#             "vvi@gmail.com",
+#             "bbi@gmail.com",
+#             "nni@gmail.com"
+#         ]
+#         sy = school_year.objects.latest("date_created")
+#         s1 = shs_strand.objects.get(id=1)
+#         s2 = shs_strand.objects.get(id=2)
+
+#         for user in stud_user:
+#             student_admission_details.objects.create(
+#                 admission_owner=User.objects.get(email=user),
+#                 first_name=adm_details[0],
+#                 middle_name=adm_details[1],
+#                 last_name=adm_details[2],
+#                 sex=adm_details[3],
+#                 date_of_birth=adm_details[4],
+#                 birthplace=adm_details[5],
+#                 nationality=adm_details[6],
+
+#                 elem_name=adm_details[7],
+#                 elem_address=adm_details[8],
+#                 elem_region=adm_details[9],
+#                 elem_year_completed=adm_details[10],
+#                 elem_pept_passer=adm_details[11],
+#                 elem_pept_date_completion=adm_details[12],
+#                 elem_ae_passer=adm_details[13],
+#                 elem_ae_date_completion=adm_details[14],
+#                 elem_community_learning_center=adm_details[15],
+#                 elem_clc_address=adm_details[16],
+
+#                 jhs_name=adm_details[17],
+#                 jhs_address=adm_details[18],
+#                 jhs_region=adm_details[19],
+#                 jhs_year_completed=adm_details[20],
+#                 jhs_pept_passer=adm_details[21],
+#                 jhs_pept_date_completion=adm_details[22],
+#                 jhs_ae_passer=adm_details[23],
+#                 jhs_ae_date_completion=adm_details[24],
+#                 jhs_community_learning_center=adm_details[25],
+#                 jhs_clc_address=adm_details[26],
+
+#                 is_validated=True,
+
+#                 admission_sy=sy,
+#                 first_chosen_strand=s1,
+#                 second_chosen_strand=s2,
+
+#                 is_denied=True
+#             )
+
+#         return student_admission_details.objects.filter(admission_owner__email__in=stud_user)
+#     except Exception as e:
+#         return e
+
+
+# def make_admissions():
+#     try:
+#         make_pending_admission()
+#         make_valid_admission()
+#         make_forReview_admission()
+#         make_denied_admissions()
+#         make_hold_admissions()
+#         return student_admission_details.objects.values('id', 'is_validated', 'is_denied')
+#     except Exception as e:
+#         return e

@@ -42,16 +42,16 @@ class edit_strand_form(forms.Form):
         label="Strand Details", widget=forms.Textarea)
 
 
-class ea_setup_form(forms.Form):
-    start_date = forms.DateField(label="Start Date", validators=[
-                                 setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
-    end_date = forms.DateField(label="End Date", validators=[
-                               setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
+# class ea_setup_form(forms.Form):
+#     start_date = forms.DateField(label="Start Date", validators=[
+#                                  setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
+#     end_date = forms.DateField(label="End Date", validators=[
+#                                setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
 
 
-class extend_enrollment(forms.Form):
-    end_date = forms.DateField(label="End Date", validators=[
-                               setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
+# class extend_enrollment(forms.Form):
+#     end_date = forms.DateField(label="End Date", validators=[
+#                                setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
 
 
 class makeDocument(forms.Form):
