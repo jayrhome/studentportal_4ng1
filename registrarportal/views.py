@@ -69,3 +69,20 @@ class getList_documentRequest(ListView, DeletionMixin):
             self.cancel_this_request = documentRequest.registrarObjects.filter(
                 id=int(request.POST["pk"])).first()
         return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(registrar_only, login_url="studentportal:index")], name="dispatch")
+class view_schoolYears(ListView):
+    allow_empty = True
+    context_object_name = "listOfSchoolYear"
+    http_method_names = ["get"]
+    paginate_by = 1
+    template_name = "registrarPortal/schoolyear/listOfSchoolYear.html"
+
+    def get_queryset(self):
+        return schoolYear.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "School Years"
+        return context

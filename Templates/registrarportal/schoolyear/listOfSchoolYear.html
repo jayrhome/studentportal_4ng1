@@ -1,0 +1,58 @@
+{% extends 'registrarportal/schoolyear/base1.html' %}
+{% block content %}
+{% include 'registrarportal/messages/messages.html' %}
+
+
+<div class="container col-md-12">
+    {% for sy in listOfSchoolYear %}
+        <div id="yes">
+            {{sy.display_sy}}
+        </div>
+        <input type="text" id="tangina" value="{{sy.display_sy}}" hidden>
+    {% empty %}
+        <p> No School Year... </p>
+    {% endfor %}
+   
+    <a href="{% url 'registrarportal:dashboard' %}" class="btn btn-primary"> Back </a>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm"> Prev </a>
+            {% endif %}
+
+            {% block pagination %}
+                {% for page_number in page_obj.paginator.get_elided_page_range %}
+                    {% if page_number == page_obj.paginator.ELLIPSIS %}
+                        {{page_number}}
+                    {% else %}
+                        <a href="?page={{page_number}}" class="btn btn-secondary btn-sm"> {{page_number}} </a>
+                    {% endif %}
+                {% endfor %}
+            {% endblock %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm"> Next </a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+        </span>
+    </div>
+    
+</div>
+
+<script>
+    $(document).ready(function(){
+        const wow = document.getElementById("tangina").value;
+
+        const para = document.createElement("p");
+        const node = document.createTextNode(wow);
+        para.appendChild(node);
+        const element = document.getElementById("yes");
+        element.appendChild(para);
+    });
+</script>
+
+{% endblock content %}

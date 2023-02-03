@@ -7,5 +7,9 @@ app_name = "registrarportal"
 urlpatterns = [
     path("", registrarDashboard.as_view(), name="dashboard"),
     path("RequestDocuments/", getList_documentRequest.as_view(),
-         name="requestedDocuments")
+         name="requestedDocuments"),
+
+    path("schoolyear/", include([
+        path("", view_schoolYears.as_view(), name="schoolyear"),
+    ]))
 ]
