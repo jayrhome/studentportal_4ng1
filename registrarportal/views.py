@@ -10,7 +10,7 @@ from django.views.generic.edit import FormView, CreateView, DeletionMixin
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.db import IntegrityError, transaction
-from django.db.models import Prefetch, Count, Q
+from django.db.models import Prefetch, Count, Q, Case, When, Value
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from ratelimit.decorators import ratelimit
@@ -90,7 +90,7 @@ class view_schoolYears(ListView):
     template_name = "registrarPortal/schoolyear/listOfSchoolYear.html"
 
     def get_queryset(self):
-        return schoolYear.objects.all()
+        return schoolYear.objects.annotate(can_update=Case(When(until__gte=date.today(), then=Value(True)), default=Value(False)), population=Case(When(pk__in=[3, 4, 5], then=Value(100)), default=Value(50)))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -117,6 +117,7 @@ class add_schoolYear(FormView):
                     start_on=start_on, until=until)
                 messages.success(
                     self.request, f"SY: {self.new_sy.display_sy()} is created.")
+                return super().form_valid(form)
             else:
                 messages.warning(self.request, "Invalid Period. Try again.")
                 return self.form_invalid(form)
@@ -129,9 +130,75 @@ class add_schoolYear(FormView):
         if self.get_sy and not validate_latestSchoolYear(self.get_sy):
             return super().dispatch(request, *args, **kwargs)
         else:
+            if not self.get_sy:
+                return super().dispatch(request, *args, **kwargs)
+            messages.warning(
+                self.request, "Current school year is still ongoing.")
             return HttpResponseRedirect(reverse("registrarportal:schoolyear"))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Add School Year"
         return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(registrar_only, login_url="studentportal:index")], name="dispatch")
+class update_schoolYear(FormView):
+    form_class = add_schoolyear_form
+    http_method_names = ["get", "post"]
+    template_name = "registrarportal/schoolyear/updateSchoolYear.html"
+    success_url = "/Registrar/schoolyear/"
+
+    def form_valid(self, form):
+        if form.has_changed():
+            try:
+                self.sy.refresh_from_db()
+                start_on = form.cleaned_data["start_on"]
+                until = form.cleaned_data["until"]
+
+                if "start_on" in form.changed_data and self.sy.start_on <= date.today():
+                    messages.warning(
+                        self.request, f"SY {self.sy.display_sy()} has already started. It's start date can no longer be edited.")
+                    return self.form_invalid(form)
+
+                elif ("start_on" in form.changed_data and self.sy.start_on > date.today()) or ("start_on" not in form.changed_data):
+                    if start_on < until:
+                        self.update_sy(form.changed_data, form)
+                        messages.success(
+                            self.request, f"SY {self.sy.display_sy()} is updated successfully.")
+                        return super().form_valid(form)
+                    messages.warning(self.request, "Invalid dates. Try again.")
+                    return self.form_invalid(form)
+
+                else:
+                    return super().form_valid(form)
+
+            except Exception as e:
+                return self.form_invalid(form)
+        return super().form_valid(form)
+
+    def update_sy(self, fields, form):
+        for field in fields:
+            setattr(self.sy, field, form.cleaned_data[field])
+        self.sy.save()
+        self.sy.refresh_from_db()
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["start_on"] = self.sy.start_on
+        initial["until"] = self.sy.until
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Update School Year"
+        context["sy"] = self.sy.display_sy()
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        self.sy = schoolYear.objects.filter(id=int(self.kwargs["pk"])).first()
+        if self.sy and validate_latestSchoolYear(self.sy):
+            return super().dispatch(request, *args, **kwargs)
+        messages.warning(
+            request, "Invalid Primary Key or object can no longer be edited.")
+        return HttpResponseRedirect(reverse("registrarportal:schoolyear"))

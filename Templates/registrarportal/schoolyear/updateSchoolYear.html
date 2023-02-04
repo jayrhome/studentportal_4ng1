@@ -11,7 +11,7 @@
         <!-- List of errors from forms.py -->
         {{ form.non_field_errors }}
     
-        <h4> New School Year </h4>
+        <h4> Update School Year {{sy}} </h4>
 
         <div class="form-outline mb-4">
             <label for="{{ form.start_on.id_for_label }}" class="form-label"> {{ form.start_on.label }}: </label>
@@ -25,10 +25,10 @@
             {{ form.until.errors }} <!-- Field errors -->
         </div>
 
-        <input type="submit" value="Add" class="btn btn-primary btn-block mb-4">
+        <input type="submit" value="Update" class="btn btn-primary btn-block mb-4">
     </form>
 
-    <a href="{% url 'registrarportal:dashboard' %}" class="btn btn-primary"> Back </a>
+    <a href="{% url 'registrarportal:schoolyear' %}" class="btn btn-primary"> Back </a>
 </div>
 
 {% endblock content %}

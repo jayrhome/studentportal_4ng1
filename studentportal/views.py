@@ -107,60 +107,60 @@ class index(TemplateView):
 
         return context
 
-    def enroll_now(self, request):
-        if request.user.is_authenticated:
-            if request.user.is_student:
-                try:
-                    sy = school_year.objects.latest('date_created')
-                    if validate_enrollmentSetup(request, sy):
-                        if enrollment_admission_setup.objects.filter(ea_setup_sy=sy).exists():
-                            # if the latest school year have admission setup
-                            setup_obj = enrollment_admission_setup.objects.filter(
-                                ea_setup_sy=sy).first()
-                            if setup_obj.start_date <= date.today() and setup_obj.end_date >= date.today():
-                                # If enrollment and admission dates are ongoing
-                                if setup_obj.still_accepting:
-                                    get_admission = student_admission_details.objects.filter(
-                                        admission_owner__id=request.user.id).first()
+    # def enroll_now(self, request):
+    #     if request.user.is_authenticated:
+    #         if request.user.is_student:
+    #             try:
+    #                 sy = school_year.objects.latest('date_created')
+    #                 if validate_enrollmentSetup(request, sy):
+    #                     if enrollment_admission_setup.objects.filter(ea_setup_sy=sy).exists():
+    #                         # if the latest school year have admission setup
+    #                         setup_obj = enrollment_admission_setup.objects.filter(
+    #                             ea_setup_sy=sy).first()
+    #                         if setup_obj.start_date <= date.today() and setup_obj.end_date >= date.today():
+    #                             # If enrollment and admission dates are ongoing
+    #                             if setup_obj.still_accepting:
+    #                                 get_admission = student_admission_details.objects.filter(
+    #                                     admission_owner__id=request.user.id).first()
 
-                                    if get_admission:
-                                        # If student have admission
-                                        if get_admission.is_validated and not get_admission.is_denied:
-                                            # if student admission is validated and not denied
-                                            if not student_enrollment_details.objects.filter(admission_details=get_admission, enrolled_schoolyear=sy).exists():
-                                                # if a valid admission have no enrollment on current school year
-                                                return "enroll"
-                                        else:
-                                            if get_admission.admission_sy == sy:
-                                                if not student_enrollment_details.objects.filter(admission_details=get_admission, enrolled_schoolyear=sy).exists():
-                                                    # For student with not yet validated admission and no submitted enrollment
-                                                    return "enroll"
-                                            else:
-                                                # For student with previous admission but not valid and school_year is previous, they can submit new admission
-                                                return "enroll"
-                                    else:
-                                        # If the logged-in user have no admission
-                                        return "enroll"
-                                else:
-                                    return "postpone"
-                            elif setup_obj.start_date > date.today() and setup_obj.end_date > date.today():
-                                return "start_soon"
-                            else:
-                                pass
-                except:
-                    pass
-        else:
-            # if anonymous user
-            pass
+    #                                 if get_admission:
+    #                                     # If student have admission
+    #                                     if get_admission.is_validated and not get_admission.is_denied:
+    #                                         # if student admission is validated and not denied
+    #                                         if not student_enrollment_details.objects.filter(admission_details=get_admission, enrolled_schoolyear=sy).exists():
+    #                                             # if a valid admission have no enrollment on current school year
+    #                                             return "enroll"
+    #                                     else:
+    #                                         if get_admission.admission_sy == sy:
+    #                                             if not student_enrollment_details.objects.filter(admission_details=get_admission, enrolled_schoolyear=sy).exists():
+    #                                                 # For student with not yet validated admission and no submitted enrollment
+    #                                                 return "enroll"
+    #                                         else:
+    #                                             # For student with previous admission but not valid and school_year is previous, they can submit new admission
+    #                                             return "enroll"
+    #                                 else:
+    #                                     # If the logged-in user have no admission
+    #                                     return "enroll"
+    #                             else:
+    #                                 return "postpone"
+    #                         elif setup_obj.start_date > date.today() and setup_obj.end_date > date.today():
+    #                             return "start_soon"
+    #                         else:
+    #                             pass
+    #             except:
+    #                 pass
+    #     else:
+    #         # if anonymous user
+    #         pass
 
-    def determine_valid_sy(self):
-        try:
-            sy = school_year.objects.order_by('-date_created').first()
-            if validate_enrollmentSetup(self.request, sy):
-                return sy.sy
-            return False
-        except:
-            return False
+    # def determine_valid_sy(self):
+    #     try:
+    #         sy = school_year.objects.order_by('-date_created').first()
+    #         if validate_enrollmentSetup(self.request, sy):
+    #             return sy.sy
+    #         return False
+    #     except:
+    #         return False
 
 
 admission_templates = {

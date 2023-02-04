@@ -40,12 +40,18 @@
     <!-- fontawesome icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
+    <!--Chart js-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" integrity="sha256-Uv9BNBucvCPipKQ2NS9wYpJmi8DTOEfTA/nH2aoJALw=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css" integrity="sha256-aa0xaJgmK/X74WM224KMQeNQC2xYKwlAt08oZqjeF0E=" crossorigin="anonymous" />
+
 </head>
 <body>
 
     <a href="{% url 'registrarportal:dashboard' %}" class="btn btn-primary"> Dashboard </a>
     <a href="{% url 'registrarportal:addSchoolYear' %}" class="btn btn-primary"> Add </a>
     <a href="{% url 'usersPortal:logout' %}" class="btn btn-primary"> Logout </a>
+
+    {% block scripts %}{% endblock scripts %}
 
     {% block content %}{% endblock content %}
     <script src="{% static 'registrarportal/js/formSubmit.js' %}"></script>
