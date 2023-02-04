@@ -20,9 +20,19 @@ from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.db import IntegrityError
 from . models import *
 from studentportal.models import documentRequest
+from . forms import *
 
 
 User = get_user_model()
+
+
+def validate_latestSchoolYear(sy):
+    # Return true if school year is ongoing/latest
+    try:
+        return date.today() <= sy.until
+    except Exception as e:
+        print(e)
+        return False
 
 
 def registrar_only(user):
@@ -85,4 +95,43 @@ class view_schoolYears(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "School Years"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(registrar_only, login_url="studentportal:index")], name="dispatch")
+class add_schoolYear(FormView):
+    form_class = add_schoolyear_form
+    http_method_names = ["get", "post"]
+    template_name = "registrarportal/schoolyear/addSchoolYear.html"
+
+    # For revision, redirect user to enrollment and admission scheduling
+    success_url = "/Registrar/schoolyear/"
+
+    def form_valid(self, form):
+        try:
+            start_on = form.cleaned_data["start_on"]
+            until = form.cleaned_data["until"]
+
+            if start_on < until:
+                self.new_sy = schoolYear.objects.create(
+                    start_on=start_on, until=until)
+                messages.success(
+                    self.request, f"SY: {self.new_sy.display_sy()} is created.")
+            else:
+                messages.warning(self.request, "Invalid Period. Try again.")
+                return self.form_invalid(form)
+
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def dispatch(self, request, *args, **kwargs):
+        self.get_sy = schoolYear.objects.first()
+        if self.get_sy and not validate_latestSchoolYear(self.get_sy):
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return HttpResponseRedirect(reverse("registrarportal:schoolyear"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Add School Year"
         return context
