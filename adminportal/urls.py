@@ -69,12 +69,10 @@ urlpatterns = [
     ])),
 
     path("school_events/", include([
-        path("", upcoming_school_events.as_view(), name="upcomingschoolevents"),
-        path("ongoing_events/", ongoing_school_events.as_view(),
-             name="ongoingschoolevents"),
-        path("previous_events/", previous_school_events.as_view(),
-             name="previousschoolevents"),
-        path("add_events/", add_event.as_view(), name="addschoolevents"),
+        path("", get_ongoingSchoolEvents.as_view(),
+             name="get_ongoingSchoolEvents"),
+        path("Add/", add_schoolEvent.as_view(), name="add_schoolEvent"),
+        path("Update/<pk>/", edit_schoolEvent.as_view(), name="edit_schoolEvent"),
     ])),
 
 ]

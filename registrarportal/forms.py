@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 def validate_startDate(date):
     if date < date.today():
         raise ValidationError(
-            "Invalid Date! Do not select the previous or current date.")
+            "Invalid Date! Do not select the previous date.")
 
 
 def validate_endDate(date):

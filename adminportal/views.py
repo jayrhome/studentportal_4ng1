@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, HttpResponseRedirect
 from django.views.generic.base import TemplateView
-from django.views.generic.edit import FormView, FormMixin
+from django.views.generic.edit import FormView, FormMixin, DeletionMixin
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.contrib import messages
@@ -13,7 +13,7 @@ from . forms import *
 from . models import *
 from django.db import IntegrityError, transaction
 from django.contrib import messages
-from django.db.models import Q, FilteredRelation, Prefetch, Count
+from django.db.models import Q, FilteredRelation, Prefetch, Count, Case, When, Value
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.exceptions import ObjectDoesNotExist
@@ -37,6 +37,32 @@ def compute_schoolyear(year):
     sy = " ".join(
         map(str, [date_now.strftime("%Y"), "-", future_date.strftime("%Y")]))
     return sy
+
+
+# validate the latest school year
+def validate_enrollmentSetup(request, sy):
+    try:
+        dt1 = date.today()
+        dt2 = sy.date_created.date()
+        dt3 = dt1 - dt2
+
+        if dt3.days < 209:
+            return True
+        return False
+    except:
+        return False
+
+
+def strand_dispatch_func(request, strand_id):
+    obj = shs_strand.objects.filter(id=strand_id).first()
+    if obj:
+        if obj.is_deleted == True:
+            messages.warning(
+                request, "Strand id no. %s no longer exist." % strand_id)
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
+    else:
+        messages.error(request, "Strand id no. %s does not exist." % strand_id)
+        return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
@@ -321,18 +347,6 @@ class add_strand(FormView):
             return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
 
-def strand_dispatch_func(request, strand_id):
-    obj = shs_strand.objects.filter(id=strand_id).first()
-    if obj:
-        if obj.is_deleted == True:
-            messages.warning(
-                request, "Strand id no. %s no longer exist." % strand_id)
-            return HttpResponseRedirect(reverse("adminportal:view_courses"))
-    else:
-        messages.error(request, "Strand id no. %s does not exist." % strand_id)
-        return HttpResponseRedirect(reverse("adminportal:view_courses"))
-
-
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class edit_strand(FormView):
     template_name = "adminportal/Shs_courses/edit_strand.html"
@@ -420,20 +434,6 @@ class delete_strand(TemplateView):
             return super().dispatch(request, *args, **kwargs)
         else:
             return strand_dispatch_func(request, strand_id)
-
-
-# validate the latest school year
-def validate_enrollmentSetup(request, sy):
-    try:
-        dt1 = date.today()
-        dt2 = sy.date_created.date()
-        dt3 = dt1 - dt2
-
-        if dt3.days < 209:
-            return True
-        return False
-    except:
-        return False
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
@@ -547,59 +547,111 @@ class hideDocument(TemplateView):
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
-class upcoming_school_events(ListView):
-    # Get the list of upcoming school events, order by start_date and date_created
-    template_name = "adminportal/school_events_HTMLs/upcoming_school_events.html"
-    allow_empty = True
-    context_object_name = "event_lists"
-    paginate_by = 10
+class get_ongoingSchoolEvents(TemplateView, DeletionMixin):
+    template_name = "adminportal/schoolEvents/ongoingSchoolEvents.html"
+    http_method_names = ["get", "post"]
+    success_url = "/School_admin/school_events/"
 
-    def get_queryset(self):
-        # Return a querysets of school events where the start date is greater than the date today
-        return school_events.validObjects.filter(event_start_date__gt=date.today()).prefetch_related(Prefetch("event_photo", queryset=event_img.validObjects.all(), to_attr="event_pictures")).order_by('event_start_date', 'last_modified')
+    def delete(self, request, *args, **kwargs):
+        try:
+            self.cancelThisEvent.is_cancelled = True
+            self.cancelThisEvent.save()
+        except Exception as e:
+            pass
+        return HttpResponseRedirect(self.success_url)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Upcoming Events"
-        return context
-
-
-@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
-class ongoing_school_events(ListView):
-    # Get the list of ongoing school events, order by start_date and date_created
-    template_name = "adminportal/school_events_HTMLs/ongoing_school_events.html"
-    allow_empty = True
-    context_object_name = "ongoing_events"
-    paginate_by = 10
-
-    def get_queryset(self):
-        # Return a querysets of school events where the start date is greater than the date today
-        return school_events.validObjects.filter(event_start_date__lte=date.today(), event_date_until__gte=date.today()).prefetch_related(Prefetch("event_photo", queryset=event_img.validObjects.all(), to_attr="event_pictures")).order_by('event_start_date', 'last_modified')
+    def dispatch(self, request, *args, **kwargs):
+        if ("pk" in request.POST) and request.method == "POST":
+            self.cancelThisEvent = school_events.ongoingEvents.filter(
+                id=int(request.POST["pk"])).first()
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Ongoing Events"
+
+        get_eventsObj = school_events.ongoingEvents.annotate(
+            can_cancel=Case(When(start_on__gt=date.today(),
+                            then=Value(True)), default=Value(False))
+        )
+
+        if get_eventsObj:
+            dct = dict()
+            for event in get_eventsObj:
+                if event.start_on.strftime("%B") not in dct:
+                    dct[event.start_on.strftime("%B")] = list()
+                    dct[event.start_on.strftime("%B")].append(event)
+                else:
+                    dct[event.start_on.strftime("%B")].append(event)
+            context["events"] = dct
+
         return context
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
-class previous_school_events(ListView):
-    # Get the list of ongoing school events, order by start_date and date_created
-    template_name = "adminportal/school_events_HTMLs/previous_school_events.html"
-    allow_empty = True
-    context_object_name = "previous_events"
-    paginate_by = 10
+class add_schoolEvent(FormView):
+    template_name = "adminportal/schoolEvents/newEvent.html"
+    success_url = "/School_admin/school_events/"
+    form_class = addEventForm
 
-    def get_queryset(self):
-        # Return a querysets of school events where the start date is greater than the date today
-        return school_events.validObjects.filter(event_date_until__lt=date.today()).prefetch_related(Prefetch("event_photo", queryset=event_img.validObjects.all(), to_attr="event_pictures")).order_by('event_start_date', 'last_modified')
+    def form_valid(self, form):
+        try:
+            name = form.cleaned_data["name"]
+            start_on = form.cleaned_data["start_on"]
+            school_events.objects.create(name=name, start_on=start_on)
+            messages.success(self.request, "New event is added successfully")
+            return super().form_valid(form)
+        except Exception as e:
+            return self.form_invalid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Previous Events"
+        context["title"] = "New event"
         return context
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
-class add_event(TemplateView):
-    template_name = "adminportal/school_events_HTMLs/add_events.html"
+class edit_schoolEvent(FormView):
+    template_name = "adminportal/schoolEvents/updateEvent.html"
+    success_url = "/School_admin/school_events/"
+    form_class = updateEventForm
+
+    def form_valid(self, form):
+        try:
+            if form.has_changed():
+
+                if "name" in form.changed_data and school_events.ongoingEvents.filter(name__unaccent__icontains=form.cleaned_data["name"]).exclude(id=self.get_event.id).exists():
+                    messages.warning(
+                        self.request, f"{form.cleaned_data['name']} is an ongoing event.")
+                    return self.form_invalid(form)
+
+                self.get_event.name = form.cleaned_data["name"]
+                self.get_event.start_on = form.cleaned_data["start_on"]
+                self.get_event.save()
+                messages.success(self.request, "Event updated successfully.")
+                return super().form_valid(form)
+            return super().form_valid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["name"] = self.get_event.name
+        initial["start_on"] = self.get_event.start_on
+        return initial
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            self.get_event = school_events.ongoingEvents.filter(
+                id=int(self.kwargs["pk"])).first()
+            if self.get_event:
+                return super().dispatch(request, *args, **kwargs)
+            messages.warning(request, "Invalid Primary key.")
+            return HttpResponseRedirect(reverse("adminportal:get_ongoingSchoolEvents"))
+        except Exception as e:
+            return HttpResponseRedirect(reverse("adminportal:get_ongoingSchoolEvents"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Edit event"
+        return context

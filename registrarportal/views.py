@@ -63,7 +63,7 @@ class getList_documentRequest(ListView, DeletionMixin):
             self.cancel_this_request.is_cancelledByRegistrar = True
             self.cancel_this_request.save()
         except Exception as e:
-            messages.warning(request, "Error.")
+            pass
         return HttpResponseRedirect(self.success_url)
 
     def get_queryset(self):

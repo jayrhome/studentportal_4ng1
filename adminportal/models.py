@@ -364,45 +364,28 @@ class school_email(models.Model):
         return self.email
 
 
-class manager_event_img(models.Manager):
-    # Return unhidden event images
+class manager_ongoingSchoolEvents(models.Manager):
+    # Return ongoing school events.
     def get_queryset(self):
-        return super().get_queryset().filter(is_hidden=False)
-
-
-class manager_schoolevents(models.Manager):
-    # Return unhidden school events
-    def get_queryset(self):
-        return super().get_queryset().filter(is_cancelled=False)
-
-
-class event_img(models.Model):
-    event = models.ForeignKey(
-        "school_events", on_delete=models.PROTECT, related_name="event_photo")
-    captured_imgs = models.ImageField(upload_to="Event_pictures/%Y")
-    date_created = models.DateTimeField(auto_now=True)
-    last_modified = models.DateTimeField(auto_now_add=True)
-    is_hidden = models.BooleanField(default=False)
-
-    objects = models.Manager()
-    validObjects = manager_event_img()
+        return super().get_queryset().filter(is_cancelled=False, start_on__gte=date.today())
 
 
 class school_events(models.Model):
-    event_name = models.CharField(max_length=200)
-    event_details = models.TextField()
-    organizers = models.TextField()
-    event_start_date = models.DateField()
-    event_date_until = models.DateField()
+    name = models.CharField(max_length=200)
+    start_on = models.DateField()
+    is_cancelled = models.BooleanField(default=False)
     date_created = models.DateTimeField(auto_now=True)
     last_modified = models.DateTimeField(auto_now_add=True)
-    is_cancelled = models.BooleanField(default=False)
 
     objects = models.Manager()
-    validObjects = manager_schoolevents()
+    ongoingEvents = manager_ongoingSchoolEvents()
+
+    class Meta:
+        ordering = ["start_on", "name"]
+        base_manager_name = "objects"
 
     def __str__(self):
-        return self.event_name
+        return self.name
 
 
 class manager_studentDocument(models.Manager):

@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from . models import *
 from datetime import date, datetime
 from django.forms.widgets import DateInput
+from registrarportal.forms import validate_startDate
 
 User = get_user_model()
 
@@ -19,6 +20,11 @@ def setup_form_DateValidation(date):
     if date <= date.today():
         raise ValidationError(
             "Invalid Date! Do not select the previous or current date.")
+
+
+def validate_eventName_uniqueness(name):
+    if school_events.ongoingEvents.filter(name__unaccent__icontains=name).exists():
+        raise ValidationError(f"{name} is an ongoing event.")
 
 
 class add_shs_track(forms.Form):
@@ -56,3 +62,16 @@ class edit_strand_form(forms.Form):
 
 class makeDocument(forms.Form):
     documentName = forms.CharField(label="Document Name", max_length=50)
+
+
+class addEventForm(forms.Form):
+    name = forms.CharField(label="Event Name", max_length=100, validators=[
+                           validate_eventName_uniqueness, ])
+    start_on = forms.DateField(label="Start Date", validators=[
+                               validate_startDate], widget=forms.DateInput(attrs={'type': 'date'}))
+
+
+class updateEventForm(forms.Form):
+    name = forms.CharField(label="Event Name", max_length=100)
+    start_on = forms.DateField(label="Start Date", validators=[
+                               validate_startDate], widget=forms.DateInput(attrs={'type': 'date'}))
