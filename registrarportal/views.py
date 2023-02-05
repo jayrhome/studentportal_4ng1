@@ -90,7 +90,14 @@ class view_schoolYears(ListView):
     template_name = "registrarPortal/schoolyear/listOfSchoolYear.html"
 
     def get_queryset(self):
-        return schoolYear.objects.annotate(can_update=Case(When(until__gte=date.today(), then=Value(True)), default=Value(False)), population=Case(When(pk__in=[3, 4, 5], then=Value(100)), default=Value(50)))
+        return schoolYear.objects.annotate(
+            can_update=Case(When(until__gte=date.today(),
+                            then=Value(True)), default=Value(False)),
+            male_population=Case(
+                When(pk__in=[3, 4], then=Value(100)), default=Value(50)),
+            female_population=Case(
+                When(pk__in=[3, 4], then=Value(100)), default=Value(50)),
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
