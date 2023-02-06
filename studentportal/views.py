@@ -27,6 +27,7 @@ from smtplib import SMTPException
 from usersPortal.models import user_photo
 from . models import *
 from . email_token import *
+from adminportal.models import *
 
 User = get_user_model()
 
@@ -85,6 +86,17 @@ class index(TemplateView):
 
         context["emails"] = school_email.objects.filter(
             is_deleted=False).first()
+
+        getEvents = school_events.ongoingEvents.all()
+        if getEvents:
+            dct = dict()
+            for event in getEvents:
+                if event.start_on.strftime("%B") not in dct:
+                    dct[event.start_on.strftime("%B")] = list()
+                    dct[event.start_on.strftime("%B")].append(event)
+                else:
+                    dct[event.start_on.strftime("%B")].append(event)
+            context["events"] = dct
 
         # context["enroll_now"] = self.enroll_now(self.request)
 
