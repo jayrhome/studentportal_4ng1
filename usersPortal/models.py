@@ -161,7 +161,7 @@ class user_contactNumber(models.Model):
     cp_number_regex = RegexValidator(regex=r"^(09)([0-9]{9})$")
     cellphone_number = models.CharField(
         max_length=11, unique=True, validators=[cp_number_regex])
-    date_created = models.DateTimeField(auto_now=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-date_created"]
@@ -175,7 +175,7 @@ class user_photo(models.Model):
         "user_profile", on_delete=models.RESTRICT, related_name="user_pic")
     image = models.ImageField(
         default="user_images/default_male.png", upload_to="user_images/%Y/%m/%d/")
-    date_created = models.DateTimeField(auto_now=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-date_created"]
@@ -212,7 +212,7 @@ class user_profile(models.Model):
     last_name = models.CharField(max_length=50, null=True)
     birth_date = models.DateField(null=True)
     sex = models.CharField(max_length=2, choices=sexChoices.choices, null=True)
-    date_created = models.DateTimeField(auto_now=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.first_name

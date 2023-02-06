@@ -374,8 +374,8 @@ class school_events(models.Model):
     name = models.CharField(max_length=200)
     start_on = models.DateField()
     is_cancelled = models.BooleanField(default=False)
-    date_created = models.DateTimeField(auto_now=True)
-    last_modified = models.DateTimeField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     objects = models.Manager()
     ongoingEvents = manager_ongoingSchoolEvents()
@@ -397,8 +397,8 @@ class manager_studentDocument(models.Manager):
 class studentDocument(models.Model):
     documentName = models.CharField(max_length=50, unique=True)
     is_active = models.BooleanField(default=True)
-    date_created = models.DateTimeField(auto_now=True)
-    last_modified = models.DateTimeField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
 
     objects = models.Manager()
     activeObjects = manager_studentDocument()
