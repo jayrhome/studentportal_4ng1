@@ -83,7 +83,7 @@ class shs_courses(TemplateView):
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
-class add_shs_track_cbv(FormView):
+class add_courseTrack(FormView):
     template_name = "adminportal/Shs_courses/create_track.html"
     form_class = add_shs_track
     success_url = "/School_admin/Courses/"
@@ -133,12 +133,12 @@ class add_shs_track_cbv(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Add Track"
+        context["title"] = "New Course Track"
         return context
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
-class edit_track(FormView):
+class edit_courseTrack(FormView):
     template_name = "adminportal/Shs_courses/edit_track.html"
     form_class = add_shs_track
     success_url = "/School_admin/Courses/"
@@ -152,7 +152,7 @@ class edit_track(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Edit Track"
+        context["title"] = "Update Course Track"
         return context
 
     def form_valid(self, form):
@@ -209,7 +209,7 @@ class edit_track(FormView):
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
-class delete_track(TemplateView):
+class delete_courseTrack(TemplateView):
     template_name = "adminportal/Shs_courses/delete_track.html"
 
     def post(self, request, *args, **kwargs):
@@ -228,6 +228,7 @@ class delete_track(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["title"] = "Remove Course Track"
         context["obj"] = shs_track.objects.filter(id=self.kwargs["pk"]).first()
         context["related_strands"] = shs_strand.objects.filter(
             track__id=self.kwargs["pk"])
@@ -250,7 +251,7 @@ class delete_track(TemplateView):
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
-class add_strand(FormView):
+class add_trackStrand(FormView):
     success_url = "/School_admin/Courses/"
     form_class = add_strand_form
     template_name = "adminportal/Shs_courses/create_strands.html"
@@ -323,7 +324,7 @@ class add_strand(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Add Strand"
+        context["title"] = "Add Track Strand"
         return context
 
     def dispatch(self, request, *args, **kwargs):
@@ -346,7 +347,7 @@ class add_strand(FormView):
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
-class edit_strand(FormView):
+class update_trackStrand(FormView):
     template_name = "adminportal/Shs_courses/edit_strand.html"
     form_class = edit_strand_form
     success_url = "/School_admin/Courses/"
@@ -389,7 +390,7 @@ class edit_strand(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Update Strand"
+        context["title"] = "Update Track Strand"
         return context
 
     def dispatch(self, request, *args, **kwargs):
@@ -404,7 +405,7 @@ class edit_strand(FormView):
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
-class delete_strand(TemplateView):
+class delete_trackStrand(TemplateView):
     template_name = "adminportal/Shs_courses/delete_strand.html"
 
     def post(self, request, *args, **kwargs):
@@ -419,6 +420,7 @@ class delete_strand(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         obj = shs_strand.objects.get(id=self.kwargs["pk"])
+        context["title"] = "Remove Track Strand"
         context["track"] = obj.track.track_name
         context["strand_name"] = obj.strand_name
         context["definition"] = obj.definition
