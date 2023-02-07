@@ -1,0 +1,72 @@
+{% extends 'registrarportal/documentRequests/base1.html' %}
+{% block content %}
+{% include 'registrarportal/messages/messages.html' %}
+
+<a href="{% url 'adminportal:addSubjects' %}"> Add Subject + </a>
+
+<div class="container col-md-12">
+    <form method="post">
+        {% csrf_token %}
+        <div class="input-group">
+            <div class="form-outline">
+                <input type="search" name="key" id="key" class="form-control" placeholder="Subject code or name" required/>
+            </div>
+            <input type="submit" value="Search" class="btn btn-primary mb-3">
+        </div>
+    </form>
+
+    <table class="table">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Id</th>
+                <th scope="col">Subject Code</th>
+                <th scope="col">Subject Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for subject in subjects %}
+                <tr>
+                    <th scope="row"> {{subject.id}} </th>
+                    <td> {{subject.code}} </td>
+                    <td> {{subject.title}} </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td> No subjects... </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+   
+    <a href="{% url 'registrarportal:dashboard' %}" class="btn btn-primary"> Back </a>
+
+    
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm"> Prev </a>
+            {% endif %}
+
+            {% block pagination %}
+                {% for page_number in page_obj.paginator.get_elided_page_range %}
+                    {% if page_number == page_obj.paginator.ELLIPSIS %}
+                        {{page_number}}
+                    {% else %}
+                        <a href="?page={{page_number}}" class="btn btn-secondary btn-sm"> {{page_number}} </a>
+                    {% endif %}
+                {% endfor %}
+            {% endblock %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm"> Next </a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+        </span>
+    </div>
+    
+</div>
+
+{% endblock content %}

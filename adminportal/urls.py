@@ -75,4 +75,9 @@ urlpatterns = [
         path("Update/<pk>/", edit_schoolEvent.as_view(), name="edit_schoolEvent"),
     ])),
 
+    re_path(r"subjects/(?:(?P<key>[a-zA-Z\d\s]+)/)?$", include([
+        path("", get_subjects.as_view(), name="getSubjects"),
+        path("Add/", add_subjects.as_view(), name="addSubjects"),
+    ])),
+
 ]

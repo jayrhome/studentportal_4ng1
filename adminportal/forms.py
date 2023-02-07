@@ -75,3 +75,8 @@ class updateEventForm(forms.Form):
     name = forms.CharField(label="Event Name", max_length=100)
     start_on = forms.DateField(label="Start Date", validators=[
                                validate_startDate], widget=forms.DateInput(attrs={'type': 'date'}))
+
+
+class addSubjectForm(forms.Form):
+    code = forms.CharField(label="Subject Code", max_length=20)
+    title = forms.CharField(label="Subject Title", max_length=50)

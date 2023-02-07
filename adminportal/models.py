@@ -408,3 +408,26 @@ class studentDocument(models.Model):
 
     class Meta:
         ordering = ["documentName", "-date_created", "-last_modified"]
+
+
+class subjectsManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_remove=True)
+
+
+class subjects(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    title = models.CharField(max_length=50, unique=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    is_remove = models.BooleanField(default=False)
+
+    objects = models.Manager()
+    activeSubjects = subjectsManager()
+
+    class Meta:
+        ordering = ["title", "-created_on"]
+        unique_together = ["code", "title"]
+
+    def __str__(self):
+        return f"{self.code}: {self.title}"

@@ -613,3 +613,60 @@ class edit_schoolEvent(FormView):
         context = super().get_context_data(**kwargs)
         context["title"] = "Edit event"
         return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class add_subjects(FormView):
+    template_name = "adminportal/subjects/subjectDetails.html"
+    success_url = "/School_admin/"
+    form_class = addSubjectForm
+
+    def form_valid(self, form):
+        try:
+            code = form.cleaned_data["code"]
+            title = form.cleaned_data["title"]
+            if code and title:
+                subjects.objects.create(code=code, title=title)
+                messages.success(
+                    self.request, f"{code}: {title} is a new subject.")
+                return super().form_valid(form)
+            else:
+                messages.warning(self.request, "Fill all fields.")
+                return self.form_invalid(form)
+        except IntegrityError:
+            messages.warning(
+                self.request, "Subject code or title already exist.")
+            return self.form_invalid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Add Subject"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class get_subjects(ListView):
+    allow_empty = True
+    context_object_name = "subjects"
+    http_method_names = ["get", "post"]
+    paginate_by = 15
+    template_name = "adminportal/subjects/viewSubjects.html"
+
+    def get_queryset(self):
+        try:
+            if "key" in self.kwargs:
+                key = self.kwargs["key"].strip()
+                qs = subjects.activeSubjects.values("id", "code", "title").filter(
+                    Q(code____unaccent__icontains=key) | Q(title____unaccent__icontains=key))
+            else:
+                qs = subjects.activeSubjects.values("id", "code", "title")
+        except Exception as e:
+            qs = subjects.objects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "View Subjects"
+        return context
