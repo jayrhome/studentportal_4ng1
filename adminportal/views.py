@@ -51,18 +51,6 @@ def validate_enrollmentSetup(request, sy):
         return False
 
 
-def strand_dispatch_func(request, strand_id):
-    obj = shs_strand.objects.filter(id=strand_id).first()
-    if obj:
-        if obj.is_deleted == True:
-            messages.warning(
-                request, "Strand id no. %s no longer exist." % strand_id)
-            return HttpResponseRedirect(reverse("adminportal:view_courses"))
-    else:
-        messages.error(request, "Strand id no. %s does not exist." % strand_id)
-        return HttpResponseRedirect(reverse("adminportal:view_courses"))
-
-
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class index(TemplateView):
     template_name = "adminportal/dashboard.html"
@@ -95,40 +83,41 @@ class add_courseTrack(FormView):
             return super().get_success_url()
 
     def form_valid(self, form):
-        name = form.cleaned_data["name"]
-        details = form.cleaned_data["details"]
+        try:
+            name = form.cleaned_data["name"]
+            details = form.cleaned_data["details"]
 
-        if name and details:
-            try:
-                if shs_track.objects.filter(track_name=name, is_deleted=False).exists():
-                    messages.warning(
-                        self.request, "%s already exist." % name)
-                    return self.form_invalid(form)
-                elif shs_track.objects.filter(track_name=name, is_deleted=True).exists():
-                    shs_track.objects.filter(track_name=name, is_deleted=True).update(
-                        track_name=name,
-                        definition=details,
-                        is_deleted=False
-                    )
-                    messages.success(
-                        self.request, "%s is added successfully." % name)
-                    return super().form_valid(form)
+            if name and details:
+                self.get_existingTrack = shs_track.objects.filter(
+                    track_name=name).first()
+                if self.get_existingTrack:
+                    if not self.get_existingTrack.is_deleted:
+                        messages.warning(
+                            self.request, f"{name} already exist.")
+                        return self.form_invalid(form)
+                    else:
+                        self.get_existingTrack.track_name = name
+                        self.get_existingTrack.definition = details
+                        self.get_existingTrack.is_deleted = False
+                        self.get_existingTrack.save()
+                        messages.success(
+                            self.request, f"{name} is updated successfully.")
+                        return super().form_valid(form)
                 else:
                     shs_track.objects.create(
                         track_name=name, definition=details)
                     messages.success(
-                        self.request, "%s is added successfully." % name)
+                        self.request, f"{name} is added successfully.")
                     return super().form_valid(form)
-            except IntegrityError:
-                messages.error(
-                    self.request, "%s already exist. Duplicate is not allowed." % name)
+            else:
+                messages.warning(self.request, "Fill all fields.")
                 return self.form_invalid(form)
-            except Exception as e:
-                messages.error(
-                    self.request, e)
-                return self.form_invalid(form)
-        else:
-            messages.warning(self.request, "Fill all fields.")
+
+        except IntegrityError:
+            messages.error(
+                self.request, f"{name} already exist. Duplicate is not allowed.")
+            return self.form_invalid(form)
+        except Exception as e:
             return self.form_invalid(form)
 
     def get_context_data(self, **kwargs):
@@ -145,9 +134,8 @@ class edit_courseTrack(FormView):
 
     def get_initial(self):
         initial = super().get_initial()
-        qs = shs_track.objects.get(id=self.kwargs["track_id"])
-        initial["name"] = qs.track_name
-        initial["details"] = qs.definition
+        initial["name"] = self.updateCourseTrackObject.track_name
+        initial["details"] = self.updateCourseTrackObject.definition
         return initial
 
     def get_context_data(self, **kwargs):
@@ -156,56 +144,44 @@ class edit_courseTrack(FormView):
         return context
 
     def form_valid(self, form):
-        name = form.cleaned_data["name"]
-        details = form.cleaned_data["details"]
+        try:
+            name = form.cleaned_data["name"]
+            details = form.cleaned_data["details"]
 
-        if form.has_changed():
-            try:
+            if form.has_changed():
                 if name and details:
-                    obj = shs_track.objects.filter(
-                        id=self.kwargs["track_id"]).first()
-                    if obj:
-                        if obj.is_deleted == True:
-                            messages.warning(
-                                self.request, "%s no longer exist." % name)
-                            return super().form_valid(form)
-                        else:
-                            shs_track.objects.filter(id=self.kwargs["track_id"]).update(
-                                track_name=name,
-                                definition=details
-                            )
-                            messages.success(
-                                self.request, "%s is updated successfully." % name)
-                            return super().form_valid(form)
-                    else:
-                        messages.warning(
-                            self.request, "%s no longer exist." % name)
-                        return super().form_valid(form)
+                    self.updateCourseTrackObject.refresh_from_db()
+                    self.updateCourseTrackObject.track_name = name
+                    self.updateCourseTrackObject.definition = details
+                    self.updateCourseTrackObject.save()
+                    messages.success(
+                        self.request, f"{name} is updated successfully.")
+                    return super().form_valid(form)
                 else:
                     messages.warning(self.request, "Fill all fields.")
                     return self.form_invalid(form)
-            except IntegrityError:
-                messages.error(
-                    self.request, "%s already exist. Duplicate is not allowed." % name)
-                return self.form_invalid(form)
-            except Exception as e:
-                messages.error(
-                    self.request, e)
-                return self.form_valid(form)
-        else:
-            return super().form_valid(form)
+            else:
+                return super().form_valid(form)
+        except IntegrityError:
+            messages.error(
+                self.request, f"{name} already exist. Duplicate is not allowed.")
+            return self.form_invalid(form)
+        except Exception as e:
+            return self.form_invalid(form)
 
     def dispatch(self, request, *args, **kwargs):
-        if shs_track.objects.filter(id=self.kwargs["track_id"], is_deleted=True).exists():
-            messages.warning(
-                request, "Course Track with id no. %s no longer exist." % self.kwargs["track_id"])
-            return HttpResponseRedirect(reverse("adminportal:view_courses"))
-        elif not shs_track.objects.filter(id=self.kwargs["track_id"]).exists():
-            messages.warning(
-                request, "Course Track with id no. %s does not exist." % self.kwargs["track_id"])
-            return HttpResponseRedirect(reverse("adminportal:view_courses"))
+        self.updateCourseTrackObject = shs_track.objects.filter(
+            id=int(self.kwargs["track_id"])).first()
+        if self.updateCourseTrackObject:
+            if not self.updateCourseTrackObject.is_deleted:
+                return super().dispatch(request, *args, **kwargs)
+            else:
+                messages.warning(request, "Course track does not exist.")
+                return HttpResponseRedirect(reverse("adminportal:view_courses"))
         else:
-            return super().dispatch(request, *args, **kwargs)
+            messages.warning(
+                request, f"Course track with id no. {self.kwargs['track_id']} does not exist.")
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
@@ -213,41 +189,38 @@ class delete_courseTrack(TemplateView):
     template_name = "adminportal/Shs_courses/delete_track.html"
 
     def post(self, request, *args, **kwargs):
-        obj = shs_track.objects.filter(id=self.kwargs["pk"]).first()
-        obj.is_deleted = True
-        obj.save()
+        try:
+            self.deleteTrack.refresh_from_db()
 
-        foreign_obj = shs_strand.objects.filter(track=obj)
-        for item in foreign_obj:
-            item.is_deleted = True
-            item.save()
+            for strand in shs_strand.objects.filter(track=self.deleteTrack):
+                strand.is_deleted = True
+                strand.save()
 
-        messages.success(request, "%s is deleted successfully." %
-                         obj.track_name)
-        return HttpResponseRedirect(reverse("adminportal:view_courses"))
+            self.deleteTrack.is_deleted = True
+            self.deleteTrack.save()
+            messages.success(
+                request, f"{self.deleteTrack.track_name} is deleted.")
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
+        except Exception as e:
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Remove Course Track"
-        context["obj"] = shs_track.objects.filter(id=self.kwargs["pk"]).first()
-        context["related_strands"] = shs_strand.objects.filter(
-            track__id=self.kwargs["pk"])
+        context["courseObjects"] = shs_track.objects.filter(id=self.deleteTrack.id).prefetch_related(Prefetch(
+            "track_strand", queryset=shs_strand.objects.filter(is_deleted=False), to_attr="strands")).first()
         return context
 
     def dispatch(self, request, *args, **kwargs):
-        if shs_track.objects.filter(id=self.kwargs["pk"], is_deleted=True).exists():
-            # if track is already deleted
-            messages.warning(
-                request, "Course Track with id no. %s no longer exist." % self.kwargs["pk"])
+        self.deleteTrack = shs_track.objects.filter(
+            id=int(self.kwargs["pk"])).first()
+        if self.deleteTrack:
+            if not self.deleteTrack.is_deleted:
+                return super().dispatch(request, *args, **kwargs)
+            messages.warning(request, "Course track does not exist.")
             return HttpResponseRedirect(reverse("adminportal:view_courses"))
-        elif not shs_track.objects.filter(id=self.kwargs["pk"]).exists():
-            # if track id does not exist
-            messages.warning(
-                request, "Course Track with id no. %s does not exist." % self.kwargs["pk"])
-            return HttpResponseRedirect(reverse("adminportal:view_courses"))
-        else:
-            # if track id is not yet deleted
-            return super().dispatch(request, *args, **kwargs)
+        messages.warning(request, "Course track does not exist.")
+        return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
@@ -263,63 +236,60 @@ class add_trackStrand(FormView):
             return super().get_success_url()
 
     def form_valid(self, form):
-        strand_name = form.cleaned_data["strand_name"]
-        strand_details = form.cleaned_data["strand_details"]
+        try:
+            strand_name = form.cleaned_data["strand_name"]
+            strand_details = form.cleaned_data["strand_details"]
 
-        if form.has_changed():
-            if strand_name and strand_details:
-                # if not empty
-                try:
-                    obj1 = shs_strand.objects.filter(
+            if form.has_changed():
+                if strand_name and strand_details:
+                    self.getStrand = shs_strand.objects.filter(
                         strand_name=strand_name).first()
-                    foreign_obj = shs_track.objects.get(
-                        id=self.kwargs["track_id"])
-                    if obj1:
+                    if self.getStrand:
                         # if strand name already exist
-                        if obj1.is_deleted == False:
+                        if not self.getStrand.is_deleted:
                             # if the existing strand name is not deleted
                             messages.warning(
-                                self.request, "%s already exist." % strand_name)
+                                self.request, f"{strand_name} already exist.")
                             return self.form_invalid(form)
                         else:
-                            # if the existing strand is deleted=True
-                            obj_update = shs_strand.objects.filter(strand_name=strand_name).update(
-                                track=foreign_obj,
-                                strand_name=strand_name,
-                                definition=strand_details,
-                                is_deleted=False
-                            )
-                            messages.success(self.request, "%s is added to %s" % (
-                                strand_name, foreign_obj.track_name))
-                            return super().form_valid(form)
+                            # if the existing strand is deleted
+                            if self.getStrand.track == self.getTrack:
+                                self.getStrand.strand_name = strand_name
+                                self.getStrand.definition = strand_details
+                                self.getStrand.is_deleted = False
+                                self.getStrand.save()
+                                messages.success(
+                                    self.request, f"{strand_name} is added to {self.getTrack.track_name}")
+                                return super().form_valid(form)
+                            messages.warning(
+                                self.request, f"{strand_name} is being used on other track.")
+                            return self.form_invalid(form)
                     else:
                         # If strand name is unique, then, Create new strand
                         shs_strand.objects.create(
-                            track=foreign_obj,
+                            track=self.getTrack,
                             strand_name=strand_name,
                             definition=strand_details,
                         )
-                        messages.success(self.request, "%s is added to %s" % (
-                            strand_name, foreign_obj.track_name))
+                        messages.success(
+                            self.request, f"{strand_name} is added to {self.getTrack.track_name}")
                         return super().form_valid(form)
-                except IntegrityError:
-                    messages.warning(
-                        self.request, "%s already exist." % strand_name)
+
+                else:
+                    # if empty fields
+                    messages.warning(self.request, "Fill all fields")
                     return self.form_invalid(form)
-                except Exception as e:
-                    messages.error(self.request, e)
-                    return self.form_valid(form)
             else:
-                # if empty fields
-                messages.warning(self.request, "Fill all fields")
-                return self.form_invalid(form)
-        else:
-            return super().form_valid(form)
+                return super().form_valid(form)
+        except IntegrityError:
+            messages.warning(self.request, f"{strand_name} already exist.")
+            return self.form_invalid(form)
+        except Exception as e:
+            return self.form_invalid(form)
 
     def get_initial(self):
         initial = super().get_initial()
-        obj = shs_track.objects.filter(id=self.kwargs["track_id"]).first()
-        initial["track"] = obj.track_name
+        initial["track"] = self.getTrack.track_name
         return initial
 
     def get_context_data(self, **kwargs):
@@ -328,21 +298,16 @@ class add_trackStrand(FormView):
         return context
 
     def dispatch(self, request, *args, **kwargs):
-        track_id = self.kwargs["track_id"]
-
-        if shs_track.objects.filter(id=track_id, is_deleted=False).exists():
-            # if track_id is not deleted
-            return super().dispatch(request, *args, **kwargs)
+        self.getTrack = shs_track.objects.filter(
+            id=int(self.kwargs["track_id"])).first()
+        if self.getTrack:
+            self.getTrack.refresh_from_db()
+            if not self.getTrack.is_deleted:
+                return super().dispatch(request, *args, **kwargs)
+            messages.warning(request, "Track course no longer exist.")
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
         else:
-            if shs_track.objects.filter(id=track_id, is_deleted=True).exists():
-                # if track_id exist but deleted
-                messages.error(
-                    request, "Track id no. %s no longer exist." % track_id)
-                return HttpResponseRedirect(reverse("adminportal:view_courses"))
-
-            # if there's no track_id
-            messages.error(
-                request, "Track id no. %s does not exist." % track_id)
+            messages.warning(request, "Track course does not exist.")
             return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
 
@@ -353,39 +318,34 @@ class update_trackStrand(FormView):
     success_url = "/School_admin/Courses/"
 
     def form_valid(self, form):
-        strand_name = form.cleaned_data["strand_name"]
-        strand_details = form.cleaned_data["strand_details"]
-        strand_id = self.kwargs["strand_id"]
+        try:
+            strand_name = form.cleaned_data["strand_name"]
+            strand_details = form.cleaned_data["strand_details"]
 
-        strand_obj = shs_strand.objects.filter(id=strand_id).first()
-        if form.has_changed():
-            if strand_name and strand_details:
-                try:
-                    strand_obj.strand_name = strand_name
-                    strand_obj.definition = strand_details
-                    strand_obj.save()
+            if form.has_changed():
+                if strand_name and strand_details:
+                    self.getStrand.strand_name = strand_name
+                    self.getStrand.definition = strand_details
+                    self.getStrand.save()
                     messages.success(
-                        self.request, "%s is updated successfully." % strand_name)
+                        self.request, f"{strand_name} is updated successfully.")
                     return super().form_valid(form)
-                except IntegrityError:
-                    messages.warning(
-                        self.request, "%s already exist." % strand_name)
-                    return self.form_invalid(form)
-                except Exception as e:
-                    messages.error(self.request, e)
+                else:
+                    messages.warning(self.request, "Fill all fields.")
                     return self.form_invalid(form)
             else:
-                messages.warning(self.request, "Fill all fields.")
-                return self.form_invalid(form)
-        else:
-            return super().form_valid(form)
+                return super().form_valid(form)
+        except IntegrityError:
+            messages.warning(self.request, f"{strand_name} already exist.")
+            return self.form_invalid(form)
+        except Exception as e:
+            return self.form_invalid(form)
 
     def get_initial(self):
         initial = super().get_initial()
-        obj = shs_strand.objects.get(id=self.kwargs["strand_id"])
-        initial["track"] = obj.track.track_name
-        initial["strand_name"] = obj.strand_name
-        initial["strand_details"] = obj.definition
+        initial["track"] = self.getStrand.track.track_name
+        initial["strand_name"] = self.getStrand.strand_name
+        initial["strand_details"] = self.getStrand.definition
         return initial
 
     def get_context_data(self, **kwargs):
@@ -394,14 +354,14 @@ class update_trackStrand(FormView):
         return context
 
     def dispatch(self, request, *args, **kwargs):
-        strand_id = self.kwargs["strand_id"]
-
-        if shs_strand.objects.filter(id=strand_id, is_deleted=False).exists():
+        self.getStrand = shs_strand.objects.filter(
+            id=int(self.kwargs["strand_id"])).first()
+        if self.getStrand and not self.getStrand.is_deleted:
             # if strand_id exist and not deleted
             return super().dispatch(request, *args, **kwargs)
         else:
             # if strand_id exist or deleted
-            return strand_dispatch_func(request, strand_id)
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
@@ -409,31 +369,29 @@ class delete_trackStrand(TemplateView):
     template_name = "adminportal/Shs_courses/delete_strand.html"
 
     def post(self, request, *args, **kwargs):
-        obj = shs_strand.objects.filter(id=self.kwargs["pk"]).first()
-        obj.is_deleted = True
-        obj.save()
-
-        messages.success(request, "%s is deleted successfully." %
-                         obj.strand_name)
+        self.deleteStrand.is_deleted = True
+        self.deleteStrand.save()
+        messages.success(
+            request, f"{self.deleteStrand.strand_name} is deleted.")
         return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        obj = shs_strand.objects.get(id=self.kwargs["pk"])
         context["title"] = "Remove Track Strand"
-        context["track"] = obj.track.track_name
-        context["strand_name"] = obj.strand_name
-        context["definition"] = obj.definition
+        context["track"] = self.deleteStrand.track.track_name
+        context["strand_name"] = self.deleteStrand.strand_name
+        context["definition"] = self.deleteStrand.definition
         return context
 
     def dispatch(self, request, *args, **kwargs):
         strand_id = self.kwargs["pk"]
-
-        if shs_strand.objects.filter(id=strand_id, is_deleted=False).exists():
+        self.deleteStrand = shs_strand.objects.filter(
+            id=int(self.kwargs["pk"])).exclude(is_deleted=True).first()
+        if self.deleteStrand:
             # if strand_id exist and not deleted
             return super().dispatch(request, *args, **kwargs)
         else:
-            return strand_dispatch_func(request, strand_id)
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
