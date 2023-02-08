@@ -80,3 +80,25 @@ class updateEventForm(forms.Form):
 class addSubjectForm(forms.Form):
     code = forms.CharField(label="Subject Code", max_length=20)
     title = forms.CharField(label="Subject Title", max_length=50)
+
+
+class g11_firstSem(forms.Form):
+    effective_date = forms.DateField(label="Effective Date", validators=[
+                                     setup_form_DateValidation, ], widget=forms.DateInput(attrs={'type': 'date'}))
+    g11_firstSem_subjects = forms.TypedMultipleChoiceField(label="Grade 11 - First Semester Subjects", choices=(
+        (subject.id, f"{subject.code}: {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)
+
+
+class g11_secondSem(forms.Form):
+    g11_secondSem_subjects = forms.TypedMultipleChoiceField(label="Grade 11 - Second Semester Subjects", choices=(
+        (subject.id, f"{subject.code}: {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)
+
+
+class g12_firstSem(forms.Form):
+    g12_firstSem_subjects = forms.TypedMultipleChoiceField(label="Grade 12 - First Semester Subjects", choices=(
+        (subject.id, f"{subject.code}: {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)
+
+
+class g12_secondSem(forms.Form):
+    g12_secondSem_subjects = forms.TypedMultipleChoiceField(label="Grade 12 - Second Semester Subjects", choices=(
+        (subject.id, f"{subject.code}: {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)

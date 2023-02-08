@@ -727,3 +727,9 @@ class update_subjects(FormView):
             return super().dispatch(request, *args, **kwargs)
         messages.warning(request, "Subject Id does not exist.")
         return HttpResponseRedirect(reverse("adminportal:getSubjects"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class add_curriculum(FormView):
+    template_name = "adminportal/curriculum/curriculumDetails.html"
+    success_url = "/School_admin/"

@@ -431,3 +431,23 @@ class subjects(models.Model):
 
     def __str__(self):
         return f"{self.code}: {self.title}"
+
+
+class curriculum(models.Model):
+    effective_date = models.DateField()
+
+    g11_firstSem_subjects = models.ManyToManyField(
+        subjects, related_name="grade11_firstSem")
+    g11_secondSem_subjects = models.ManyToManyField(
+        subjects, related_name="grade11_secondSem")
+
+    g12_firstSem_subjects = models.ManyToManyField(
+        subjects, related_name="grade12_firstSem")
+    g12_secondSem_subjects = models.ManyToManyField(
+        subjects, related_name="grade12_secondSem")
+
+    def __str__(self):
+        return self.pk
+
+    class Meta:
+        ordering = ["-effective_date"]
