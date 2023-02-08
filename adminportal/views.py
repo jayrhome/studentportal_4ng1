@@ -618,7 +618,7 @@ class edit_schoolEvent(FormView):
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class add_subjects(FormView):
     template_name = "adminportal/subjects/subjectDetails.html"
-    success_url = "/School_admin/"
+    success_url = "/School_admin/subjects/"
     form_class = addSubjectForm
 
     def form_valid(self, form):
@@ -626,6 +626,14 @@ class add_subjects(FormView):
             code = form.cleaned_data["code"]
             title = form.cleaned_data["title"]
             if code and title:
+                if subjects.objects.filter(code=code, title=title).exclude(is_remove=False).exists():
+                    obj = subjects.objects.get(code=code, title=title)
+                    obj.code = code
+                    obj.title = title
+                    obj.is_remove = False
+                    obj.save()
+                    return super().form_valid(form)
+
                 subjects.objects.create(code=code, title=title)
                 messages.success(
                     self.request, f"{code}: {title} is a new subject.")
@@ -650,19 +658,21 @@ class add_subjects(FormView):
 class get_subjects(ListView):
     allow_empty = True
     context_object_name = "subjects"
-    http_method_names = ["get", "post"]
     paginate_by = 15
     template_name = "adminportal/subjects/viewSubjects.html"
+
+    def post(self, request, *args, **kwargs):
+        return HttpResponseRedirect(reverse("adminportal:getSubjects", kwargs={"key": request.POST.get("key")}))
 
     def get_queryset(self):
         try:
             if "key" in self.kwargs:
-                key = self.kwargs["key"].strip()
-                qs = subjects.activeSubjects.values("id", "code", "title").filter(
-                    Q(code____unaccent__icontains=key) | Q(title____unaccent__icontains=key))
+                qs = subjects.activeSubjects.values("id", "code", "title").filter(Q(code__unaccent__icontains=str(
+                    self.kwargs["key"])) | Q(title__unaccent__icontains=str(self.kwargs["key"])))
             else:
                 qs = subjects.activeSubjects.values("id", "code", "title")
         except Exception as e:
+            messages.error(self.request, e)
             qs = subjects.objects.none()
         return qs
 
@@ -670,3 +680,50 @@ class get_subjects(ListView):
         context = super().get_context_data(**kwargs)
         context["title"] = "View Subjects"
         return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class update_subjects(FormView):
+    template_name = "adminportal/subjects/subjectDetails.html"
+    success_url = "/School_admin/subjects/"
+    form_class = addSubjectForm
+
+    def form_valid(self, form):
+        try:
+            self.getSubject.refresh_from_db()
+            if "removeSub" in self.request.POST:
+                self.getSubject.is_remove = True
+                self.getSubject.save()
+                return super().form_valid(form)
+
+            code = form.cleaned_data["code"]
+            title = form.cleaned_data["title"]
+            self.getSubject.code = code
+            self.getSubject.title = title
+            self.getSubject.save()
+            return super().form_valid(form)
+        except IntegrityError:
+            messages.warning(self.request, "Subject already exist.")
+            return self.form_invalid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["code"] = self.getSubject.code
+        initial["title"] = self.getSubject.title
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Update Subject"
+        context["for_update"] = True
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        self.getSubject = subjects.activeSubjects.filter(
+            id=int(kwargs["pk"])).first()
+        if self.getSubject:
+            return super().dispatch(request, *args, **kwargs)
+        messages.warning(request, "Subject Id does not exist.")
+        return HttpResponseRedirect(reverse("adminportal:getSubjects"))

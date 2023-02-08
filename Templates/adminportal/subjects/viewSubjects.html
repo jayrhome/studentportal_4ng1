@@ -29,6 +29,7 @@
                     <th scope="row"> {{subject.id}} </th>
                     <td> {{subject.code}} </td>
                     <td> {{subject.title}} </td>
+                    <td> <a href="{% url 'adminportal:updateSubjects' pk=subject.id %}" class="btn btn-primary btn-sm"> Edit </a> </td>
                 </tr>
             {% empty %}
                 <tr>

@@ -412,7 +412,7 @@ class studentDocument(models.Model):
 
 class subjectsManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(is_remove=True)
+        return super().get_queryset().filter(is_remove=False)
 
 
 class subjects(models.Model):
