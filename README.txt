@@ -1,4 +1,3 @@
-https://drive.google.com/drive/u/0/folders/1YIbO2dnDpT-P1lvImGlGEzElfJ0cYHxt
 --- STEPS FOR NEWLY CREATE LOCAL REPOSITORY ---
 Step 1: Create a root directory in your local folder.
 Step 2: Open cmd and cd to the root directory.
