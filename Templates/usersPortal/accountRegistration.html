@@ -6,7 +6,7 @@
 
 <div class="main">
     <div class="submain">
-        <form id ="create_user_form" method="post">
+        <form id ="postForm" method="post">
             {% csrf_token %}
             <!-- List of errors from forms.py -->
             {{ form.non_field_errors }}
@@ -45,11 +45,5 @@
         </form>
     </div>
 </div>
-
-<script>
-    $('#create_user_form').one('submit', function() {
-        $(this).find('input[type="submit"]').attr('disabled','disabled');
-    }); 
-</script>
 
 {% endblock content %}

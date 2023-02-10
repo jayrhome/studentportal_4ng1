@@ -6,7 +6,7 @@
 
 <div class="main">
     <div class="submain">
-        <form id="loginform" method="post">
+        <form id="postForm" method="post">
             {% csrf_token %}
         
             <!-- List of errors from forms.py -->
@@ -29,10 +29,5 @@
 </div>
 
 <!-- Email: admin@gmail.com Password: admin  -->
-<script>
-    $('#loginform').one('submit', function() {
-        $(this).find('input[type="submit"]').attr('disabled','disabled');
-    });
-</script>
 
 {% endblock content %}

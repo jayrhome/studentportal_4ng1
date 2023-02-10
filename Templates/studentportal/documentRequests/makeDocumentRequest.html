@@ -6,7 +6,7 @@
 
 <div class="container">
     <div class="col-md-8">
-        <form id ="form_submit" method="post">
+        <form id ="postForm" method="post">
             {% csrf_token %}
             <!-- List of errors from forms.py -->
             {{ form.non_field_errors }}
@@ -33,11 +33,5 @@
         </form>
     </div>
 </div>
-
-<script>
-    $('#form_submit').one('submit', function() {
-        $(this).find('input[type="submit"]').attr('disabled','disabled');
-    });
-</script>
 
 {% endblock content %}

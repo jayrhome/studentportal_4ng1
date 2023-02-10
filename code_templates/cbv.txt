@@ -1,0 +1,78 @@
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(, login_url="")], name="dispatch")
+class update_subjects(FormView):
+    template_name = ""
+    success_url = ""
+    form_class = 
+
+    def form_valid(self, form):
+        try:
+            return super().form_valid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = ""
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if True:
+            return super().dispatch(request, *args, **kwargs)
+        messages.warning(request, "")
+        return HttpResponseRedirect(reverse(""))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(, login_url="")], name="dispatch")
+class get_subjects(ListView):
+    allow_empty = True
+    context_object_name = ""
+    paginate_by = 
+    template_name = ""
+
+    def post(self, request, *args, **kwargs):
+        return HttpResponseRedirect(reverse("", kwargs={"": ""}))
+
+    def get_queryset(self):
+        try:
+            if "key" in self.kwargs:
+                qs = Model.objects.none()
+            else:
+                qs = Model.objects.none()
+        except Exception as e:
+            messages.error(self.request, e)
+            qs = Model.objects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = ""
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(, login_url="")], name="dispatch")
+class get_ongoingSchoolEvents(TemplateView, DeletionMixin):
+    template_name = ""
+    http_method_names = ["get", "post"]
+    success_url = ""
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            pass
+        except Exception as e:
+            pass
+        return HttpResponseRedirect(self.success_url)
+
+    def dispatch(self, request, *args, **kwargs):
+        if ("" in request.POST) and request.method == "POST":
+            pass
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = ""
+
+        return context
