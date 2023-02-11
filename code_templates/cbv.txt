@@ -76,3 +76,51 @@ class get_ongoingSchoolEvents(TemplateView, DeletionMixin):
         context["title"] = ""
 
         return context
+
+
+from formtools.wizard.views import SessionWizardView
+templates = {
+    "key": "html_file",
+    "key": "html_file",
+    "key": "html_file",
+}
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(, login_url="")], name="dispatch")
+class admission_application(SessionWizardView):
+    form_list = [("key", form),
+                 ("key", form),
+                 ("key", form)]
+
+    def get_template_names(self):
+        return [templates[self.steps.current]]
+
+    def done(self, form_list, **kwargs):
+        try:
+            data = self.get_cleaned_data_for_step("key")
+            data = self.get_cleaned_data_for_step("key")
+            data = self.get_cleaned_data_for_step("key")
+            
+            return HttpResponseRedirect(reverse(""))
+        except Exception as e:
+            return HttpResponseRedirect(reverse(""))
+
+    def render_goto_step(self, goto_step, **kwargs):
+        form = self.get_form(data=self.request.POST, files=self.request.FILES)
+        if form.is_valid():
+            self.storage.set_step_data(
+                self.steps.current, self.process_step(form))
+            self.storage.set_step_files(
+                self.steps.current, self.process_step_files(form))
+        return super().render_goto_step(goto_step, **kwargs)
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form, **kwargs)
+        context['title'] = ""
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except:
+            return HttpResponseRedirect(reverse(""))
+
+

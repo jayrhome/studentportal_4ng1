@@ -81,6 +81,11 @@ urlpatterns = [
     path("Subject/", include([
         path("Add/", add_subjects.as_view(), name="addSubjects"),
         path("Update/<pk>", update_subjects.as_view(), name="updateSubjects"),
-    ]))
+    ])),
 
+    path("Curriculums/", include([
+        path("", view_curriculum.as_view(), name="view_curriculum"),
+        path("Add/", add_curriculum.as_view(), name="add_curriculum"),
+        path("Update/<pk>", update_curriculum.as_view(), name="update_curriculum"),
+    ])),
 ]

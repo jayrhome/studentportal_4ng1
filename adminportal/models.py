@@ -447,7 +447,7 @@ class curriculum(models.Model):
         subjects, related_name="grade12_secondSem")
 
     def __str__(self):
-        return self.pk
+        return str(self.pk)
 
     class Meta:
         ordering = ["-effective_date"]

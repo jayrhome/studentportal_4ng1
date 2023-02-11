@@ -3,6 +3,7 @@ from . models import *
 from django.contrib.auth import get_user_model
 import json
 from datetime import date, datetime
+from django.db.models import Prefetch
 
 User = get_user_model()
 

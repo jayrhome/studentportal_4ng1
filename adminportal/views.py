@@ -16,6 +16,7 @@ from django.contrib import messages
 from django.db.models import Q, FilteredRelation, Prefetch, Count, Case, When, Value
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
+from formtools.wizard.views import SessionWizardView
 
 
 def superuser_only(user):
@@ -730,6 +731,193 @@ class update_subjects(FormView):
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
-class add_curriculum(FormView):
-    template_name = "adminportal/curriculum/curriculumDetails.html"
-    success_url = "/School_admin/"
+class view_curriculum(ListView):
+    allow_empty = True
+    context_object_name = "curriculums"
+    paginate_by = 1
+    template_name = "adminportal/curriculum/getCurriculum.html"
+
+    def get_queryset(self):
+        try:
+            qs = curriculum.objects.prefetch_related(
+                Prefetch("g11_firstSem_subjects", queryset=subjects.objects.all(
+                ), to_attr="g11FirstSemSubs"),
+                Prefetch("g11_secondSem_subjects", queryset=subjects.objects.all(
+                ), to_attr="g11SecondSemSubs"),
+                Prefetch("g12_firstSem_subjects", queryset=subjects.objects.all(
+                ), to_attr="g12FirstSemSubs"),
+                Prefetch("g12_secondSem_subjects", queryset=subjects.objects.all(
+                ), to_attr="g12SecondSemSubs"),
+            ).annotate(
+                can_edit=Case(When(effective_date__gte=date.today(),
+                              then=Value(True)), default=Value(False))
+            )
+        except Exception as e:
+            qs = curriculum.objects.none()
+            messages.error(self.request, e)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "List of Curriculum"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class add_curriculum(SessionWizardView):
+    templates = {
+        "g11_firstSem": "adminportal/curriculum/addCurriculumHTMLfiles/g11firstsem.html",
+        "g11_secondSem": "adminportal/curriculum/addCurriculumHTMLfiles/g11secondsem.html",
+        "g12_firstSem": "adminportal/curriculum/addCurriculumHTMLfiles/g12firstsem.html",
+        "g12_secondSem": "adminportal/curriculum/addCurriculumHTMLfiles/g12secondsem.html",
+    }
+
+    form_list = [
+        ("g11_firstSem", g11_firstSem),
+        ("g11_secondSem", g11_secondSem),
+        ("g12_firstSem", g12_firstSem),
+        ("g12_secondSem", g12_secondSem),
+    ]
+
+    def get_template_names(self):
+        return [self.templates[self.steps.current]]
+
+    def done(self, form_list, **kwargs):
+        try:
+            g11_First_Sem = self.get_cleaned_data_for_step("g11_firstSem")
+            g11_Second_Sem = self.get_cleaned_data_for_step("g11_secondSem")
+            g12_First_Sem = self.get_cleaned_data_for_step("g12_firstSem")
+            g12_Second_Sem = self.get_cleaned_data_for_step("g12_secondSem")
+
+            new_curriculum = curriculum()
+            new_curriculum.effective_date = g11_First_Sem["effective_date"]
+            new_curriculum.save()
+
+            new_curriculum.g11_firstSem_subjects.add(
+                *g11_First_Sem["g11_firstSem_subjects"])
+            new_curriculum.g11_secondSem_subjects.add(
+                *g11_Second_Sem["g11_secondSem_subjects"])
+            new_curriculum.g12_firstSem_subjects.add(
+                *g12_First_Sem["g12_firstSem_subjects"])
+            new_curriculum.g12_secondSem_subjects.add(
+                *g12_Second_Sem["g12_secondSem_subjects"])
+            new_curriculum.save()
+
+            messages.success(
+                self.request, "New curriculum is saved successfully.")
+
+            return HttpResponseRedirect(reverse("adminportal:view_curriculum"))
+        except Exception as e:
+            return HttpResponseRedirect(reverse("adminportal:add_curriculum"))
+
+    def render_goto_step(self, goto_step, **kwargs):
+        form = self.get_form(data=self.request.POST, files=self.request.FILES)
+        if form.is_valid():
+            self.storage.set_step_data(
+                self.steps.current, self.process_step(form))
+            self.storage.set_step_files(
+                self.steps.current, self.process_step_files(form))
+        return super().render_goto_step(goto_step, **kwargs)
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form, **kwargs)
+        context['title'] = "New Curriculum"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if subjects.activeSubjects.all():
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            messages.warning(request, "Add subjects to create curriculum.")
+            return HttpResponseRedirect(reverse("adminportal:addSubjects"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class update_curriculum(SessionWizardView):
+    templates = {
+        "g11_firstSem": "adminportal/curriculum/addCurriculumHTMLfiles/g11firstsem.html",
+        "g11_secondSem": "adminportal/curriculum/addCurriculumHTMLfiles/g11secondsem.html",
+        "g12_firstSem": "adminportal/curriculum/addCurriculumHTMLfiles/g12firstsem.html",
+        "g12_secondSem": "adminportal/curriculum/addCurriculumHTMLfiles/g12secondsem.html",
+    }
+
+    form_list = [
+        ("g11_firstSem", g11_firstSem),
+        ("g11_secondSem", g11_secondSem),
+        ("g12_firstSem", g12_firstSem),
+        ("g12_secondSem", g12_secondSem),
+    ]
+
+    def get_form_initial(self, step):
+        initial = super().get_form_initial(step)
+
+        match step:
+            case "g11_firstSem":
+                initial["effective_date"] = self.get_saved_curriculum.effective_date
+                initial["g11_firstSem_subjects"] = tuple(
+                    [item.id for item in self.get_saved_curriculum.g11_firstSem_subjects.all()])
+
+            case "g11_secondSem":
+                initial["g11_secondSem_subjects"] = tuple(
+                    [item.id for item in self.get_saved_curriculum.g11_secondSem_subjects.all()])
+
+            case "g12_firstSem":
+                initial["g12_firstSem_subjects"] = tuple(
+                    [item.id for item in self.get_saved_curriculum.g12_firstSem_subjects.all()])
+
+            case "g12_secondSem":
+                initial["g12_secondSem_subjects"] = tuple(
+                    [item.id for item in self.get_saved_curriculum.g12_secondSem_subjects.all()])
+
+        return initial
+
+    def get_template_names(self):
+        return [self.templates[self.steps.current]]
+
+    def done(self, form_list, **kwargs):
+        try:
+            g11_First_Sem = self.get_cleaned_data_for_step("g11_firstSem")
+            g11_Second_Sem = self.get_cleaned_data_for_step("g11_secondSem")
+            g12_First_Sem = self.get_cleaned_data_for_step("g12_firstSem")
+            g12_Second_Sem = self.get_cleaned_data_for_step("g12_secondSem")
+
+            self.get_saved_curriculum.refresh_from_db()
+            self.get_saved_curriculum.effective_date = g11_First_Sem["effective_date"]
+            self.get_saved_curriculum.g11_firstSem_subjects.set(
+                [*g11_First_Sem["g11_firstSem_subjects"]])
+            self.get_saved_curriculum.g11_secondSem_subjects.set(
+                [*g11_Second_Sem["g11_secondSem_subjects"]])
+            self.get_saved_curriculum.g12_firstSem_subjects.set(
+                [*g12_First_Sem["g12_firstSem_subjects"]])
+            self.get_saved_curriculum.g12_secondSem_subjects.set(
+                [*g12_Second_Sem["g12_secondSem_subjects"]])
+            self.get_saved_curriculum.save()
+
+            return HttpResponseRedirect(reverse("adminportal:view_curriculum"))
+        except Exception as e:
+            messages.error(self.request, e)
+            return HttpResponseRedirect(reverse("adminportal:add_curriculum"))
+
+    def render_goto_step(self, goto_step, **kwargs):
+        form = self.get_form(data=self.request.POST, files=self.request.FILES)
+        if form.is_valid():
+            self.storage.set_step_data(
+                self.steps.current, self.process_step(form))
+            self.storage.set_step_files(
+                self.steps.current, self.process_step_files(form))
+        return super().render_goto_step(goto_step, **kwargs)
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form, **kwargs)
+        context['title'] = "Update Curriculum"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        self.get_saved_curriculum = curriculum.objects.filter(
+            pk=int(kwargs["pk"])).exclude(effective_date__lt=date.today()).first()
+        if self.get_saved_curriculum and subjects.activeSubjects.all():
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            if not subjects.activeSubjects.all():
+                messages.warning(request, "Add subjects to create curriculum.")
+            return HttpResponseRedirect(reverse("adminportal:view_curriculum"))

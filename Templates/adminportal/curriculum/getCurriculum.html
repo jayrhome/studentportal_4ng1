@@ -1,0 +1,101 @@
+{% extends 'adminportal/curriculum/base1.html' %}
+{% block content %}
+{% include 'adminportal/messages/messages.html' %}
+
+
+<a href="{% url 'adminportal:add_curriculum' %}" class="btn btn-primary"> New Curriculum + </a>
+
+<div class="container-fluid" style="background: #fff;">
+
+    <div class="track_and_strand_wrapper container py-5">
+        <div class="row grid">
+            {% for curriculum in curriculums %}
+                <div class="track_strand mb-3 " style="background: #fff;">
+                    <h3 class=""> Date Effective: {{curriculum.effective_date|date:"l, M j, Y"}} </h3>
+                    <div class="strand_box p-3 border-top border-primary">
+
+                        {% for subject in curriculum.g11FirstSemSubs %}
+                            {% if forloop.counter == 1 %} <p> Grade 11 - First Semester </p> {% endif %}
+                            <div class="strand">
+                                <i class="fa fa-caret-right" aria-hidden="true"></i>
+                                    <p> {{subject.code}} : {{subject.title}} </p>
+                            </div>
+                        {% endfor %}
+                        <hr>
+
+                        {% for subject in curriculum.g11SecondSemSubs %}
+                            {% if forloop.counter == 1 %} <p> Grade 11 - Second Semester </p> {% endif %}
+                            <div class="strand">
+                                <i class="fa fa-caret-right" aria-hidden="true"></i>
+                                    <p> {{subject.code}} : {{subject.title}} </p>
+                            </div>
+                        {% endfor %}
+                        <hr>
+                        
+                        {% for subject in curriculum.g12FirstSemSubs %}
+                            {% if forloop.counter == 1 %} <p> Grade 12 - First Semester </p> {% endif %}
+                            <div class="strand">
+                                <i class="fa fa-caret-right" aria-hidden="true"></i>
+                                    <p> {{subject.code}} : {{subject.title}} </p>
+                            </div>
+                        {% endfor %}
+                        <hr>
+
+                        {% for subject in curriculum.g12SecondSemSubs %}
+                            {% if forloop.counter == 1 %} <p> Grade 12 - Second Semester </p> {% endif %}
+                            <div class="strand">
+                                <i class="fa fa-caret-right" aria-hidden="true"></i>
+                                    <p> {{subject.code}} : {{subject.title}} </p>
+                            </div>
+                        {% endfor %}
+                        <hr>
+
+                        {% if curriculum.can_edit %} <a href="{% url 'adminportal:update_curriculum' pk=curriculum.id %}" class="btn btn-primary btn-sm"> Update </a> {% endif %}
+
+                    </div>
+                </div>
+            {% empty %}
+                <h4> No curriculum... </h4>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<a href="{% url 'adminportal:index' %}" class="btn btn-primary"> Back </a>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm"> Prev </a>
+        {% endif %}
+
+        {% block pagination %}
+            {% for page_number in page_obj.paginator.get_elided_page_range %}
+                {% if page_number == page_obj.paginator.ELLIPSIS %}
+                    {{page_number}}
+                {% else %}
+                    <a href="?page={{page_number}}" class="btn btn-secondary btn-sm"> {{page_number}} </a>
+                {% endif %}
+            {% endfor %}
+        {% endblock %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm"> Next </a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+    </span>
+</div>
+
+<style>
+    .box{
+        box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+    }
+</style>
+
+
+
+{% endblock content %}
