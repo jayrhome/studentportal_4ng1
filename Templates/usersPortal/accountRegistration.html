@@ -1,0 +1,49 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+{% load std_portal %}
+{% include 'usersPortal/messages/messages.html' %}
+
+
+<div class="main">
+    <div class="submain">
+        <form id ="postForm" method="post">
+            {% csrf_token %}
+            <!-- List of errors from forms.py -->
+            {{ form.non_field_errors }}
+
+            <div class="cards_create">
+                <h4> Create Account </h4>
+                <div class="form-outline mb-4">
+                    {{ form.email.errors }} <!-- Field errors -->
+                    <label for="{{ form.email.id_for_label }}" class="form-label"> Email: </label>
+                    {{ form.email|addclass:"form-control"}} <!-- Input Field -->
+                    <div id="emailHelp" class="form-text"> Enter your email </div>
+                </div>
+
+                <div class="form-outline mb-4">
+                    {{ form.display_name.errors }} <!-- Field errors -->
+                    <label for="{{ form.display_name.id_for_label }}" class="form-label"> Username: </label>
+                    {{ form.display_name|addclass:"form-control"}} <!-- Input Field -->
+                </div>
+
+                <div class="form-outline mb-4">
+                    {{ form.password.errors }} <!-- Field errors -->
+                    <label for="{{ form.password.id_for_label }}" class="form-label"> Password: </label>
+                    {{ form.password|addclass:"form-control" }} <!-- Input Field -->
+                </div>
+
+                <div class="form-outline mb-5">
+                    {{ form.confirmpassword.errors }} <!-- Field errors -->
+                    <label for="{{ form.confirmpassword.id_for_label }}" class="form-label"> Confirm Password: </label>
+                    {{ form.confirmpassword|addclass:"form-control" }} <!-- Input Field -->
+                </div>
+
+                <input type="submit" value="Create" class="btn_create btn-block mb-3">
+                {% if user.is_superuser %} <a href="{% url 'adminportal:index' %}" class="btn_create btn-block mb-3" > Back </a> {% endif %}
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{% endblock content %}

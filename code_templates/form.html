@@ -1,0 +1,34 @@
+{% extends '' %}
+{% block content %}
+{% load  %}
+{% include '' %}
+
+
+<div class="container col-md-12">
+    <form id="postForm" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <!-- List of errors from forms.py -->
+        {{ form.non_field_errors }}
+    
+        <h4>  </h4>
+
+        <div class="form-outline mb-4">
+            <label for="{{ form..id_for_label }}" class="form-label"> {{ form..label }}: </label>
+            {{ form.|addclass:"form-control"}} <!-- Input Field -->
+            {{ form..errors }} <!-- Field errors -->
+        </div>
+
+        <div class="form-outline mb-4">
+            <label for="{{ form..id_for_label }}" class="form-label"> {{ form..label }}: </label>
+            {{ form.|addclass:"form-control"}} <!-- Input Field -->
+            {{ form..errors }} <!-- Field errors -->
+        </div>
+
+        <input type="submit" value="Create" class="btn btn-primary btn-block mb-4">
+    </form>
+
+    <a href="" class="btn btn-primary">  </a>
+</div>
+
+
+{% endblock content %}
