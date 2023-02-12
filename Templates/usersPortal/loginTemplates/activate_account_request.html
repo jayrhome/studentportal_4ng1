@@ -1,0 +1,9 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+
+    <h4> Hi, {{name}}. We sent the authentication link to {{email}} to activate your account.</h4>
+    <a href="{% url 'usersPortal:requestAuthentication' %}" class=""> Request new authentication link </a>
+    <a href="https://gmail.com/" class="btn btnproceed"> Go to Gmail </a>
+    <a href="{% url 'usersPortal:login' %}" class=""> Return </a>
+
+{% endblock content %}

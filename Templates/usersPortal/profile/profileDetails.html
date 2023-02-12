@@ -1,0 +1,22 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+{% include 'usersPortal/messages/messages.html' %}
+
+
+<div class="container">
+    <div class="col-md-8">
+        <img src="{{ userDetails.userimage.image.url }}" alt="">
+        <p> First Name: {{userDetails.first_name}} </p>
+        <p> Middle Name: {{userDetails.middle_name}} </p>
+        <p> Last Name: {{userDetails.last_name}} </p>
+        <p> Birthdate: {{userDetails.birth_date}} </p>
+        <p> Sex: {{userDetails.sex}} </p>
+        <p> Contact: {{userDetails.contactnum}} </p>
+        <p> Address: {{userDetails.useraddress}} </p>
+        <a href="{% url 'usersPortal:updateAccountProfile' %}" class="btn btn-primary btn-sm"> Edit </a>
+        <a href="{% url 'usersPortal:changepassword' %}" class="btn btn-primary btn-sm"> Change Password </a>
+        <a href="{% url 'usersPortal:resetpassword' %}" class="btn btn-primary btn-sm"> Reset Password </a>
+    </div>
+</div>
+
+{% endblock content %}

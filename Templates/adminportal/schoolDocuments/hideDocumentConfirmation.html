@@ -1,0 +1,24 @@
+{% extends 'adminportal/schoolDocuments/schoolDocument_base1.html' %}
+{% block content %}
+{% load std_portal %}
+{% include 'adminportal/messages/messages.html' %}
+
+
+<div class="container">
+    <div class="col-md-8">
+        <form id ="postForm" method="post">
+            {% csrf_token %}
+            <!-- List of errors from forms.py -->
+
+            <div class="cards_create">
+                <h4> Do you want to hide {{documentName}} ? </h4>
+
+                <input type="submit" value="Yes" class="btn btn-primary btn-sm">
+                <a href="{% url 'adminportal:schoolDocuments' %}" class="btn btn-primary btn-sm" > Cancel </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{% endblock content %}

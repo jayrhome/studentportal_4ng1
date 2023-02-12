@@ -1,0 +1,16 @@
+{% extends 'adminportal/schoolDocuments/schoolDocument_base1.html' %}
+{% block content %}
+{% include 'adminportal/messages/messages.html' %}
+
+<div class="container">
+    <div class="col-md-8">
+        <a href="{% url 'adminportal:addEditDocument' %}" class="btn btn-primary"> Add Document + </a>
+        {% for document in availableDocuments %}
+            <p> {{document.documentName}} - <a href="{% url 'adminportal:hideDocument' pk=document.id %}" class="btn btn-primary btn-sm"> Hide </a> - <a href="{% url 'adminportal:addEditDocument' docuId=document.id %}" class="btn btn-primary btn-sm"> Edit </a> </p>
+        {% empty %}
+            <p> No documents can be requested now. </p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock content %}

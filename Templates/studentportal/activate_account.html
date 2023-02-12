@@ -1,6 +1,0 @@
-{% autoescape off %}
-Hi {{ user }}, click the link below to activate your account in Taal High School.
-Note: The activation link is available for 20 minutes.
-
-http://{{ domain }}{% url "studentportal:activate_account" uidb64=uid token=token %}
-{% endautoescape %}
