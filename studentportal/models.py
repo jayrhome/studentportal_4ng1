@@ -1,52 +1,32 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from adminportal.models import studentDocument
+from django.contrib.auth import get_user_model
+from datetime import date
+
+User = get_user_model()
 
 
-class AccountManager(BaseUserManager):
-    def create_user(self, email, display_name, password):
-        user = self.model(
-            email=email, display_name=display_name, password=password)
-        user.set_password(password)
-        user.save(using=self.db)
-        return user
-
-    def create_superuser(self, email, display_name, password):
-        user = self.create_user(
-            email=email, display_name=display_name, password=password)
-        user.set_password(password)
-        user.is_student = False
-        user.is_staff = True
-        user.is_active = True
-        user.is_superuser = True
-        user.save(using=self.db)
-        return user
-
-    def get_by_natural_key(self, email_):
-        print(email_)
-        return self.get(email=email_)
+class getActiveDocumentRequests(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(scheduled_date__gte=date.today(), is_cancelledByRegistrar=False)
 
 
-# email: admin@gmail.com  password: admin
-class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True, max_length=50)
-    display_name = models.CharField(max_length=25)
-    is_active = models.BooleanField(default=False)
-    is_staff = models.BooleanField(default=False)
-    is_teacher = models.BooleanField(default=False)
-    is_student = models.BooleanField(default=True)
-    is_superuser = models.BooleanField(default=False)
-    last_password_changed_date = models.DateTimeField(auto_now=True)
+class documentRequest(models.Model):
+    document = models.ForeignKey(
+        studentDocument, on_delete=models.RESTRICT, related_name="documentRequestDetails")
+    request_by = models.ForeignKey(
+        User, on_delete=models.RESTRICT, related_name="documentRequestedBy")
+    scheduled_date = models.DateField()
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    is_cancelledByRegistrar = models.BooleanField(default=False)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['display_name']
+    objects = models.Manager()
+    registrarObjects = getActiveDocumentRequests()
 
-    objects = AccountManager()
-
-    def get_short_name(self):
-        return self.display_name
-
-    def natural_key(self):
-        return self.email
+    class Meta:
+        ordering = ["scheduled_date", "last_modified"]
+        unique_together = ["document", "scheduled_date"]
 
     def __str__(self):
-        return self.email
+        return f"{self.document.documentName} Request by - {self.request_by.display_name}"

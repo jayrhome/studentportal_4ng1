@@ -1,17 +1,8 @@
 {% extends 'adminportal/Shs_courses/courses_base.html' %}
 {% block content %}
 {% load std_portal %}
+{% include 'studentportal/messages/messages.html' %}
 
-<!-- Message from messages framework / views.py -->
-{% if messages %}
-<div class="container col-md-3">
-    <ul class="messages">
-        {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
-        {% endfor %}
-    </ul>
-</div>
-{% endif %}
 
 <form id="enrollment_form" class="p-3" method="post" enctype="multipart/form-data">
     {% csrf_token %}

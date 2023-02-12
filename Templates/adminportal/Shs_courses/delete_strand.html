@@ -6,11 +6,11 @@
     <a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary"> Back </a>
 </div>
 
-<form id="del_form" class="p-3" method="post">
+<form id="postForm" class="p-3" method="post">
     {% csrf_token %}
     <!-- List of errors from forms.py -->
     {{ form.non_field_errors }}
-    <div class="container col-md-8">
+    <div class="container col-md-8 p-3 bg-white box_shadow">
         <div class="form-outline mb-4">
             <h4> Do you want to delete {{strand_name}} from {{track}}? </h4>
             <p> {{definition}} </p>
@@ -18,11 +18,5 @@
         <input type="submit" value="Delete" class="btn btn-danger btn-block mb-4">
     </div>
 </form>
-
-<script>
-    $('#del_form').one('submit', function() {
-        $(this).find('input[type="submit"]').attr('disabled','disabled');
-    }); 
-</script>
 
 {% endblock content %}

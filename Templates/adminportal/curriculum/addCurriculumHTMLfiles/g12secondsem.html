@@ -1,0 +1,37 @@
+{% extends 'adminportal/curriculum/base1.html' %}
+{% block content %}
+{% load i18n %}
+{% load adminportal_tags %}
+
+<h4> Grade 11 - Second Semester </h4>
+
+<div class="container col-md-8">
+    <form id="postForm" method="post">
+
+        {{ wizard.form.non_field_errors }}
+        {% csrf_token %}
+        <table>
+        {{ wizard.management_form }}
+        {% if wizard.form.forms %}
+            {{ wizard.form.management_form }}
+            {% for form in wizard.form.forms %}
+                {{ form }}
+            {% endfor %}
+        {% else %}
+
+            {{ wizard.form.g12_secondSem_subjects.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.g12_secondSem_subjects.id_for_label }}" class="form-label"> {{ wizard.form.g12_secondSem_subjects.label }} </label>
+            {{ wizard.form.g12_secondSem_subjects|addclass:"form-control"}} <!-- Input Field -->
+
+        {% endif %}
+        </table>
+
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-primary btn-sm">{% trans "Prev" %}</button>
+        <input type="submit" name="wizard_goto_step" value="Submit" class="btn btn-primary btn-sm">
+
+    </form>
+</div>
+
+<p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+
+{% endblock content %}

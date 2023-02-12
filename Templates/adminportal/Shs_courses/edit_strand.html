@@ -1,27 +1,19 @@
 {% extends 'adminportal/Shs_courses/courses_base.html' %}
 {% block content %}
 {% load std_portal %}
+{% include 'adminportal/messages/messages.html' %}
 
-<!-- Message from messages framework / views.py -->
-{% if messages %}
-<div class="container col-md-3">
-    <ul class="messages">
-        {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
-        {% endfor %}
-    </ul>
-</div>
-{% endif %}
 
 <div class="container py-3 d-flex justify-content-end">
     <a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary" > Back </a>
 </div>
-<form id="Edit_strandForm" class="p-3" method="post">
+
+<form id="postForm" class="p-3" method="post">
     {% csrf_token %}
     <!-- List of errors from forms.py -->
     {{ form.non_field_errors }}
 
-    <div class="container col-md-8">
+    <div class="container col-md-8 bg-white box_shadow p-3">
         <h4> Edit Strand </h4>
 
         <div class="form-outline mb-4">
@@ -46,11 +38,5 @@
     </div>
 
 </form>
-
-<script>
-    $('#Edit_strandForm').one('submit', function() {
-        $(this).find('input[type="submit"]').attr('disabled','disabled');
-    }); 
-</script>
 
 {% endblock content %}

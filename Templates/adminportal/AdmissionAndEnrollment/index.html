@@ -12,20 +12,55 @@
     </ul>
 </div>
 {% endif %}
-<div class="container col-md-6">
-    {% if no_record or new_enrollment %}
-        <p> Open enrollment and admission for this school year? Click <a href="{% url 'adminportal:admission_enrollment_setup' %}" class="btn btn-primary"> Open </a> </p>
-    {% endif %}
-</div>
+
+
+
+
+
+
+
+<div class="adm-enr">
+    <div class="adm-enr-sec">
+        <div class="center">
+            <div class="adm-enr-cont" data-aos="fade-left" data-aos-duration="1000">
+                <h1>What do you want to do?</h1>
+            </div>
+          
+
+                <div class="adm-enr-butt" data-aos="fade-left" data-aos-duration="1500">
+                    <!-- <a href="{% url 'adminportal:admission_and_enrollment' %}" aria-current="page" class="nav-link a_p_card d-flex">
+                        <i class="fa fa-graduation-cap py-2 me-3" aria-hidden="true"></i>
+                        <h4>Admission and enrollment </h4>
+                    </a> -->
+            
+                        
+                   
+                            {% if no_record or new_enrollment %}
+                                 <a href="{% url 'adminportal:admission_enrollment_setup' %}" aria-current="page" class="nav-link a_p_card d-flex"> 
+                                    <i class="fa-sharp fa-solid fa-door-open"  aria-hidden="true"></i>
+                                    <h4> Open enrollment and admission </h4>
+                                   
+                            {% endif %}
+
+                        </a> 
+                        </div>
+                
+
+        </div>
+      
+
 
 {% if sy %}
-    <div class="container col-md-6">
+    <div class="container-hex">
 
-        <!-- if school year is less than 209 days and setup form will start soon -->
+        
         {% if start_soon %}
+   
+        <!-- if school year is less than 209 days and setup form will start soon -->
             <p> Enrollment and Admission will start on {{start_date}} until {{end_date}}. </p>
             <p> To update the Enrollment and Admission dates. Click <a href="{% url 'adminportal:setup_details_update' uid=uid %}" class="btn btn-primary">Update</a> </p>
-        {% endif %}
+
+    {% endif %}
 
         {% if is_empty_count %}
             <p> No students have been enrolled and admitted for S.Y. {{sy}} yet. </p>

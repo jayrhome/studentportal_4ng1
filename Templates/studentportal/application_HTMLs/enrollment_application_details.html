@@ -2,18 +2,7 @@
 {% block content %}
 {% include 'studentportal/application_HTMLs/adm_enr_menu.html' %}
 {% load std_portal %}
-
-
-<!-- Message from messages framework / views.py -->
-{% if messages %}
-<div class="container col-md-3">
-    <ul class="messages">
-        {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}> {{message}} </li>
-        {% endfor %}
-    </ul>
-</div>
-{% endif %}
+{% include 'studentportal/messages/messages.html' %}
 
 
 {% if enrolled_sy %}
@@ -92,7 +81,7 @@
 {% if no_enrollment %}
     <p> You have no enrollment. </p>
 {% endif %}
-
+</div>
 <script>
     $('#enrollment_form').one('submit', function() {
         $(this).find('input[type="submit"]').attr('disabled','disabled');

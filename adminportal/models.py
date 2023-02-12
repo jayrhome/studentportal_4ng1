@@ -55,12 +55,12 @@ def current_school_year():
     return sy
 
 
-class school_year(models.Model):
-    sy = models.CharField(max_length=11, unique=True)
-    date_created = models.DateTimeField(auto_now=True)
+# class school_year(models.Model):
+#     sy = models.CharField(max_length=11, unique=True)
+#     date_created = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.sy
+#     def __str__(self):
+#         return self.sy
 
 
 class shs_track(models.Model):
@@ -76,7 +76,7 @@ class shs_track(models.Model):
 
 class shs_strand(models.Model):
     track = models.ForeignKey(
-        "shs_track", on_delete=models.PROTECT, related_name="track_strand")
+        "shs_track", on_delete=models.RESTRICT, related_name="track_strand")
     strand_name = models.CharField(max_length=100, unique=True)
     definition = models.TextField()
     date_added = models.DateTimeField(auto_now_add=True)
@@ -97,243 +97,243 @@ class shs_strand(models.Model):
         }
 
 
-class student_address(models.Model):
-    address_owner = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="user_address")
-    permanent_home_address = models.CharField(max_length=50)
-    date_created = models.DateTimeField(auto_now=True)
-    last_modified = models.DateTimeField(auto_now_add=True)
+# class student_address(models.Model):
+#     address_owner = models.ForeignKey(
+#         User, on_delete=models.PROTECT, related_name="user_address")
+#     permanent_home_address = models.CharField(max_length=50)
+#     date_created = models.DateTimeField(auto_now=True)
+#     last_modified = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return self.permanent_home_address
-
-
-class student_contact_number(models.Model):
-    contactnum_owner = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="user_contact")
-    cp_number_regex = RegexValidator(regex=r"^(09)([0-9]{9})$")
-    cellphone_number = models.CharField(
-        max_length=11, unique=True, validators=[cp_number_regex])
-    date_created = models.DateTimeField(auto_now=True)
-    last_modified = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.cellphone_number
+#     def __str__(self):
+#         return self.permanent_home_address
 
 
-class student_report_card(models.Model):
-    report_card_owner = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="user_reportcard")
-    report_card = models.ImageField(upload_to="Report_cards/%Y/")
-    date_created = models.DateTimeField(auto_now=True)
-    last_modified = models.DateTimeField(auto_now_add=True)
+# class student_contact_number(models.Model):
+#     contactnum_owner = models.ForeignKey(
+#         User, on_delete=models.PROTECT, related_name="user_contact")
+#     cp_number_regex = RegexValidator(regex=r"^(09)([0-9]{9})$")
+#     cellphone_number = models.CharField(
+#         max_length=11, unique=True, validators=[cp_number_regex])
+#     date_created = models.DateTimeField(auto_now=True)
+#     last_modified = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return self.report_card.url
-
-
-class student_profile_image(models.Model):
-    image_user = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="user_image")
-    user_image = models.ImageField(upload_to="User_profiles/")
-    date_created = models.DateTimeField(auto_now=True)
-    last_modified = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.user_image.url
+#     def __str__(self):
+#         return self.cellphone_number
 
 
-class student_admission_details(models.Model):
+# class student_report_card(models.Model):
+#     report_card_owner = models.ForeignKey(
+#         User, on_delete=models.PROTECT, related_name="user_reportcard")
+#     report_card = models.ImageField(upload_to="Report_cards/%Y/")
+#     date_created = models.DateTimeField(auto_now=True)
+#     last_modified = models.DateTimeField(auto_now_add=True)
 
-    class SexChoices(models.TextChoices):
-        MALE = 'M', _('Male')
-        FEMALE = 'F', _('Female')
-
-    admission_owner = models.OneToOneField(
-        User, on_delete=models.PROTECT, related_name="admission_details")
-    first_name = models.CharField(max_length=20)
-    middle_name = models.CharField(max_length=20)
-    last_name = models.CharField(max_length=20)
-    sex = models.CharField(max_length=2, choices=SexChoices.choices)
-    date_of_birth = models.DateField()
-    birthplace = models.CharField(max_length=200)
-    nationality = models.CharField(max_length=50)
-
-    # Elementary school details
-    elem_name = models.CharField(max_length=50)
-    elem_address = models.CharField(max_length=50)
-    elem_region = models.CharField(max_length=30)
-    elem_year_completed = models.DateField()
-    elem_pept_passer = models.BooleanField(default=False)
-    elem_pept_date_completion = models.DateField(null=True, blank=True)
-    elem_ae_passer = models.BooleanField(default=False)
-    elem_ae_date_completion = models.DateField(null=True, blank=True)
-    elem_community_learning_center = models.CharField(
-        max_length=50, null=True, blank=True)
-    elem_clc_address = models.CharField(max_length=50, null=True, blank=True)
-
-    # Junior High school details
-    jhs_name = models.CharField(max_length=50)
-    jhs_address = models.CharField(max_length=50)
-    jhs_region = models.CharField(max_length=30)
-    jhs_year_completed = models.DateField()
-    jhs_pept_passer = models.BooleanField(default=False)
-    jhs_pept_date_completion = models.DateField(null=True, blank=True)
-    jhs_ae_passer = models.BooleanField(default=False)
-    jhs_ae_date_completion = models.DateField(null=True, blank=True)
-    jhs_community_learning_center = models.CharField(
-        max_length=50, null=True, blank=True)
-    jhs_clc_address = models.CharField(max_length=50, null=True, blank=True)
-
-    is_validated = models.BooleanField(default=False)  # if pending or accepted
-    admission_sy = models.ForeignKey(
-        school_year, on_delete=models.PROTECT, related_name="sy_admitted")
-    first_chosen_strand = models.ForeignKey(
-        shs_strand, on_delete=models.PROTECT, related_name="first_strand")
-    second_chosen_strand = models.ForeignKey(
-        shs_strand, on_delete=models.PROTECT, related_name="second_strand")
-
-    is_late = models.BooleanField(default=False)
-    is_transferee = models.BooleanField(default=False)
-
-    is_denied = models.BooleanField(default=False)  # if denied, for review
-    date_created = models.DateTimeField(auto_now_add=True)
-    date_modified = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["date_created"]
-        get_latest_by = ["date_created"]
-
-    def __str__(self):
-        return f"{self.admission_owner}: {self.last_name}, {self.first_name} {self.middle_name} - {self.sex}"
-
-    def elementary_school(self):
-        return self.elem_name
-
-    def jhs(self):
-        return self.jhs_name
-
-    def student_basic_details(self):
-        return {
-            "student_acc_id": self.admission_owner.id,
-            "first_name": self.first_name,
-            "middle_name": self.middle_name,
-            "last_name": self.last_name,
-            "sex": self.sex,
-            "date_of_birth": self.date_of_birth,
-            "birthplace": self.birthplace,
-            "nationality": self.nationality,
-        }
-
-    def to_pendingList(self):
-        return reverse("adminportal:admission")
-
-    def to_admittedList(self):
-        return reverse("adminportal:admitted_students")
-
-    def to_reviewList(self):
-        return reverse("adminportal:forReviewAdmission")
-
-    def to_deniedList(self):
-        return reverse("adminportal:denied_admissions")
-
-    def to_holdList(self):
-        return reverse("adminportal:hold_admissions")
+#     def __str__(self):
+#         return self.report_card.url
 
 
-class studentEnrollment_manager(models.Manager):
-    # Use this manager to get enrollments with validated admission
-    def get_queryset(self):
-        return super().get_queryset().filter(admission_details__is_validated=True, admission_details__is_denied=False)
+# class student_profile_image(models.Model):
+#     image_user = models.ForeignKey(
+#         User, on_delete=models.PROTECT, related_name="user_image")
+#     user_image = models.ImageField(upload_to="User_profiles/")
+#     date_created = models.DateTimeField(auto_now=True)
+#     last_modified = models.DateTimeField(auto_now_add=True)
+
+#     def __str__(self):
+#         return self.user_image.url
 
 
-class student_enrollment_details(models.Model):
-    student_user = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="user_enrollment_details")
-    admission_details = models.ForeignKey(
-        student_admission_details, on_delete=models.PROTECT, related_name="user_student_enrollment_details")
-    selected_strand = models.ForeignKey(
-        shs_strand, on_delete=models.PROTECT, related_name="chosen_strand")
-    full_name = models.CharField(max_length=60)
-    home_address = models.ForeignKey(
-        student_address, on_delete=models.PROTECT, related_name="student_address")
-    age_validator = RegexValidator(regex=r"([0-9])")
-    age = models.CharField(max_length=3, validators=[age_validator])
-    contact_number = models.ForeignKey(
-        student_contact_number, on_delete=models.PROTECT, related_name="cp_number")
+# class student_admission_details(models.Model):
 
-    card = models.ForeignKey(
-        student_report_card, on_delete=models.PROTECT, related_name="enrollment_report_card")
-    profile_image = models.ForeignKey(
-        student_profile_image, on_delete=models.PROTECT, related_name="enrollment_profile_image")
+#     class SexChoices(models.TextChoices):
+#         MALE = 'M', _('Male')
+#         FEMALE = 'F', _('Female')
 
-    is_passed = models.BooleanField(default=False)
-    is_denied = models.BooleanField(default=False)
+#     admission_owner = models.OneToOneField(
+#         User, on_delete=models.PROTECT, related_name="admission_details")
+#     first_name = models.CharField(max_length=20)
+#     middle_name = models.CharField(max_length=20)
+#     last_name = models.CharField(max_length=20)
+#     sex = models.CharField(max_length=2, choices=SexChoices.choices)
+#     date_of_birth = models.DateField()
+#     birthplace = models.CharField(max_length=200)
+#     nationality = models.CharField(max_length=50)
 
-    is_late = models.BooleanField(default=False)
-    is_repeater = models.BooleanField(default=False)
+#     # Elementary school details
+#     elem_name = models.CharField(max_length=50)
+#     elem_address = models.CharField(max_length=50)
+#     elem_region = models.CharField(max_length=30)
+#     elem_year_completed = models.DateField()
+#     elem_pept_passer = models.BooleanField(default=False)
+#     elem_pept_date_completion = models.DateField(null=True, blank=True)
+#     elem_ae_passer = models.BooleanField(default=False)
+#     elem_ae_date_completion = models.DateField(null=True, blank=True)
+#     elem_community_learning_center = models.CharField(
+#         max_length=50, null=True, blank=True)
+#     elem_clc_address = models.CharField(max_length=50, null=True, blank=True)
 
-    enrolled_schoolyear = models.ForeignKey(
-        school_year, on_delete=models.PROTECT, related_name="sy_enrolled")
+#     # Junior High school details
+#     jhs_name = models.CharField(max_length=50)
+#     jhs_address = models.CharField(max_length=50)
+#     jhs_region = models.CharField(max_length=30)
+#     jhs_year_completed = models.DateField()
+#     jhs_pept_passer = models.BooleanField(default=False)
+#     jhs_pept_date_completion = models.DateField(null=True, blank=True)
+#     jhs_ae_passer = models.BooleanField(default=False)
+#     jhs_ae_date_completion = models.DateField(null=True, blank=True)
+#     jhs_community_learning_center = models.CharField(
+#         max_length=50, null=True, blank=True)
+#     jhs_clc_address = models.CharField(max_length=50, null=True, blank=True)
 
-    # Add grade level, defaults to grade 11
+#     is_validated = models.BooleanField(default=False)  # if pending or accepted
+#     admission_sy = models.ForeignKey(
+#         school_year, on_delete=models.PROTECT, related_name="sy_admitted")
+#     first_chosen_strand = models.ForeignKey(
+#         shs_strand, on_delete=models.PROTECT, related_name="first_strand")
+#     second_chosen_strand = models.ForeignKey(
+#         shs_strand, on_delete=models.PROTECT, related_name="second_strand")
 
-    date_created = models.DateTimeField(auto_now=True)
-    last_modified = models.DateTimeField(auto_now_add=True)
+#     is_late = models.BooleanField(default=False)
+#     is_transferee = models.BooleanField(default=False)
 
-    objects = models.Manager()  # Default manager
-    validObjects = studentEnrollment_manager()
+#     is_denied = models.BooleanField(default=False)  # if denied, for review
+#     date_created = models.DateTimeField(auto_now_add=True)
+#     date_modified = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.full_name
+#     class Meta:
+#         ordering = ["date_created"]
+#         get_latest_by = ["date_created"]
 
-    def to_pendingList(self):
-        return reverse("adminportal:pending_enrollment")
+#     def __str__(self):
+#         return f"{self.admission_owner}: {self.last_name}, {self.first_name} {self.middle_name} - {self.sex}"
 
-    def to_enrolledList(self):
-        return reverse("adminportal:enrolled_students")
+#     def elementary_school(self):
+#         return self.elem_name
 
-    def to_reviewList(self):
-        return reverse("adminportal:ForReviewEnrollmentLists")
+#     def jhs(self):
+#         return self.jhs_name
 
-    def to_deniedList(self):
-        return reverse("adminportal:denied_enrollment_lists")
+#     def student_basic_details(self):
+#         return {
+#             "student_acc_id": self.admission_owner.id,
+#             "first_name": self.first_name,
+#             "middle_name": self.middle_name,
+#             "last_name": self.last_name,
+#             "sex": self.sex,
+#             "date_of_birth": self.date_of_birth,
+#             "birthplace": self.birthplace,
+#             "nationality": self.nationality,
+#         }
 
-    def to_holdList(self):
-        return reverse("adminportal:hold_enrollment_lists")
+#     def to_pendingList(self):
+#         return reverse("adminportal:admission")
+
+#     def to_admittedList(self):
+#         return reverse("adminportal:admitted_students")
+
+#     def to_reviewList(self):
+#         return reverse("adminportal:forReviewAdmission")
+
+#     def to_deniedList(self):
+#         return reverse("adminportal:denied_admissions")
+
+#     def to_holdList(self):
+#         return reverse("adminportal:hold_admissions")
 
 
-class enrollment_admission_setup(models.Model):
-    ea_setup_sy = models.OneToOneField(
-        school_year, on_delete=models.PROTECT, related_name="setup_sy")
-    start_date = models.DateField()
-    end_date = models.DateField()
-    still_accepting = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.ea_setup_sy.sy
+# class studentEnrollment_manager(models.Manager):
+#     # Use this manager to get enrollments with validated admission
+#     def get_queryset(self):
+#         return super().get_queryset().filter(admission_details__is_validated=True, admission_details__is_denied=False)
 
 
-class for_review_admission(models.Model):
-    to_review = models.ForeignKey(
-        student_admission_details, on_delete=models.CASCADE, related_name="admission_review")
-    comment = models.TextField()
-    date_created = models.DateTimeField(auto_now=True)
-    last_modified = models.DateTimeField(auto_now_add=True)
+# class student_enrollment_details(models.Model):
+#     student_user = models.ForeignKey(
+#         User, on_delete=models.PROTECT, related_name="user_enrollment_details")
+#     admission_details = models.ForeignKey(
+#         student_admission_details, on_delete=models.PROTECT, related_name="user_student_enrollment_details")
+#     selected_strand = models.ForeignKey(
+#         shs_strand, on_delete=models.PROTECT, related_name="chosen_strand")
+#     full_name = models.CharField(max_length=60)
+#     home_address = models.ForeignKey(
+#         student_address, on_delete=models.PROTECT, related_name="student_address")
+#     age_validator = RegexValidator(regex=r"([0-9])")
+#     age = models.CharField(max_length=3, validators=[age_validator])
+#     contact_number = models.ForeignKey(
+#         student_contact_number, on_delete=models.PROTECT, related_name="cp_number")
 
-    def __str__(self):
-        return self.to_review.first_name
+#     card = models.ForeignKey(
+#         student_report_card, on_delete=models.PROTECT, related_name="enrollment_report_card")
+#     profile_image = models.ForeignKey(
+#         student_profile_image, on_delete=models.PROTECT, related_name="enrollment_profile_image")
+
+#     is_passed = models.BooleanField(default=False)
+#     is_denied = models.BooleanField(default=False)
+
+#     is_late = models.BooleanField(default=False)
+#     is_repeater = models.BooleanField(default=False)
+
+#     enrolled_schoolyear = models.ForeignKey(
+#         school_year, on_delete=models.PROTECT, related_name="sy_enrolled")
+
+#     # Add grade level, defaults to grade 11
+
+#     date_created = models.DateTimeField(auto_now=True)
+#     last_modified = models.DateTimeField(auto_now_add=True)
+
+#     objects = models.Manager()  # Default manager
+#     validObjects = studentEnrollment_manager()
+
+#     def __str__(self):
+#         return self.full_name
+
+#     def to_pendingList(self):
+#         return reverse("adminportal:pending_enrollment")
+
+#     def to_enrolledList(self):
+#         return reverse("adminportal:enrolled_students")
+
+#     def to_reviewList(self):
+#         return reverse("adminportal:ForReviewEnrollmentLists")
+
+#     def to_deniedList(self):
+#         return reverse("adminportal:denied_enrollment_lists")
+
+#     def to_holdList(self):
+#         return reverse("adminportal:hold_enrollment_lists")
 
 
-class enrollment_review(models.Model):
-    to_review = models.ForeignKey(
-        student_enrollment_details, on_delete=models.CASCADE, related_name="enrollment_review")
-    comment = models.TextField()
-    date_created = models.DateTimeField(auto_now=True)
-    last_modified = models.DateTimeField(auto_now_add=True)
+# class enrollment_admission_setup(models.Model):
+#     ea_setup_sy = models.OneToOneField(
+#         school_year, on_delete=models.PROTECT, related_name="setup_sy")
+#     start_date = models.DateField()
+#     end_date = models.DateField()
+#     still_accepting = models.BooleanField(default=True)
 
-    def __str__(self):
-        return self.to_review.full_name
+#     def __str__(self):
+#         return self.ea_setup_sy.sy
+
+
+# class for_review_admission(models.Model):
+#     to_review = models.ForeignKey(
+#         student_admission_details, on_delete=models.CASCADE, related_name="admission_review")
+#     comment = models.TextField()
+#     date_created = models.DateTimeField(auto_now=True)
+#     last_modified = models.DateTimeField(auto_now_add=True)
+
+#     def __str__(self):
+#         return self.to_review.first_name
+
+
+# class enrollment_review(models.Model):
+#     to_review = models.ForeignKey(
+#         student_enrollment_details, on_delete=models.CASCADE, related_name="enrollment_review")
+#     comment = models.TextField()
+#     date_created = models.DateTimeField(auto_now=True)
+#     last_modified = models.DateTimeField(auto_now_add=True)
+
+#     def __str__(self):
+#         return self.to_review.full_name
 
 
 class school_contact_number(models.Model):
@@ -362,3 +362,122 @@ class school_email(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class manager_ongoingSchoolEvents(models.Manager):
+    # Return ongoing school events.
+    def get_queryset(self):
+        return super().get_queryset().filter(is_cancelled=False, start_on__gte=date.today())
+
+
+class school_events(models.Model):
+    name = models.CharField(max_length=200)
+    start_on = models.DateField()
+    is_cancelled = models.BooleanField(default=False)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
+    ongoingEvents = manager_ongoingSchoolEvents()
+
+    class Meta:
+        ordering = ["start_on", "name"]
+        base_manager_name = "objects"
+
+    def __str__(self):
+        return self.name
+
+
+class manager_studentDocument(models.Manager):
+    # Return active documents
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
+class studentDocument(models.Model):
+    documentName = models.CharField(max_length=50, unique=True)
+    is_active = models.BooleanField(default=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()
+    activeObjects = manager_studentDocument()
+
+    def __str__(self):
+        return self.documentName
+
+    class Meta:
+        ordering = ["documentName", "-date_created", "-last_modified"]
+
+
+class subjectsManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_remove=False)
+
+
+class subjects(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    title = models.CharField(max_length=50, unique=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    is_remove = models.BooleanField(default=False)
+
+    objects = models.Manager()
+    activeSubjects = subjectsManager()
+
+    class Meta:
+        ordering = ["title", "-created_on"]
+        unique_together = ["code", "title"]
+
+    def __str__(self):
+        return f"{self.code}: {self.title}"
+
+
+class curriculum(models.Model):
+    effective_date = models.DateField()
+
+    g11_firstSem_subjects = models.ManyToManyField(
+        subjects, related_name="grade11_firstSem")
+    g11_secondSem_subjects = models.ManyToManyField(
+        subjects, related_name="grade11_secondSem")
+
+    g12_firstSem_subjects = models.ManyToManyField(
+        subjects, related_name="grade12_firstSem")
+    g12_secondSem_subjects = models.ManyToManyField(
+        subjects, related_name="grade12_secondSem")
+
+    def __str__(self):
+        return str(self.pk)
+
+    class Meta:
+        ordering = ["-effective_date"]
+
+
+class schoolSections(models.Model):
+    name = models.CharField(max_length=30, unique=True)
+    assignedStrand = models.ForeignKey(
+        shs_strand, on_delete=models.RESTRICT, related_name="section_strand")
+    assignedSubjects = models.ManyToManyField(
+        subjects, through="sectionSchedule", related_name="section")
+    # Model.m2mfield.through.objects.all()
+    allowedPopulation = models.IntegerField()
+    is_active = models.BooleanField(default=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class sectionSchedule(models.Model):
+    section = models.ForeignKey(
+        schoolSections, on_delete=models.RESTRICT, related_name="section_schedule")
+    subject = models.ForeignKey(
+        subjects, on_delete=models.RESTRICT, related_name="subject_schedule")
+    class_schedule = models.JSONField()
+
+    def __str__(self):
+        return f"{self.section.name}: {self.subject.code} - {self.subject.title}"

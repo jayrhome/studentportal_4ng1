@@ -129,3 +129,45 @@ def password_reset_form(request, uidb64, token):
     return HttpResponseRedirect(reverse("studentportal:login"))
 
 <button name="wizard_goto_step" type="submit" class="btn btn-primary btn-sm"> Next </button>
+
+
+
+
+    def merge_formField_keys(self, forms):
+        f1 = [key for key in forms[0].declared_fields.keys()]
+        f2 = [key for key in forms[1].declared_fields.keys()]
+        f3 = [key for key in forms[2].declared_fields.keys()]
+        f4 = [key for key in forms[3].declared_fields.keys()]
+        f1.extend([f2[0], f3[0], f4[0]])
+        return f1
+
+    def detect_formField_changes(self, boundField, initialField, key):
+        # if boundField == initialField:
+        #     return False
+        # # Return False if there's no changes from the initial values
+        # return key
+        return boundField == initialField
+
+            form_fields = self.merge_formField_keys(
+                [g11_firstSem, g11_secondSem, g12_firstSem, g12_secondSem])
+            initial_values = [
+                self.get_form_initial("g11_firstSem")["effective_date"],
+                self.get_form_initial("g11_firstSem")["g11_firstSem_subjects"],
+                self.get_form_initial("g11_secondSem")[
+                    "g11_secondSem_subjects"],
+                self.get_form_initial("g12_firstSem")["g12_firstSem_subjects"],
+                self.get_form_initial("g12_secondSem")[
+                    "g12_secondSem_subjects"],
+            ]
+
+            # changes = list(map(self.detect_formField_changes, [
+            #                value for key, value in self.get_all_cleaned_data().items()], initial_values, form_fields))
+
+            # if all(changes):
+            #     messages.success(self.request, "Has changes")
+            # else:
+            #     messages.success(self.request, "No changes")
+            # messages.success(self.request, changes)
+
+            if self.get_form_instance("g11_firstSem").has_changed():
+                messages.success(self.request, "changed")

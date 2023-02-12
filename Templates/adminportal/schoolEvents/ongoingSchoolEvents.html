@@ -1,0 +1,31 @@
+{% extends 'adminportal/schoolEvents/base1.html' %}
+{% block content %}
+{% include 'adminportal/messages/messages.html' %}
+
+
+<div class="container col-md-8 p-5">
+    {% for key, value in events.items %}
+        <h4> {{key}} </h4> <!-- Display month -->
+        {% for event in value %}
+            <p> <a href="{% url 'adminportal:edit_schoolEvent' pk=event.id %}" class="btn btn-primary btn-sm"> Edit </a>
+                {% if event.can_cancel %}
+                    <form id="postForm" method="post">
+                        {% csrf_token %}
+                        <button type="submit" name="pk" value="{{event.id}}" class="btn btn-primary btn-sm"> Cancel </button>
+                    </form>
+                {% endif %}
+                {{event.name|truncatewords:10}} - {{event.start_on|date:"l, M j, Y"}} </p>
+        {% endfor %}
+        <br>
+        <p> ------------------------------------------------------ </p>
+    {% empty %}
+        <h4> No event... </h4>
+    {% endfor %}
+
+    <br>
+    <br>
+
+</div>
+
+
+{% endblock content %}

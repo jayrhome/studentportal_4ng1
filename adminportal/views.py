@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, HttpResponseRedirect
 from django.views.generic.base import TemplateView
-from django.views.generic.edit import FormView, FormMixin
+from django.views.generic.edit import FormView, FormMixin, DeletionMixin
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.contrib import messages
@@ -11,13 +11,12 @@ from django.urls import reverse
 from datetime import date, datetime
 from . forms import *
 from . models import *
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.contrib import messages
-from django.db.models import Q, FilteredRelation, Prefetch, Count
+from django.db.models import Q, FilteredRelation, Prefetch, Count, Case, When, Value
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.core.exceptions import ObjectDoesNotExist
-import re
+from formtools.wizard.views import SessionWizardView
 
 
 def superuser_only(user):
@@ -39,389 +38,6 @@ def compute_schoolyear(year):
     return sy
 
 
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class index(TemplateView):
-    template_name = "adminportal/dashboard.html"
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class shs_courses(TemplateView):
-    # View courses
-    template_name = "adminportal/Shs_courses/courses.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Courses"
-        context["courses"] = shs_track.objects.filter(is_deleted=False).prefetch_related(Prefetch(
-            "track_strand", queryset=shs_strand.objects.filter(is_deleted=False), to_attr="strands")).order_by("track_name")
-
-        return context
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class add_shs_track_cbv(FormView):
-    template_name = "adminportal/Shs_courses/create_track.html"
-    form_class = add_shs_track
-    success_url = "/School_admin/Courses/"
-
-    def get_success_url(self):
-        if "another" in self.request.POST:
-            return "/School_admin/Courses/add_track/"
-        else:
-            return super().get_success_url()
-
-    def form_valid(self, form):
-        name = form.cleaned_data["name"]
-        details = form.cleaned_data["details"]
-
-        if name and details:
-            try:
-                if shs_track.objects.filter(track_name=name, is_deleted=False).exists():
-                    messages.warning(
-                        self.request, "%s already exist." % name)
-                    return self.form_invalid(form)
-                elif shs_track.objects.filter(track_name=name, is_deleted=True).exists():
-                    shs_track.objects.filter(track_name=name, is_deleted=True).update(
-                        track_name=name,
-                        definition=details,
-                        is_deleted=False
-                    )
-                    messages.success(
-                        self.request, "%s is added successfully." % name)
-                    return super().form_valid(form)
-                else:
-                    shs_track.objects.create(
-                        track_name=name, definition=details)
-                    messages.success(
-                        self.request, "%s is added successfully." % name)
-                    return super().form_valid(form)
-            except IntegrityError:
-                messages.error(
-                    self.request, "%s already exist. Duplicate is not allowed." % name)
-                return self.form_invalid(form)
-            except Exception as e:
-                messages.error(
-                    self.request, e)
-                return self.form_invalid(form)
-        else:
-            messages.warning(self.request, "Fill all fields.")
-            return self.form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Add Course"
-        return context
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class edit_track(FormView):
-    template_name = "adminportal/Shs_courses/edit_track.html"
-    form_class = add_shs_track
-    success_url = "/School_admin/Courses/"
-
-    def get_initial(self):
-        initial = super().get_initial()
-        qs = shs_track.objects.get(id=self.kwargs["track_id"])
-        initial["name"] = qs.track_name
-        initial["details"] = qs.definition
-        return initial
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Edit Track"
-        return context
-
-    def form_valid(self, form):
-        name = form.cleaned_data["name"]
-        details = form.cleaned_data["details"]
-
-        if form.has_changed():
-            try:
-                if name and details:
-                    obj = shs_track.objects.filter(
-                        id=self.kwargs["track_id"]).first()
-                    if obj:
-                        if obj.is_deleted == True:
-                            messages.warning(
-                                self.request, "%s no longer exist." % name)
-                            return super().form_valid(form)
-                        else:
-                            shs_track.objects.filter(id=self.kwargs["track_id"]).update(
-                                track_name=name,
-                                definition=details
-                            )
-                            messages.success(
-                                self.request, "%s is updated successfully." % name)
-                            return super().form_valid(form)
-                    else:
-                        messages.warning(
-                            self.request, "%s no longer exist." % name)
-                        return super().form_valid(form)
-                else:
-                    messages.warning(self.request, "Fill all fields.")
-                    return self.form_invalid(form)
-            except IntegrityError:
-                messages.error(
-                    self.request, "%s already exist. Duplicate is not allowed." % name)
-                return self.form_invalid(form)
-            except Exception as e:
-                messages.error(
-                    self.request, e)
-                return self.form_valid(form)
-        else:
-            return super().form_valid(form)
-
-    def dispatch(self, request, *args, **kwargs):
-        if shs_track.objects.filter(id=self.kwargs["track_id"], is_deleted=True).exists():
-            messages.warning(
-                request, "Course Track with id no. %s no longer exist." % self.kwargs["track_id"])
-            return HttpResponseRedirect(reverse("adminportal:view_courses"))
-        elif not shs_track.objects.filter(id=self.kwargs["track_id"]).exists():
-            messages.warning(
-                request, "Course Track with id no. %s does not exist." % self.kwargs["track_id"])
-            return HttpResponseRedirect(reverse("adminportal:view_courses"))
-        else:
-            return super().dispatch(request, *args, **kwargs)
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class delete_track(TemplateView):
-    template_name = "adminportal/Shs_courses/delete_track.html"
-
-    def post(self, request, *args, **kwargs):
-        obj = shs_track.objects.filter(id=self.kwargs["pk"]).first()
-        obj.is_deleted = True
-        obj.save()
-
-        foreign_obj = shs_strand.objects.filter(track=obj)
-        for item in foreign_obj:
-            item.is_deleted = True
-            item.save()
-
-        messages.success(request, "%s is deleted successfully." %
-                         obj.track_name)
-        return HttpResponseRedirect(reverse("adminportal:view_courses"))
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["obj"] = shs_track.objects.filter(id=self.kwargs["pk"]).first()
-        context["related_strands"] = shs_strand.objects.filter(
-            track__id=self.kwargs["pk"])
-        return context
-
-    def dispatch(self, request, *args, **kwargs):
-        if shs_track.objects.filter(id=self.kwargs["pk"], is_deleted=True).exists():
-            # if track is already deleted
-            messages.warning(
-                request, "Course Track with id no. %s no longer exist." % self.kwargs["pk"])
-            return HttpResponseRedirect(reverse("adminportal:view_courses"))
-        elif not shs_track.objects.filter(id=self.kwargs["pk"]).exists():
-            # if track id does not exist
-            messages.warning(
-                request, "Course Track with id no. %s does not exist." % self.kwargs["pk"])
-            return HttpResponseRedirect(reverse("adminportal:view_courses"))
-        else:
-            # if track id is not yet deleted
-            return super().dispatch(request, *args, **kwargs)
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class add_strand(FormView):
-    success_url = "/School_admin/Courses/"
-    form_class = add_strand_form
-    template_name = "adminportal/Shs_courses/create_strands.html"
-
-    def get_success_url(self):
-        if "another" in self.request.POST:
-            return "/School_admin/Courses/Add_strand/" + self.kwargs["track_id"]
-        else:
-            return super().get_success_url()
-
-    def form_valid(self, form):
-        strand_name = form.cleaned_data["strand_name"]
-        strand_details = form.cleaned_data["strand_details"]
-
-        if form.has_changed():
-            if strand_name and strand_details:
-                # if not empty
-                try:
-                    obj1 = shs_strand.objects.filter(
-                        strand_name=strand_name).first()
-                    foreign_obj = shs_track.objects.get(
-                        id=self.kwargs["track_id"])
-                    if obj1:
-                        # if strand name already exist
-                        if obj1.is_deleted == False:
-                            # if the existing strand name is not deleted
-                            messages.warning(
-                                self.request, "%s already exist." % strand_name)
-                            return self.form_invalid(form)
-                        else:
-                            # if the existing strand is deleted=True
-                            obj_update = shs_strand.objects.filter(strand_name=strand_name).update(
-                                track=foreign_obj,
-                                strand_name=strand_name,
-                                definition=strand_details,
-                                is_deleted=False
-                            )
-                            messages.success(self.request, "%s is added to %s" % (
-                                strand_name, foreign_obj.track_name))
-                            return super().form_valid(form)
-                    else:
-                        # If strand name is unique, then, Create new strand
-                        shs_strand.objects.create(
-                            track=foreign_obj,
-                            strand_name=strand_name,
-                            definition=strand_details,
-                        )
-                        messages.success(self.request, "%s is added to %s" % (
-                            strand_name, foreign_obj.track_name))
-                        return super().form_valid(form)
-                except IntegrityError:
-                    messages.warning(
-                        self.request, "%s already exist." % strand_name)
-                    return self.form_invalid(form)
-                except Exception as e:
-                    messages.error(self.request, e)
-                    return self.form_valid(form)
-            else:
-                # if empty fields
-                messages.warning(self.request, "Fill all fields")
-                return self.form_invalid(form)
-        else:
-            return super().form_valid(form)
-
-    def get_initial(self):
-        initial = super().get_initial()
-        obj = shs_track.objects.filter(id=self.kwargs["track_id"]).first()
-        initial["track"] = obj.track_name
-        return initial
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Add Strand"
-        return context
-
-    def dispatch(self, request, *args, **kwargs):
-        track_id = self.kwargs["track_id"]
-
-        if shs_track.objects.filter(id=track_id, is_deleted=False).exists():
-            # if track_id is not deleted
-            return super().dispatch(request, *args, **kwargs)
-        else:
-            if shs_track.objects.filter(id=track_id, is_deleted=True).exists():
-                # if track_id exist but deleted
-                messages.error(
-                    request, "Track id no. %s no longer exist." % track_id)
-                return HttpResponseRedirect(reverse("adminportal:view_courses"))
-
-            # if there's no track_id
-            messages.error(
-                request, "Track id no. %s does not exist." % track_id)
-            return HttpResponseRedirect(reverse("adminportal:view_courses"))
-
-
-def strand_dispatch_func(request, strand_id):
-    obj = shs_strand.objects.filter(id=strand_id).first()
-    if obj:
-        if obj.is_deleted == True:
-            messages.warning(
-                request, "Strand id no. %s no longer exist." % strand_id)
-            return HttpResponseRedirect(reverse("adminportal:view_courses"))
-    else:
-        messages.error(request, "Strand id no. %s does not exist." % strand_id)
-        return HttpResponseRedirect(reverse("adminportal:view_courses"))
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class edit_strand(FormView):
-    template_name = "adminportal/Shs_courses/edit_strand.html"
-    form_class = edit_strand_form
-    success_url = "/School_admin/Courses/"
-
-    def form_valid(self, form):
-        strand_name = form.cleaned_data["strand_name"]
-        strand_details = form.cleaned_data["strand_details"]
-        strand_id = self.kwargs["strand_id"]
-
-        strand_obj = shs_strand.objects.filter(id=strand_id).first()
-        if form.has_changed():
-            if strand_name and strand_details:
-                try:
-                    strand_obj.strand_name = strand_name
-                    strand_obj.definition = strand_details
-                    strand_obj.save()
-                    messages.success(
-                        self.request, "%s is updated successfully." % strand_name)
-                    return super().form_valid(form)
-                except IntegrityError:
-                    messages.warning(
-                        self.request, "%s already exist." % strand_name)
-                    return self.form_invalid(form)
-                except Exception as e:
-                    messages.error(self.request, e)
-                    return self.form_invalid(form)
-            else:
-                messages.warning(self.request, "Fill all fields.")
-                return self.form_invalid(form)
-        else:
-            return super().form_valid(form)
-
-    def get_initial(self):
-        initial = super().get_initial()
-        obj = shs_strand.objects.get(id=self.kwargs["strand_id"])
-        initial["track"] = obj.track.track_name
-        initial["strand_name"] = obj.strand_name
-        initial["strand_details"] = obj.definition
-        return initial
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Update Strand"
-        return context
-
-    def dispatch(self, request, *args, **kwargs):
-        strand_id = self.kwargs["strand_id"]
-
-        if shs_strand.objects.filter(id=strand_id, is_deleted=False).exists():
-            # if strand_id exist and not deleted
-            return super().dispatch(request, *args, **kwargs)
-        else:
-            # if strand_id exist or deleted
-            return strand_dispatch_func(request, strand_id)
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class delete_strand(TemplateView):
-    template_name = "adminportal/Shs_courses/delete_strand.html"
-
-    def post(self, request, *args, **kwargs):
-        obj = shs_strand.objects.filter(id=self.kwargs["pk"]).first()
-        obj.is_deleted = True
-        obj.save()
-
-        messages.success(request, "%s is deleted successfully." %
-                         obj.strand_name)
-        return HttpResponseRedirect(reverse("adminportal:view_courses"))
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        obj = shs_strand.objects.get(id=self.kwargs["pk"])
-        context["track"] = obj.track.track_name
-        context["strand_name"] = obj.strand_name
-        context["definition"] = obj.definition
-        return context
-
-    def dispatch(self, request, *args, **kwargs):
-        strand_id = self.kwargs["pk"]
-
-        if shs_strand.objects.filter(id=strand_id, is_deleted=False).exists():
-            # if strand_id exist and not deleted
-            return super().dispatch(request, *args, **kwargs)
-        else:
-            return strand_dispatch_func(request, strand_id)
-
-
 # validate the latest school year
 def validate_enrollmentSetup(request, sy):
     try:
@@ -436,1282 +52,872 @@ def validate_enrollmentSetup(request, sy):
         return False
 
 
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class admission_and_enrollment(TemplateView):
-    # Used to create admission and enrollment form, then create the school year
-    # Add Features to check if the given dates are properly set, if not, then it should inform the user/admin
-    template_name = "adminportal/AdmissionAndEnrollment/index.html"
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class index(TemplateView):
+    template_name = "adminportal/dashboard.html"
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class shs_courses(TemplateView):
+    # View courses
+    template_name = "adminportal/Shs_courses/courses.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Enrollment and Admission"
-        try:
-            sy = school_year.objects.latest("date_created")
-            context["sy"] = sy.sy
+        context["title"] = "Courses"
+        context["courses"] = shs_track.objects.filter(is_deleted=False).prefetch_related(Prefetch(
+            "track_strand", queryset=shs_strand.objects.filter(is_deleted=False), to_attr="strands")).order_by("track_name")
 
-            if sy.setup_sy.start_date > date.today() and validate_enrollmentSetup(self.request, sy):
-                # if school year is less than 209 days and setup form will start soon
-                context["start_soon"] = True  # For update period button
-                context["start_date"] = sy.setup_sy.start_date.strftime(
-                    "%A, %b %d, %Y")
-                context["end_date"] = sy.setup_sy.end_date.strftime(
-                    "%A, %b %d, %Y")
-                context["uid"] = urlsafe_base64_encode(
-                    force_bytes(sy.setup_sy.id))
-
-            elif sy.setup_sy.end_date >= date.today() and validate_enrollmentSetup(self.request, sy):
-                # if school year is less than 209 days and setup form will end soon
-                if sy.setup_sy.still_accepting:
-                    # if enrollment is not postpone
-                    context["is_empty_count"] = self.count_validation2(sy)
-                    context["count_sy_details"] = self.count_validation1(sy)
-                    context["is_extend"] = True  # extend period
-                    context["end_dt"] = sy.setup_sy.end_date.strftime(
-                        "%A, %b %d, %Y")
-
-                    # use to postpone enrollment
-                    context["stop_accepting"] = True
-                    context["uid"] = urlsafe_base64_encode(
-                        force_bytes(sy.setup_sy.id))
-
-                else:
-                    # if enrollment is postpone
-                    context["is_empty_count"] = self.count_validation2(sy)
-                    context["count_sy_details"] = self.count_validation1(sy)
-                    context["stop_from_accepting"] = True
-                    context["is_extend"] = True  # extend period
-                    context["end_dt"] = sy.setup_sy.end_date.strftime(
-                        "%A, %b %d, %Y")
-                    context["uid"] = urlsafe_base64_encode(
-                        force_bytes(sy.setup_sy.id))
-
-            else:
-                if sy.setup_sy.end_date <= date.today() and validate_enrollmentSetup(self.request, sy):
-                    # if school year is less than 209 days and setup form period has ended
-                    context["is_empty_count"] = self.count_validation2(sy)
-                    context["count_sy_details"] = self.count_validation1(sy)
-                    context["extend_notif"] = f"Enrollment and Admission for S.Y. {sy} have already ended."
-                    context["uid"] = urlsafe_base64_encode(
-                        force_bytes(sy.setup_sy.id))
-            if not validate_enrollmentSetup(self.request, sy):
-                # If school year is greater than 209 days.
-                context["new_enrollment"] = True
-
-        except Exception as e:
-            # if no school year
-            # if with school year but no setup form
-            # messages.error(self.request, e)
-            context["no_record"] = True
         return context
 
-    def count_validation2(self, sy):
-        enrollment_count = Count(
-            "sy_enrolled", filter=Q(sy_enrolled__is_denied=False))
-        admission_count_sy = Count(
-            "sy_admitted", filter=Q(sy_admitted__is_denied=False))
-        count_if_exist = school_year.objects.filter(id=sy.id).annotate(
-            e_count=enrollment_count, a_count=admission_count_sy).first()
 
-        return False if count_if_exist.e_count or count_if_exist.a_count else True
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class add_courseTrack(FormView):
+    template_name = "adminportal/Shs_courses/create_track.html"
+    form_class = add_shs_track
+    success_url = "/School_admin/Courses/"
 
-    def count_validation1(self, sy):
-        enrolled_count = Count(
-            "sy_enrolled", filter=Q(sy_enrolled__is_passed=True, sy_enrolled__is_denied=False))
-        pending_enrollment_count = Count(
-            "sy_enrolled", filter=Q(sy_enrolled__is_passed=False, sy_enrolled__is_denied=False))
-        admission_count = Count("sy_admitted", filter=Q(
-            sy_admitted__is_validated=True, sy_admitted__is_denied=False))  # For accepted
-        pending_admission_count = Count(
-            "sy_admitted", filter=Q(sy_admitted__is_validated=False, sy_admitted__is_denied=False))  # For pending but not denied
-
-        return school_year.objects.filter(id=sy.id).annotate(enrolled_students=enrolled_count, pending_enrollment=pending_enrollment_count, admitted_students=admission_count, pending_admission=pending_admission_count).first()
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class update_enrollment(FormView):
-    # If enrollment and admission will start soon
-    form_class = ea_setup_form
-    template_name = "adminportal/AdmissionAndEnrollment/update_enrollment.html"
-    success_url = "/School_admin/Admission_and_enrollment/"
-
-    def form_valid(self, form):
-        try:
-            if form.has_changed():
-                start_date = form.cleaned_data["start_date"]
-                end_date = form.cleaned_data["end_date"]
-                if start_date < end_date:
-                    enrollment_admission_setup.objects.filter(id=self.convert_to_pk(
-                        self.kwargs["uid"])).update(start_date=start_date, end_date=end_date)
-                    messages.success(
-                        self.request, "Enrollment and Admission period is updated successfully.")
-                    return super().form_valid(form)
-                else:
-                    messages.warning(
-                        self.request, "Dates are not valid! Try again.")
-                    return self.form_invalid(form)
-            else:
-                return super().form_valid(form)
-        except Exception as e:
-            messages.error(self.request, e)
-            return super().form_valid(form)
-
-    def get_initial(self):
-        initial = super().get_initial()
-        get_obj = enrollment_admission_setup.objects.get(
-            id=self.convert_to_pk(self.kwargs["uid"]))
-        initial["start_date"] = get_obj.start_date
-        initial["end_date"] = get_obj.end_date
-        return initial
-
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            uid = self.convert_to_pk(self.kwargs["uid"])
-            get_obj = enrollment_admission_setup.objects.get(id=uid)
-            if validate_enrollmentSetup(request, get_obj.ea_setup_sy):
-                if get_obj.start_date > date.today() and get_obj.end_date > date.today():
-                    return super().dispatch(request, *args, **kwargs)
-                else:
-                    messages.warning(
-                        request, "Enrollment and Admission period are no longer valid.")
-                    return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-            else:
-                messages.warning(request, "%s is no longer valid." %
-                                 get_obj.ea_setup_sy.sy)
-                return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-        except Exception as e:
-            messages.error(request, e)
-            return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Update Date"
-        context["setup_details"] = enrollment_admission_setup.objects.values(
-            "ea_setup_sy__sy").get(id=self.convert_to_pk(self.kwargs["uid"]))
-        return context
-
-    def convert_to_pk(self, uid):
-        return force_str(urlsafe_base64_decode(uid))
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class extend_enrollment(FormView):
-    # for extend button
-    # still_accepting will set to True
-    form_class = extend_enrollment
-    success_url = "/School_admin/Admission_and_enrollment/"
-    template_name = "adminportal/AdmissionAndEnrollment/extend_enrollment.html"
-
-    def form_valid(self, form):
-        try:
-            if form.has_changed():
-                end_date = form.cleaned_data["end_date"]
-                if end_date > date.today():
-                    enrollment_admission_setup.objects.filter(id=self.convert_to_pk(
-                        self.kwargs["uid"])).update(end_date=end_date, still_accepting=True)
-                    get_enrollment = enrollment_admission_setup.objects.values(
-                        'end_date').get(id=self.convert_to_pk(self.kwargs["uid"]))
-                    messages.success(
-                        self.request, "Enrollment and Admission period is successfully extended until %s." % get_enrollment["end_date"].strftime("%A, %b %d, %Y"))
-                    return super().form_valid(form)
-                else:
-                    messages.warning(
-                        self.request, "End date must be greater than date today.")
-                    return self.form_invalid(form)
-            else:
-                get_obj = enrollment_admission_setup.objects.filter(
-                    id=self.convert_to_pk(self.kwargs["uid"])).first()
-                if not get_obj.still_accepting:
-                    # if postpone
-                    get_obj.still_accepting = True
-                    get_obj.save()
-                    messages.success(
-                        self.request, "Enrollment and Admission is open again.")
-                    return super().form_valid(form)
-                return super().form_valid(form)
-        except Exception as e:
-            messages.error(self.request, e)
-            return super().form_valid(form)
-
-    def get_initial(self):
-        initial = super().get_initial()
-        get_obj = enrollment_admission_setup.objects.get(
-            id=self.convert_to_pk(self.kwargs["uid"]))
-        initial["end_date"] = get_obj.end_date
-        return initial
-
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            get_obj = enrollment_admission_setup.objects.get(
-                id=self.convert_to_pk(self.kwargs["uid"]))
-            if validate_enrollmentSetup(request, get_obj.ea_setup_sy):
-                if get_obj.start_date <= date.today():
-                    return super().dispatch(request, *args, **kwargs)
-                else:
-                    messages.warning(
-                        request, "You cannot extend the enrollment date using this function.")
-                    return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-            else:
-                # if school year creation date is greater than 209 days
-                messages.warning(request, "%s is no longer valid." %
-                                 get_obj.ea_setup_sy.sy)
-                return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-        except Exception as e:
-            messages.error(request, e)
-            return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Extend Period"
-        context["school_year"] = enrollment_admission_setup.objects.values(
-            "ea_setup_sy__sy").get(id=self.convert_to_pk(self.kwargs["uid"]))
-        return context
-
-    def convert_to_pk(self, uid):
-        return force_str(urlsafe_base64_decode(uid))
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class postpone_enrollment(TemplateView):
-    template_name = "adminportal/AdmissionAndEnrollment/postpone_enrollment.html"
-
-    def post(self, request, *args, **kwargs):
-        try:
-            get_enrollment = enrollment_admission_setup.objects.get(
-                id=self.convert_to_pk(self.kwargs["uid"]))
-            get_enrollment.still_accepting = False
-            get_enrollment.save()
-            messages.success(
-                request, "Enrollment and Admission are now postponed.")
-            return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-        except Exception as e:
-            messages.error(request, e)
-            return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            get_obj = enrollment_admission_setup.objects.get(
-                id=self.convert_to_pk(self.kwargs["uid"]))
-
-            if validate_enrollmentSetup(request, get_obj.ea_setup_sy):
-                if get_obj.start_date <= date.today() and get_obj.end_date >= date.today():
-                    if get_obj.still_accepting:
-                        return super().dispatch(request, *args, **kwargs)
-                    else:
-                        messages.warning(
-                            request, "Enrollment and Admission are already postponed.")
-                        return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-                else:
-                    messages.warning(
-                        request, "Enrollment and Admission period should have already started and not yet finished.")
-                    return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-            else:
-                messages.warning(request, "School year is no longer valid.")
-                return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-
-        except Exception as e:
-            messages.error(request, e)
-            return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Postpone Enrollment"
-        context["sy"] = enrollment_admission_setup.objects.values(
-            'ea_setup_sy__sy').get(id=self.convert_to_pk(self.kwargs["uid"]))
-        return context
-
-    def convert_to_pk(self, uid):
-        return force_str(urlsafe_base64_decode(uid))
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class open_enrollment_admission(FormView):
-    template_name = "adminportal/AdmissionAndEnrollment/setup_enrollment.html"
-    form_class = ea_setup_form
-    success_url = "/School_admin/Admission_and_enrollment/"
-
-    def form_valid(self, form):
-        if form.has_changed():
-            start_date = form.cleaned_data["start_date"]
-            end_date = form.cleaned_data["end_date"]
-
-            if start_date < end_date:
-                try:
-                    sy = school_year.objects.latest("date_created")
-                    if validate_enrollmentSetup(self.request, sy):
-                        obj_create_from_existing_obj = enrollment_admission_setup.objects.create(
-                            ea_setup_sy=sy,
-                            start_date=start_date,
-                            end_date=end_date,
-                        )
-                        messages.success(
-                            self.request, "Setup Form for S.Y. %s is created successfully." % sy.sy)
-                        return super().form_valid(form)
-                    else:
-                        obj_pure_create = enrollment_admission_setup.objects.create(
-                            ea_setup_sy=school_year.objects.get_or_create(
-                                sy=compute_schoolyear(1)
-                            ),
-                            start_date=start_date,
-                            end_date=end_date,
-                        )
-                        messages.success(
-                            self.request, "Setup Form for S.Y. %s is created successfully." % obj_pure_create.ea_setup_sy.sy)
-                        return super().form_valid(form)
-                except:
-                    try:
-                        obj_created = enrollment_admission_setup.objects.create(
-                            ea_setup_sy=school_year.objects.create(
-                                sy=compute_schoolyear(1)),
-                            start_date=start_date,
-                            end_date=end_date,
-                        )
-                        messages.success(
-                            self.request, "S.Y. %s Enrollment and Admission Forms is created successfully." % obj_created.ea_setup_sy.sy)
-                        return super().form_valid(form)
-                    except Exception as e:
-                        messages.error(self.request, e)
-                        return self.form_invalid(form)
-            else:
-                messages.warning(
-                    self.request, "Start date should be less than the End Date.")
-                return self.form_invalid(form)
+    def get_success_url(self):
+        if "another" in self.request.POST:
+            return "/School_admin/Courses/add_track/"
         else:
-            messages.warning(self.request, "Fill all fields with valid data.")
+            return super().get_success_url()
+
+    def form_valid(self, form):
+        try:
+            name = form.cleaned_data["name"]
+            details = form.cleaned_data["details"]
+
+            if name and details:
+                self.get_existingTrack = shs_track.objects.filter(
+                    track_name=name).first()
+                if self.get_existingTrack:
+                    if not self.get_existingTrack.is_deleted:
+                        messages.warning(
+                            self.request, f"{name} already exist.")
+                        return self.form_invalid(form)
+                    else:
+                        self.get_existingTrack.track_name = name
+                        self.get_existingTrack.definition = details
+                        self.get_existingTrack.is_deleted = False
+                        self.get_existingTrack.save()
+                        messages.success(
+                            self.request, f"{name} is updated successfully.")
+                        return super().form_valid(form)
+                else:
+                    shs_track.objects.create(
+                        track_name=name, definition=details)
+                    messages.success(
+                        self.request, f"{name} is added successfully.")
+                    return super().form_valid(form)
+            else:
+                messages.warning(self.request, "Fill all fields.")
+                return self.form_invalid(form)
+
+        except IntegrityError:
+            messages.error(
+                self.request, f"{name} already exist. Duplicate is not allowed.")
+            return self.form_invalid(form)
+        except Exception as e:
             return self.form_invalid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Setup Details"
-        context["sy"] = self.sy_display()
+        context["title"] = "New Course Track"
         return context
 
-    def sy_display(self):
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class edit_courseTrack(FormView):
+    template_name = "adminportal/Shs_courses/edit_track.html"
+    form_class = add_shs_track
+    success_url = "/School_admin/Courses/"
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["name"] = self.updateCourseTrackObject.track_name
+        initial["details"] = self.updateCourseTrackObject.definition
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Update Course Track"
+        return context
+
+    def form_valid(self, form):
         try:
-            sy_obj = school_year.objects.latest("date_created")
-            return sy_obj.sy if validate_enrollmentSetup(self.request, sy_obj) else compute_schoolyear(1)
-        except:
-            return compute_schoolyear(1)
+            name = form.cleaned_data["name"]
+            details = form.cleaned_data["details"]
 
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            sy = school_year.objects.latest("date_created")
-            if validate_enrollmentSetup(request, sy):
-                # if school year is less than 209 days since its creation
-                try:
-                    # If school_year has enrollment_admission_setup
-                    get_sy_objs = enrollment_admission_setup.objects.get(
-                        ea_setup_sy=sy)
-                    messages.warning(
-                        request, "You already have a setup form for S.Y. %s." % sy.sy)
-                    return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-                except:
-                    if request.method == "GET":
-                        messages.warning(
-                            request, "S.Y. %s has no admission and enrollment setup form. Create Now." % sy.sy)
-                    return super().dispatch(request, *args, **kwargs)
-            else:
-                # If school_year is greater than 209 days since its creation
-                return super().dispatch(request, *args, **kwargs)
-        except:
-            # if there's no data in school_year table
-            return super().dispatch(request, *args, **kwargs)
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class adm_details(DetailView):
-    # Get the admission details of any admission status
-    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/adm_details.html"
-    context_object_name = "admissionDetails"
-    model = student_admission_details
-
-    # Add features to validate if an admission still qualified to be validated according to school year and current date
-
-    def post(self, request, *args, **kwargs):
-        try:
-            obj = student_admission_details.objects.filter(
-                id=self.kwargs["pk"])
-            if "accept" in request.POST:
-                # Accept admission
-                # Add functions to validate if an admission is still qualified to be accepted. To qualify, the admission_sy.date_created should be less than 209 days
-                redirect_link = self.where_to_redirect(obj)
-                self.validate_obj(obj)
-                return HttpResponseRedirect(redirect_link)
-
-            elif "pen_nxt_accept" in request.POST:
-                # Accept enrollment and redirect to the next pending enrollment details
-                nxt = self.get_next_pending_url(self.kwargs["pk"])
-                self.validate_obj(obj)
-                return HttpResponseRedirect(nxt)
-
-            elif "denied" in request.POST:
-                # Denied enrollment with no comments
-                nxt = self.where_to_redirect(obj)
-                self.denied_obj(obj)
-                return HttpResponseRedirect(nxt)
-
-            elif "submit_revs" in request.POST:
-                # Denied enrollment and save comments
-                comments = request.POST.get('review')
-                if comments:
-                    next_link = self.where_to_redirect(obj)
-                    self.denied_obj(obj)
-                    self.add_comments(obj, comments)
-                    return HttpResponseRedirect(next_link)
-                else:
-                    messages.warning(
-                        request, "Add a comment if you click the submit button for denied.")
-                    return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
-
-            elif "pend_next_denied_with_revs" in request.POST:
-                # Denied pending enrollment and save comments, then redirect to the next pending enrollment
-                comments = request.POST.get('review')
-                if comments:
-                    next_link = self.get_next_pending_url(self.kwargs["pk"])
-                    self.denied_obj(obj)
-                    self.add_comments(obj, comments)
-                    return HttpResponseRedirect(next_link)
-                else:
-                    messages.warning(
-                        request, "Add a comment if you click the submit button for denied.")
-                    return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
-
-            elif "hold" in request.POST:
-                try:
-                    obj = obj.first()
-                    if obj.is_validated and not obj.is_denied:
-                        obj.is_denied = True
-                        obj.save()
-                        obj.refresh_from_db()
-                        messages.warning(
-                            request, "You hold the validated admission of Mr / Ms. %s" % obj.first_name)
-                        return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
-                    else:
-                        messages.warning(
-                            request, "Admission can no longer be hold.")
-                        return HttpResponseRedirect(reverse("adminportal:admitted_students"))
-                except Exception as e:
-                    messages.error(request, e)
-                    return HttpResponseRedirect(reverse("adminportal:admitted_students"))
-
-            elif "next_valid" in request.POST:
-                nxt = self.get_next_valid_url(self.kwargs["pk"])
-                return HttpResponseRedirect(nxt)
-
-            elif "rev_nxt_accept" in request.POST:
-                # Accept from revision list, then next revision details
-                self.validate_obj(obj)
-                nxt = self.get_next_for_revision_url(self.kwargs["pk"])
-                return HttpResponseRedirect(nxt)
-
-            elif "rev_next" in request.POST:
-                nxt = self.get_next_for_revision_url(self.kwargs["pk"])
-                return HttpResponseRedirect(nxt)
-
-            elif "nxt_denied" in request.POST:
-                nxx = self.get_next_denied_url(self.kwargs["pk"])
-                return HttpResponseRedirect(nxx)
-
-            elif "next_denied_with_revs" in request.POST:
-                comments = request.POST.get('review')
-                if comments:
-                    next_link = self.get_next_denied_url(self.kwargs["pk"])
-                    self.denied_obj(obj)
-                    self.add_comments(obj, comments)
-                    return HttpResponseRedirect(next_link)
-                else:
-                    messages.warning(
-                        request, "Add a comment if you click the submit button for denied.")
-                    return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
-
-            elif "to_pending" in request.POST:
-                try:
-                    nxt = self.where_to_redirect(obj)
-                    obj = obj.first()
-                    obj.is_validated = False
-                    obj.is_denied = False
-                    obj.save()
-                    obj.refresh_from_db()
+            if form.has_changed():
+                if name and details:
+                    self.updateCourseTrackObject.refresh_from_db()
+                    self.updateCourseTrackObject.track_name = name
+                    self.updateCourseTrackObject.definition = details
+                    self.updateCourseTrackObject.save()
                     messages.success(
-                        request, "%s admission is moved to pending." % obj.first_name)
-                    return HttpResponseRedirect(nxt)
-                except Exception as e:
-                    messages.error(request, e)
-                    return HttpResponseRedirect(reverse("adminportal:hold_admissions"))
-
-            elif "hold_next_denied_with_revs" in request.POST:
-                comments = request.POST.get("review")
-                if comments:
-                    next_link = self.get_next_hold_url(self.kwargs["pk"])
-                    self.denied_obj(obj)
-                    self.add_comments(obj, comments)
-                    return HttpResponseRedirect(next_link)
+                        self.request, f"{name} is updated successfully.")
+                    return super().form_valid(form)
                 else:
-                    messages.warning(
-                        request, "Add a comment if you click the submit button for denied.")
-                    return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
-
+                    messages.warning(self.request, "Fill all fields.")
+                    return self.form_invalid(form)
             else:
-                return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
-
+                return super().form_valid(form)
+        except IntegrityError:
+            messages.error(
+                self.request, f"{name} already exist. Duplicate is not allowed.")
+            return self.form_invalid(form)
         except Exception as e:
-            messages.error(request, e)
-            return HttpResponseRedirect(reverse("adminportal:details", kwargs={"pk": self.kwargs["pk"]}))
-
-    def add_comments(self, obj, comments):
-        obj = obj.first()
-        for_review_admission.objects.create(to_review=obj, comment=comments)
-
-    def denied_obj(self, obj):
-        obj = obj.first()
-        obj.is_validated = False
-        obj.is_denied = True
-        obj.save()
-
-    def validate_obj(self, obj):
-        obj = obj.first()
-        obj.is_validated = True
-        obj.is_denied = False
-        obj.save()
-        obj.refresh_from_db()
-
-    def get_next_hold_url(self, pk):
-        # Get the next url hold admission
-        try:
-            qs = student_admission_details.objects.values_list('id', flat=True).filter(
-                is_validated=True, is_denied=True).order_by("admission_sy__sy", "date_modified", "id", "date_created")
-            if qs:
-                try:
-                    qs_count = qs.count()
-                    tupl_to_list = list(qs)
-                    nxt_id = tupl_to_list.index(int(pk)) + 1
-                    nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
-                    return reverse("adminportal:details", kwargs={"pk": nxx})
-                except ValueError:
-                    # if pk is not in the qs
-                    return reverse("adminportal:details", kwargs={"pk": tupl_to_list[0]})
-                except Exception as e:
-                    messages.error(self.request, e)
-                    return reverse("adminportal:hold_admissions")
-            else:
-                return reverse("adminportal:hold_admissions")
-        except Exception as e:
-            messages.error(self.request, e)
-            return reverse("adminportal:hold_admissions")
-
-    def get_next_denied_url(self, pk):
-        # Get the next url denied admission
-        try:
-            qs = student_admission_details.objects.values_list('id', flat=True).alias(count_reviews=Count("admission_review")).filter(
-                count_reviews__lt=1, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "date_created", "id")
-            if qs:
-                try:
-                    qs_count = qs.count()
-                    tupl_to_list = list(qs)
-                    nxt_id = tupl_to_list.index(int(pk)) + 1
-                    nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
-                    return reverse("adminportal:details", kwargs={"pk": nxx})
-                except ValueError:
-                    # if pk is not in the qs
-                    return reverse("adminportal:details", kwargs={"pk": tupl_to_list[0]})
-                except Exception as e:
-                    messages.error(self.request, e)
-                    return reverse("adminportal:denied_admissions")
-            else:
-                return reverse("adminportal:denied_admissions")
-        except Exception as e:
-            messages.error(self.request, e)
-            return reverse("adminportal:denied_admissions")
-
-    def get_next_for_revision_url(self, pk):
-        # Get the next url for revision
-        try:
-            qs = student_admission_details.objects.values_list('id', flat=True).alias(count_reviews=Count("admission_review")).filter(
-                count_reviews__gt=0, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "date_created", "id")
-            if qs:
-                try:
-                    qs_count = qs.count()
-                    tupl_to_list = list(qs)
-                    nxt_id = tupl_to_list.index(int(pk)) + 1
-                    nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
-                    return reverse("adminportal:details", kwargs={"pk": nxx})
-                except ValueError:
-                    # if pk is not in the qs
-                    return reverse("adminportal:details", kwargs={"pk": tupl_to_list[0]})
-                except Exception as e:
-                    messages.error(self.request, e)
-                    return reverse("adminportal:forReviewAdmission")
-            else:
-                return reverse("adminportal:forReviewAdmission")
-        except Exception as e:
-            messages.error(self.request, e)
-            return reverse("adminportal:forReviewAdmission")
-
-    def get_next_pending_url(self, pk):
-        # Get the next pending pk after the given pk using the same queryset
-        try:
-            sy = school_year.objects.latest("date_created")
-            qs = student_admission_details.objects.values_list("id", flat=True).filter(
-                admission_sy=sy, is_validated=False, is_denied=False).order_by("date_modified", "date_created", "id")
-
-            if qs:
-                try:
-                    qs_count = qs.count()
-                    tupl_to_list = list(qs)
-                    nxt_id = tupl_to_list.index(int(pk)) + 1
-                    nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
-                    return reverse("adminportal:details", kwargs={"pk": nxx})
-                except ValueError:
-                    # If pk is no longer pending
-                    return reverse("adminportal:details", kwargs={"pk": tupl_to_list[0]})
-                except:
-                    return reverse("adminportal:admission")
-            else:
-                return reverse("adminportal:admission")
-        except Exception as e:
-            messages.error(self.request, e)
-            return reverse("adminportal:admission")
-
-    def get_next_valid_url(self, pk):
-        # Get the next valid pk after the given pk using the same queryset
-        try:
-            sy = school_year.objects.latest("date_created")
-            qs = student_admission_details.objects.values_list("id", flat=True).filter(
-                admission_sy=sy, is_validated=True, is_denied=False).order_by("admission_sy__sy", "date_modified", "date_created", "id")
-
-            if qs:
-                try:
-                    qs_count = qs.count()
-                    tupl_to_list = list(qs)
-                    nxt_id = tupl_to_list.index(int(pk)) + 1
-                    nxx = tupl_to_list[nxt_id] if nxt_id < qs_count else tupl_to_list[0]
-                    return reverse("adminportal:details", kwargs={"pk": nxx})
-                except ValueError:
-                    # If pk is no longer pending or not in the retrieve queryset
-                    return reverse("adminportal:details", kwargs={"pk": tupl_to_list[0]})
-                except:
-                    return reverse("adminportal:admitted_students")
-            else:
-                return reverse("adminportal:admitted_students")
-        except Exception as e:
-            messages.error(self.request, e)
-            return reverse("adminportal:admitted_students")
-
-    def where_to_redirect(self, obj):
-        # If accept only
-        obj1 = obj.first()
-        if obj1.is_validated and obj1.is_denied:
-            # if hold
-            return obj1.to_holdList()
-        elif not obj1.is_validated and not obj1.is_denied:
-            # if pending
-            return obj1.to_pendingList()
-        elif not obj1.is_validated and obj1.is_denied:
-            # if denied
-            rev_obj = for_review_admission.objects.filter(
-                to_review__id=obj1.id).count()
-            if rev_obj > 0:
-                return obj1.to_reviewList()
-            else:
-                return obj1.to_deniedList()
-        else:
-            return obj1.to_admittedList()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Admission Details"
-
-        adm_obj = student_admission_details.objects.filter(
-            id=self.kwargs["pk"]).first()
-
-        if not adm_obj.is_validated and not adm_obj.is_denied:
-            # If pending
-            context["pending"] = True
-            context["status_txt"] = '<i class="bi bi-hourglass-split"> Pending </i>'
-            context["btn_redirectTo"] = adm_obj.to_pendingList()
-        elif adm_obj.is_validated and not adm_obj.is_denied:
-            # if validated
-            context["status_txt"] = '<i class="bi bi-check2-circle"> Validated </i>'
-            context["btn_redirectTo"] = adm_obj.to_admittedList()
-
-            # Option to hold enrollment for admission with no valid enrollment data
-            context["validated"] = self.can_hold()
-
-        elif not adm_obj.is_validated and adm_obj.is_denied:
-            # if denied
-            rev_obj = for_review_admission.objects.filter(
-                to_review__id=adm_obj.id).count()
-            if rev_obj > 0:
-                # if denied with review
-                context["revision"] = True
-                context["status_txt"] = '<i class="bi bi-recycle"> For review </i>'
-                context["review_contexts"] = for_review_admission.objects.values(
-                    "comment", "date_created").filter(to_review__id=self.kwargs["pk"]).order_by("date_created", "id")
-                context["btn_redirectTo"] = adm_obj.to_reviewList()
-            else:
-                # if denied and no review
-                context["full_denied"] = True
-                context["status_txt"] = '<i class="bi bi-trash3-fill"> Denied </i>'
-                context["btn_redirectTo"] = adm_obj.to_deniedList()
-        else:
-            # For admission with is_validated=True, is_denied=True = Hold status
-            if adm_obj.is_validated and adm_obj.is_denied:
-                context["is_hold"] = True
-                context["status_txt"] = '<i class="bi bi-hourglass-split"> On-Hold </i>'
-                context["btn_redirectTo"] = adm_obj.to_holdList()
-        return context
-
-    def can_hold(self):
-        enrollment_objs = student_enrollment_details.objects.filter(
-            admission_details__id=self.kwargs["pk"])
-        if enrollment_objs:
-            for obj in enrollment_objs:
-                if obj.is_passed and not obj.is_denied:
-                    ans = False
-                    break
-            ans = True
-        else:
-            ans = True
-        return ans
+            return self.form_invalid(form)
 
     def dispatch(self, request, *args, **kwargs):
-        try:
-            student_admission_details.objects.get(id=self.kwargs["pk"])
-            return super().dispatch(request, *args, **kwargs)
-        except Exception as e:
-            messages.error(request, e)
-            return HttpResponseRedirect(reverse("adminportal:admission_and_enrollment"))
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class admission(ListView):
-    # Get the list of pending admission using the latest school year
-    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/admission.html"
-    allow_empty = True
-    context_object_name = "pending_list"
-    paginate_by = 35
-
-    def get_queryset(self):
-        try:
-            sy = school_year.objects.latest("date_created")
-            if validate_enrollmentSetup(self.request, sy):
-                qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name").filter(
-                    admission_sy=sy, is_validated=False, is_denied=False).order_by("date_modified", "date_created", "id")
+        self.updateCourseTrackObject = shs_track.objects.filter(
+            id=int(self.kwargs["track_id"])).first()
+        if self.updateCourseTrackObject:
+            if not self.updateCourseTrackObject.is_deleted:
+                return super().dispatch(request, *args, **kwargs)
             else:
-                qs = student_admission_details.objects.none()
-        except ObjectDoesNotExist:
-            messages.error(self.request, "You have no school year.")
-            qs = student_admission_details.objects.none()
-        except:
-            qs = student_admission_details.objects.none()
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Pending Admission"
-        return context
+                messages.warning(request, "Course track does not exist.")
+                return HttpResponseRedirect(reverse("adminportal:view_courses"))
+        else:
+            messages.warning(
+                request, f"Course track with id no. {self.kwargs['track_id']} does not exist.")
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
 
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class admitted_students(ListView):
-    # Get the list of admitted students from all school year
-    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/admitted.html"
-    allow_empty = True
-    context_object_name = "list_of_admitted"
-    paginate_by = 35
-
-    def get_queryset(self):
-        try:
-            qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name",
-                                                          "second_chosen_strand__strand_name", "admission_sy__sy").filter(is_validated=True, is_denied=False).order_by("admission_sy__sy", "date_modified", "date_created", "id")
-        except Exception as e:
-            messages.error(self.request, e)
-            qs = student_admission_details.objects.none()
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Admitted Students"
-        return context
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class review_admissionList(ListView):
-    # Get the list of for review admission from all school year
-    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/for_reviewList.html"
-    allow_empty = True
-    context_object_name = "forReview_List"
-    paginate_by = 35
-
-    def get_queryset(self):
-        try:
-            qs = student_admission_details.objects.values("id", "date_created", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name", "admission_sy__sy").alias(
-                count_reviews=Count("admission_review")).filter(count_reviews__gt=0, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "date_created", "id")
-        except Exception as e:
-            messages.error(self.request, e)
-            qs = student_admission_details.objects.none()
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Admission for Revision"
-        return context
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class denied_admissionList(ListView):
-    # Get the list of denied admissions with no reviews from all school year
-    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/denied_admissions.html"
-    allow_empty = True
-    context_object_name = "denied_list"
-    paginate_by = 35
-
-    def get_queryset(self):
-        try:
-            qs = student_admission_details.objects.values("id", "date_created", "date_modified", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name", "second_chosen_strand__strand_name", "admission_sy__sy").alias(
-                count_reviews=Count("admission_review")).filter(count_reviews__lt=1, is_validated=False, is_denied=True).order_by("admission_sy__sy", "date_modified", "date_created", "id")
-        except Exception as e:
-            messages.error(self.request, e)
-            qs = student_admission_details.objects.none()
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Denied Admission"
-        return context
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class hold_admissionList(ListView):
-    # Get the list of hold admission, applicable to validated and denied = True admission.
-    # Applicable to admission with validated status and no valid enrollment status.
-    template_name = "adminportal/AdmissionAndEnrollment/admission_HTMLs/hold_admissions.html"
-    allow_empty = True
-    context_object_name = "hold_list"
-    paginate_by = 35
-
-    def get_queryset(self):
-        try:
-            qs = student_admission_details.objects.values("id", "date_created", "date_modified", "admission_owner__email", "last_name", "sex", "first_chosen_strand__strand_name",
-                                                          "second_chosen_strand__strand_name", "admission_sy__sy").filter(is_validated=True, is_denied=True).order_by("admission_sy__sy", "date_modified", "id", "date_created")
-        except Exception as e:
-            messages.error(self.request, e)
-            qs = student_admission_details.objects.none()
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Hold Admissions"
-        return context
-
-
-def enrollment_not_existing_kwarg(request, qs, val):
-    if not qs:
-        # if qs = walang laman, then:
-        messages.warning(request, "%s does not exist." % val)
-
-
-def search_regex_match(request, val):
-    rgx = re.compile("([a-zA-Z\d\s]+)")
-    if rgx.fullmatch(val):
-        return True
-    else:
-        messages.warning(request, "%s is invalid." % val)
-        return False
-
-
-def dts_to_list(val):
-    try:
-        if int(val):
-            # if val is int
-            return True
-    except:
-        # if val is string
-        return False
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class pending_enrollment_list(ListView):
-    # Get the list of pending enrollment, applicable to valid admissions only.
-    template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrollment.html"
-    allow_empty = True
-    context_object_name = "pending_enrollmentList"
-    paginate_by = 35
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class delete_courseTrack(TemplateView):
+    template_name = "adminportal/Shs_courses/delete_track.html"
 
     def post(self, request, *args, **kwargs):
         try:
-            search_this = request.POST.get("search_this")
-            if search_this:
-                if search_regex_match(request, search_this):
-                    return HttpResponseRedirect(reverse("adminportal:pending_enrollment", kwargs={"dts": search_this}))
-                else:
-                    return HttpResponseRedirect(reverse("adminportal:pending_enrollment"))
-            else:
-                messages.warning(
-                    request, "Enter the Student Name or ID to search.")
-                return HttpResponseRedirect(reverse("adminportal:pending_enrollment"))
+            self.deleteTrack.refresh_from_db()
+
+            for strand in shs_strand.objects.filter(track=self.deleteTrack):
+                strand.is_deleted = True
+                strand.save()
+
+            self.deleteTrack.is_deleted = True
+            self.deleteTrack.save()
+            messages.success(
+                request, f"{self.deleteTrack.track_name} is deleted.")
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
         except Exception as e:
-            messages.error(request, e)
-            return HttpResponseRedirect(reverse("adminportal:pending_enrollment"))
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
-    def get_queryset(self):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Remove Course Track"
+        context["courseObjects"] = shs_track.objects.filter(id=self.deleteTrack.id).prefetch_related(Prefetch(
+            "track_strand", queryset=shs_strand.objects.filter(is_deleted=False), to_attr="strands")).first()
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        self.deleteTrack = shs_track.objects.filter(
+            id=int(self.kwargs["pk"])).first()
+        if self.deleteTrack:
+            if not self.deleteTrack.is_deleted:
+                return super().dispatch(request, *args, **kwargs)
+            messages.warning(request, "Course track does not exist.")
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
+        messages.warning(request, "Course track does not exist.")
+        return HttpResponseRedirect(reverse("adminportal:view_courses"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class add_trackStrand(FormView):
+    success_url = "/School_admin/Courses/"
+    form_class = add_strand_form
+    template_name = "adminportal/Shs_courses/create_strands.html"
+
+    def get_success_url(self):
+        if "another" in self.request.POST:
+            return "/School_admin/Courses/Add_strand/" + self.kwargs["track_id"]
+        else:
+            return super().get_success_url()
+
+    def form_valid(self, form):
         try:
-            sy = school_year.objects.latest('date_created')
-            if validate_enrollmentSetup(self.request, sy):
-                if "dts" in self.kwargs:
+            strand_name = form.cleaned_data["strand_name"]
+            strand_details = form.cleaned_data["strand_details"]
 
-                    # Convert to list
-                    dts1 = [ltr for ltr in self.kwargs["dts"]]
-                    map_func_res = map(dts_to_list, dts1)
-
-                    if all(map_func_res):
-                        # if all are integers
-                        qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created').filter(
-                            id=int(self.kwargs["dts"]), enrolled_schoolyear__sy=sy, is_passed=False, is_denied=False).order_by('-date_created', '-last_modified', '-id')
-                        enrollment_not_existing_kwarg(
-                            self.request, qs, self.kwargs["dts"])
-
+            if form.has_changed():
+                if strand_name and strand_details:
+                    self.getStrand = shs_strand.objects.filter(
+                        strand_name=strand_name).first()
+                    if self.getStrand:
+                        # if strand name already exist
+                        if not self.getStrand.is_deleted:
+                            # if the existing strand name is not deleted
+                            messages.warning(
+                                self.request, f"{strand_name} already exist.")
+                            return self.form_invalid(form)
+                        else:
+                            # if the existing strand is deleted
+                            if self.getStrand.track == self.getTrack:
+                                self.getStrand.strand_name = strand_name
+                                self.getStrand.definition = strand_details
+                                self.getStrand.is_deleted = False
+                                self.getStrand.save()
+                                messages.success(
+                                    self.request, f"{strand_name} is added to {self.getTrack.track_name}")
+                                return super().form_valid(form)
+                            messages.warning(
+                                self.request, f"{strand_name} is being used on other track.")
+                            return self.form_invalid(form)
                     else:
-                        # If combination of str and int, or pure str
-                        qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created').filter(
-                            full_name__unaccent__icontains=str(self.kwargs["dts"]), enrolled_schoolyear__sy=sy, is_passed=False, is_denied=False).order_by('-date_created', '-last_modified', '-id')
-                        enrollment_not_existing_kwarg(
-                            self.request, qs, self.kwargs["dts"])
+                        # If strand name is unique, then, Create new strand
+                        shs_strand.objects.create(
+                            track=self.getTrack,
+                            strand_name=strand_name,
+                            definition=strand_details,
+                        )
+                        messages.success(
+                            self.request, f"{strand_name} is added to {self.getTrack.track_name}")
+                        return super().form_valid(form)
 
                 else:
-                    qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created').filter(
-                        enrolled_schoolyear__sy=sy, is_passed=False, is_denied=False).order_by('-date_created', '-last_modified', '-id')
+                    # if empty fields
+                    messages.warning(self.request, "Fill all fields")
+                    return self.form_invalid(form)
             else:
-                qs = student_enrollment_details.validObjects.none()
-        except ObjectDoesNotExist:
-            messages.error(self.request, "You have no school year.")
-            qs = student_enrollment_details.validObjects.none()
+                return super().form_valid(form)
+        except IntegrityError:
+            messages.warning(self.request, f"{strand_name} already exist.")
+            return self.form_invalid(form)
         except Exception as e:
-            messages.error(self.request, e)
-            qs = student_enrollment_details.validObjects.none()
-        return qs
+            return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["track"] = self.getTrack.track_name
+        return initial
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Pending Enrollment"
+        context["title"] = "Add Track Strand"
         return context
 
+    def dispatch(self, request, *args, **kwargs):
+        self.getTrack = shs_track.objects.filter(
+            id=int(self.kwargs["track_id"])).first()
+        if self.getTrack:
+            self.getTrack.refresh_from_db()
+            if not self.getTrack.is_deleted:
+                return super().dispatch(request, *args, **kwargs)
+            messages.warning(request, "Track course no longer exist.")
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
+        else:
+            messages.warning(request, "Track course does not exist.")
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class enrolled_students(ListView):
-    # Get the list of enrolled students from all school year
-    template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrolled_students.html"
-    allow_empty = True
-    context_object_name = "enrolled_students"
-    paginate_by = 35
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class update_trackStrand(FormView):
+    template_name = "adminportal/Shs_courses/edit_strand.html"
+    form_class = edit_strand_form
+    success_url = "/School_admin/Courses/"
+
+    def form_valid(self, form):
+        try:
+            strand_name = form.cleaned_data["strand_name"]
+            strand_details = form.cleaned_data["strand_details"]
+
+            if form.has_changed():
+                if strand_name and strand_details:
+                    self.getStrand.strand_name = strand_name
+                    self.getStrand.definition = strand_details
+                    self.getStrand.save()
+                    messages.success(
+                        self.request, f"{strand_name} is updated successfully.")
+                    return super().form_valid(form)
+                else:
+                    messages.warning(self.request, "Fill all fields.")
+                    return self.form_invalid(form)
+            else:
+                return super().form_valid(form)
+        except IntegrityError:
+            messages.warning(self.request, f"{strand_name} already exist.")
+            return self.form_invalid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["track"] = self.getStrand.track.track_name
+        initial["strand_name"] = self.getStrand.strand_name
+        initial["strand_details"] = self.getStrand.definition
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Update Track Strand"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        self.getStrand = shs_strand.objects.filter(
+            id=int(self.kwargs["strand_id"])).first()
+        if self.getStrand and not self.getStrand.is_deleted:
+            # if strand_id exist and not deleted
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            # if strand_id exist or deleted
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class delete_trackStrand(TemplateView):
+    template_name = "adminportal/Shs_courses/delete_strand.html"
 
     def post(self, request, *args, **kwargs):
-        try:
-            search_this = request.POST.get("search_this")
-            if search_this:
-                if search_regex_match(request, search_this):
-                    return HttpResponseRedirect(reverse("adminportal:enrolled_students", kwargs={"dts": search_this}))
-                else:
-                    return HttpResponseRedirect(reverse("adminportal:enrolled_students"))
-            else:
-                messages.warning(
-                    request, "Enter the Student Name or ID to search.")
-                return HttpResponseRedirect(reverse("adminportal:enrolled_students"))
-        except Exception as e:
-            messages.error(request, e)
-            return HttpResponseRedirect(reverse("adminportal:enrolled_students"))
-
-    def get_queryset(self):
-        try:
-            if "dts" in self.kwargs:
-                # if url with parameter
-                # Convert to list
-                dts1 = [ltr for ltr in self.kwargs["dts"]]
-
-                # Map each item to True if integer, or False if string
-                map_func_res = map(dts_to_list, dts1)
-
-                if all(map_func_res):
-                    # if dts is integer type
-                    qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created', 'last_modified').filter(
-                        id=int(self.kwargs["dts"]), is_passed=True, is_denied=False).order_by('-last_modified', '-id')
-                    enrollment_not_existing_kwarg(
-                        self.request, qs, self.kwargs["dts"])
-
-                else:
-                    # if dts is not integer type
-                    qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created', 'last_modified').filter(
-                        full_name__unaccent__icontains=str(self.kwargs["dts"]), is_passed=True, is_denied=False).order_by('-last_modified', '-id')
-                    enrollment_not_existing_kwarg(
-                        self.request, qs, self.kwargs["dts"])
-
-            else:
-                qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age',
-                                                                    'is_late', 'is_repeater', 'date_created', 'last_modified').filter(is_passed=True, is_denied=False).order_by('-last_modified', '-id')
-        except Exception as e:
-            messages.error(self.request, e)
-            qs = student_enrollment_details.validObjects.none()
-
-        return qs
+        self.deleteStrand.is_deleted = True
+        self.deleteStrand.save()
+        messages.success(
+            request, f"{self.deleteStrand.strand_name} is deleted.")
+        return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Enrolled Students"
+        context["title"] = "Remove Track Strand"
+        context["track"] = self.deleteStrand.track.track_name
+        context["strand_name"] = self.deleteStrand.strand_name
+        context["definition"] = self.deleteStrand.definition
         return context
 
+    def dispatch(self, request, *args, **kwargs):
+        strand_id = self.kwargs["pk"]
+        self.deleteStrand = shs_strand.objects.filter(
+            id=int(self.kwargs["pk"])).exclude(is_deleted=True).first()
+        if self.deleteStrand:
+            # if strand_id exist and not deleted
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return HttpResponseRedirect(reverse("adminportal:view_courses"))
 
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class for_review_enrollmentList(ListView):
-    # Get the list of enrollments for review from all school year
-    template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/for_review_enrollments.html"
-    allow_empty = True
-    context_object_name = "for_review_students"
-    paginate_by = 35
 
-    def post(self, request, *args, **kwargs):
-        try:
-            search_this = request.POST.get("search_this")
-            if search_this:
-                if search_regex_match(request, search_this):
-                    return HttpResponseRedirect(reverse("adminportal:ForReviewEnrollmentLists", kwargs={"dts": search_this}))
-                else:
-                    return HttpResponseRedirect(reverse("adminportal:ForReviewEnrollmentLists"))
-            else:
-                messages.warning(
-                    request, "Enter the Student Name or ID to search.")
-                return HttpResponseRedirect(reverse("adminportal:ForReviewEnrollmentLists"))
-        except Exception as e:
-            messages.error(request, e)
-            return HttpResponseRedirect(reverse("adminportal:ForReviewEnrollmentLists"))
-
-    def get_queryset(self):
-        try:
-            if "dts" in self.kwargs:
-                # if url with parameter
-                # Convert to list
-                dts1 = [ltr for ltr in self.kwargs["dts"]]
-
-                # Map each item to True if integer, or False if string
-                map_func_res = map(dts_to_list, dts1)
-
-                if all(map_func_res):
-                    # if dts is integer type
-                    qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created', 'last_modified').alias(
-                        count_reviews=Count("enrollment_review")).filter(id=int(self.kwargs["dts"]), is_passed=False, is_denied=True, count_reviews__gt=0).order_by('-enrolled_schoolyear__date_created', '-enrollment_review__last_modified', 'id')
-                    enrollment_not_existing_kwarg(
-                        self.request, qs, self.kwargs["dts"])
-
-                else:
-                    # if dts is not integer type
-                    qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created', 'last_modified').alias(count_reviews=Count(
-                        "enrollment_review")).filter(full_name__unaccent__icontains=str(self.kwargs["dts"]), is_passed=False, is_denied=True, count_reviews__gt=0).order_by('-enrolled_schoolyear__date_created', '-enrollment_review__last_modified', 'id')
-                    enrollment_not_existing_kwarg(
-                        self.request, qs, self.kwargs["dts"])
-
-            else:
-                qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created', 'last_modified').alias(
-                    count_reviews=Count("enrollment_review")).filter(is_passed=False, is_denied=True, count_reviews__gt=0).order_by('-enrolled_schoolyear__date_created', '-enrollment_review__last_modified', 'id')
-        except Exception as e:
-            messages.error(self.request, e)
-            qs = student_enrollment_details.validObjects.none()
-
-        return qs
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class view_schoolDocuments_canRequest(TemplateView):
+    template_name = "adminportal/schoolDocuments/ListOfDocuments.html"
+    http_method_names = ["get"]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Enrollment for Revision"
+        context["title"] = "School Documents Available"
+
+        context["availableDocuments"] = studentDocument.activeObjects.values(
+            "documentName", "id")
+
         return context
 
 
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class denied_enrollment_list(ListView):
-    # Get the list of denied enrollments with no reviews
-    template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/denied_enrollmentList.html"
-    allow_empty = True
-    context_object_name = "denied_enrollments"
-    paginate_by = 35
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class addEditDocument(FormView):
+    template_name = "adminportal/schoolDocuments/documentDetails.html"
+    success_url = "/School_admin/schoolDocuments/"
+    form_class = makeDocument
 
-    def post(self, request, *args, **kwargs):
+    def form_valid(self, form):
+        documentName = form.cleaned_data["documentName"]
         try:
-            search_this = request.POST.get("search_this")
-            if search_this:
-                if search_regex_match(request, search_this):
-                    return HttpResponseRedirect(reverse("adminportal:denied_enrollment_lists", kwargs={"dts": search_this}))
-                else:
-                    return HttpResponseRedirect(reverse("adminportal:denied_enrollment_lists"))
-            else:
-                messages.warning(
-                    request, "Enter the Student Name or ID to search.")
-                return HttpResponseRedirect(reverse("adminportal:denied_enrollment_lists"))
-        except Exception as e:
-            messages.error(request, e)
-            return HttpResponseRedirect(reverse("adminportal:denied_enrollment_lists"))
-
-    def get_queryset(self):
-        try:
-            if "dts" in self.kwargs:
-                # if url with parameter
-                # Convert to list
-                dts1 = [ltr for ltr in self.kwargs["dts"]]
-
-                # Map each item to True if integer, or False if string
-                map_func_res = map(dts_to_list, dts1)
-
-                if all(map_func_res):
-                    # if dts is integer type
-                    qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created', 'last_modified').alias(
-                        count_reviews=Count("enrollment_review")).filter(id=int(self.kwargs["dts"]), is_passed=False, is_denied=True, count_reviews__lt=0).order_by('-enrolled_schoolyear__date_created', '-last_modified', 'date_created', 'id')
-                    enrollment_not_existing_kwarg(
-                        self.request, qs, self.kwargs["dts"])
-
-                else:
-                    # if dts is not integer type
-                    qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created', 'last_modified').alias(count_reviews=Count(
-                        "enrollment_review")).filter(full_name__unaccent__icontains=str(self.kwargs["dts"]), is_passed=False, is_denied=True, count_reviews__lt=0).order_by('-enrolled_schoolyear__date_created', '-last_modified', 'date_created', 'id')
-                    enrollment_not_existing_kwarg(
-                        self.request, qs, self.kwargs["dts"])
+            if "docuId" in self.kwargs:
+                # If editing the document
+                self.docuObj.documentName = documentName
+                self.docuObj.save()
+                messages.success(self.request, "Updated Successfully.")
+                return super().form_valid(form)
 
             else:
-                qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created', 'last_modified').alias(
-                    count_reviews=Count("enrollment_review")).filter(is_passed=False, is_denied=True, count_reviews__lt=1).order_by('-enrolled_schoolyear__date_created', '-last_modified', 'date_created', 'id')
-        except Exception as e:
-            messages.error(self.request, e)
-            qs = student_enrollment_details.validObjects.none()
-
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Denied Enrollments"
-        return context
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class hold_enrollment_lists(ListView):
-    # Get the list of hold enrollments
-    template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/hold_enrollmentList.html"
-    allow_empty = True
-    context_object_name = "hold_enrollments"
-    paginate_by = 35
-
-    def post(self, request, *args, **kwargs):
-        try:
-            search_this = request.POST.get("search_this")
-            if search_this:
-                if search_regex_match(request, search_this):
-                    return HttpResponseRedirect(reverse("adminportal:hold_enrollment_lists", kwargs={"dts": search_this}))
+                # if adding a document
+                self.docuObj = studentDocument.objects.filter(
+                    documentName=documentName, is_active=False).first()
+                if self.docuObj:
+                    # If the document name exist but no longer active, then reactivate it.
+                    self.docuObj.is_active = True
+                    self.docuObj.save()
                 else:
-                    return HttpResponseRedirect(reverse("adminportal:hold_enrollment_lists"))
-            else:
-                messages.warning(
-                    request, "Enter the Student Name or ID to search.")
-                return HttpResponseRedirect(reverse("adminportal:hold_enrollment_lists"))
+                    # if the document name does not exist or unique, then insert it.
+                    studentDocument.objects.create(documentName=documentName)
+                messages.success(self.request, "Added successfully.")
+                return super().form_valid(form)
+        except IntegrityError:
+            messages.error(self.request, f"{documentName} already exist.")
+            return self.form_invalid(form)
         except Exception as e:
-            messages.error(request, e)
-            return HttpResponseRedirect(reverse("adminportal:hold_enrollment_lists"))
+            messages.error(
+                self.request, "Error has occurred while saving. Please try again.")
+            return self.form_invalid(form)
 
-    def get_queryset(self):
-        try:
-            if "dts" in self.kwargs:
-                # if url with parameter
-                # Convert to list
-                dts1 = [ltr for ltr in self.kwargs["dts"]]
+    def form_invalid(self, form):
+        return super().form_invalid(form)
 
-                # Map each item to True if integer, or False if string
-                map_func_res = map(dts_to_list, dts1)
-
-                if all(map_func_res):
-                    # if dts is integer type
-                    qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created', 'last_modified').filter(
-                        id=int(self.kwargs["dts"]), is_passed=True, is_denied=True).order_by('-enrolled_schoolyear__date_created', '-last_modified', '-date_created', 'id')
-                    enrollment_not_existing_kwarg(
-                        self.request, qs, self.kwargs["dts"])
-
-                else:
-                    # if dts is not integer type
-                    qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created', 'last_modified').filter(
-                        full_name__unaccent__icontains=str(self.kwargs["dts"]), is_passed=True, is_denied=True).order_by('-enrolled_schoolyear__date_created', '-last_modified', '-date_created', 'id')
-                    enrollment_not_existing_kwarg(
-                        self.request, qs, self.kwargs["dts"])
-
-            else:
-                qs = student_enrollment_details.validObjects.values('id', 'enrolled_schoolyear', 'full_name', 'home_address__permanent_home_address', 'age', 'is_late', 'is_repeater', 'date_created', 'last_modified').filter(
-                    is_passed=True, is_denied=True).order_by('-enrolled_schoolyear__date_created', '-last_modified', '-date_created', 'id')
-        except Exception as e:
-            messages.error(self.request, e)
-            qs = student_enrollment_details.validObjects.none()
-
-        return qs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Hold Enrollments"
-        return context
-
-
-@method_decorator([login_required(login_url="studentportal:login"), user_passes_test(superuser_only, login_url="teachersportal:index")], name="dispatch")
-class enrollment_details(DetailView):
-    template_name = "adminportal/AdmissionAndEnrollment/enrollment_HTMLs/enrollment_details.html"
-    context_object_name = "stud_enrollment_details"
+    def get_initial(self):
+        initial = super().get_initial()
+        if "docuId" in self.kwargs:
+            initial["documentName"] = self.docuObj.documentName
+        return initial
 
     def dispatch(self, request, *args, **kwargs):
         try:
-            student_enrollment_details.validObjects.get(id=self.kwargs["pk"])
+            if "docuId" in self.kwargs:
+                self.docuObj = studentDocument.activeObjects.filter(
+                    pk=int(self.kwargs["docuId"])).first()
+                if self.docuObj:
+                    return super().dispatch(request, *args, **kwargs)
+                messages.warning(request, "Document does not exist.")
+                return HttpResponseRedirect(reverse("adminportal:schoolDocuments"))
             return super().dispatch(request, *args, **kwargs)
         except Exception as e:
-            messages.error(request, "Enrollment Details not found")
-            return HttpResponseRedirect(reverse("adminportal:pending_enrollment"))
+            return HttpResponseRedirect(reverse("adminportal:schoolDocuments"))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Enrollment Details"
+        context["title"] = "Add/Edit Document"
+        return context
 
-        # The following codes will be used to get the enrollment status and other data related to the status
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class hideDocument(TemplateView):
+    template_name = "adminportal/schoolDocuments/hideDocumentConfirmation.html"
+    http_method_names = ["get", "post"]
+
+    def post(self, request, *args, **kwargs):
         try:
-            enrolled_obj = student_enrollment_details.validObjects.get(
-                id=self.kwargs["pk"])
-            count_enrollment_comments = enrollment_review.objects.filter(
-                to_review=enrolled_obj).count()
-            context["enrollment_status"] = self.get_enrollment_status(
-                enrolled_obj, count_enrollment_comments, enrolled_obj.enrolled_schoolyear)
-
-            context["valid_to_edit"] = validate_enrollmentSetup(
-                self.request, enrolled_obj.enrolled_schoolyear)
-
-            match context["enrollment_status"]:
-                case "Validated":
-                    context["back_btn"] = enrolled_obj.to_enrolledList()
-                    context["hold_enrollment"] = True if (
-                        date.today() - enrolled_obj.last_modified) == 7 else False
-                case "Pending":
-                    context["back_btn"] = enrolled_obj.to_pendingList()
-                case "Hold":
-                    context["back_btn"] = enrolled_obj.to_holdList()
-                case "For revision":
-                    context["back_btn"] = enrolled_obj.to_reviewList()
-                    context["enrollment_comments"] = enrollment_review.objects.values_list(
-                        'comment', flat=True).filter(to_review=enrolled_obj).order_by("-date_created")
-                case "Denied":
-                    context["back_btn"] = enrolled_obj.to_holdList()
+            self.hideThisObj.is_active = False
+            self.hideThisObj.save()
+            messages.success(request, "Document is now hidden.")
+            return HttpResponseRedirect(reverse("adminportal:schoolDocuments"))
         except Exception as e:
-            # messages.error(self.request, e)
+            messages.warning(request, e)
+            return HttpResponseRedirect(reverse("adminportal:schoolDocuments"))
+
+    def dispatch(self, request, *args, **kwargs):
+        if studentDocument.activeObjects.filter(pk=int(self.kwargs["pk"])).exists():
+            self.hideThisObj = studentDocument.objects.get(
+                pk=int(self.kwargs["pk"]))
+            return super().dispatch(request, *args, **kwargs)
+        messages.warning(request, "Document does not exist.")
+        return HttpResponseRedirect(reverse("adminportal:schoolDocuments"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Hide Document"
+        context["documentName"] = self.hideThisObj.documentName
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class get_ongoingSchoolEvents(TemplateView, DeletionMixin):
+    template_name = "adminportal/schoolEvents/ongoingSchoolEvents.html"
+    http_method_names = ["get", "post"]
+    success_url = "/School_admin/school_events/"
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            self.cancelThisEvent.is_cancelled = True
+            self.cancelThisEvent.save()
+        except Exception as e:
             pass
+        return HttpResponseRedirect(self.success_url)
+
+    def dispatch(self, request, *args, **kwargs):
+        if ("pk" in request.POST) and request.method == "POST":
+            self.cancelThisEvent = school_events.ongoingEvents.filter(
+                id=int(request.POST["pk"])).first()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Ongoing Events"
+
+        get_eventsObj = school_events.ongoingEvents.annotate(
+            can_cancel=Case(When(start_on__gt=date.today(),
+                            then=Value(True)), default=Value(False))
+        )
+
+        if get_eventsObj:
+            dct = dict()
+            for event in get_eventsObj:
+                if event.start_on.strftime("%B") not in dct:
+                    dct[event.start_on.strftime("%B")] = list()
+                    dct[event.start_on.strftime("%B")].append(event)
+                else:
+                    dct[event.start_on.strftime("%B")].append(event)
+            context["events"] = dct
 
         return context
 
-    def get_enrollment_status(self, obj, count_reviews, sy):
-        if obj.is_passed and not obj.is_denied:
-            return "Validated"
-        elif not obj.is_passed and not obj.is_denied:
-            return "Pending"
-        elif obj.is_passed and obj.is_denied:
-            return "Hold"
-        else:
-            if not validate_enrollmentSetup(sy):
-                return "No longer valid"
-            elif count_reviews > 0:
-                return "For revision"
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class add_schoolEvent(FormView):
+    template_name = "adminportal/schoolEvents/newEvent.html"
+    success_url = "/School_admin/school_events/"
+    form_class = addEventForm
+
+    def form_valid(self, form):
+        try:
+            name = form.cleaned_data["name"]
+            start_on = form.cleaned_data["start_on"]
+            school_events.objects.create(name=name, start_on=start_on)
+            messages.success(self.request, "New event is added successfully")
+            return super().form_valid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "New event"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class edit_schoolEvent(FormView):
+    template_name = "adminportal/schoolEvents/updateEvent.html"
+    success_url = "/School_admin/school_events/"
+    form_class = updateEventForm
+
+    def form_valid(self, form):
+        try:
+            if form.has_changed():
+
+                if "name" in form.changed_data and school_events.ongoingEvents.filter(name__unaccent__icontains=form.cleaned_data["name"]).exclude(id=self.get_event.id).exists():
+                    messages.warning(
+                        self.request, f"{form.cleaned_data['name']} is an ongoing event.")
+                    return self.form_invalid(form)
+
+                self.get_event.name = form.cleaned_data["name"]
+                self.get_event.start_on = form.cleaned_data["start_on"]
+                self.get_event.save()
+                messages.success(self.request, "Event updated successfully.")
+                return super().form_valid(form)
+            return super().form_valid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["name"] = self.get_event.name
+        initial["start_on"] = self.get_event.start_on
+        return initial
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            self.get_event = school_events.ongoingEvents.filter(
+                id=int(self.kwargs["pk"])).first()
+            if self.get_event:
+                return super().dispatch(request, *args, **kwargs)
+            messages.warning(request, "Invalid Primary key.")
+            return HttpResponseRedirect(reverse("adminportal:get_ongoingSchoolEvents"))
+        except Exception as e:
+            return HttpResponseRedirect(reverse("adminportal:get_ongoingSchoolEvents"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Edit event"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class add_subjects(FormView):
+    template_name = "adminportal/subjects/subjectDetails.html"
+    success_url = "/School_admin/subjects/"
+    form_class = addSubjectForm
+
+    def form_valid(self, form):
+        try:
+            code = form.cleaned_data["code"]
+            title = form.cleaned_data["title"]
+            if code and title:
+                if subjects.objects.filter(code=code, title=title).exclude(is_remove=False).exists():
+                    obj = subjects.objects.get(code=code, title=title)
+                    obj.code = code
+                    obj.title = title
+                    obj.is_remove = False
+                    obj.save()
+                    return super().form_valid(form)
+
+                subjects.objects.create(code=code, title=title)
+                messages.success(
+                    self.request, f"{code}: {title} is a new subject.")
+                return super().form_valid(form)
             else:
-                return "Denied"
+                messages.warning(self.request, "Fill all fields.")
+                return self.form_invalid(form)
+        except IntegrityError:
+            messages.warning(
+                self.request, "Subject code or title already exist.")
+            return self.form_invalid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Add Subject"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class get_subjects(ListView):
+    allow_empty = True
+    context_object_name = "subjects"
+    paginate_by = 15
+    template_name = "adminportal/subjects/viewSubjects.html"
+
+    def post(self, request, *args, **kwargs):
+        return HttpResponseRedirect(reverse("adminportal:getSubjects", kwargs={"key": request.POST.get("key")}))
 
     def get_queryset(self):
-        return student_enrollment_details.validObjects.all()
+        try:
+            if "key" in self.kwargs:
+                qs = subjects.activeSubjects.values("id", "code", "title").filter(Q(code__unaccent__icontains=str(
+                    self.kwargs["key"])) | Q(title__unaccent__icontains=str(self.kwargs["key"])))
+            else:
+                qs = subjects.activeSubjects.values("id", "code", "title")
+        except Exception as e:
+            messages.error(self.request, e)
+            qs = subjects.objects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "View Subjects"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class update_subjects(FormView):
+    template_name = "adminportal/subjects/subjectDetails.html"
+    success_url = "/School_admin/subjects/"
+    form_class = addSubjectForm
+
+    def form_valid(self, form):
+        try:
+            self.getSubject.refresh_from_db()
+            if "removeSub" in self.request.POST:
+                self.getSubject.is_remove = True
+                self.getSubject.save()
+                return super().form_valid(form)
+
+            code = form.cleaned_data["code"]
+            title = form.cleaned_data["title"]
+            self.getSubject.code = code
+            self.getSubject.title = title
+            self.getSubject.save()
+            return super().form_valid(form)
+        except IntegrityError:
+            messages.warning(self.request, "Subject already exist.")
+            return self.form_invalid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["code"] = self.getSubject.code
+        initial["title"] = self.getSubject.title
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Update Subject"
+        context["for_update"] = True
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        self.getSubject = subjects.activeSubjects.filter(
+            id=int(kwargs["pk"])).first()
+        if self.getSubject:
+            return super().dispatch(request, *args, **kwargs)
+        messages.warning(request, "Subject Id does not exist.")
+        return HttpResponseRedirect(reverse("adminportal:getSubjects"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class view_curriculum(ListView):
+    allow_empty = True
+    context_object_name = "curriculums"
+    paginate_by = 1
+    template_name = "adminportal/curriculum/getCurriculum.html"
+
+    def get_queryset(self):
+        try:
+            qs = curriculum.objects.prefetch_related(
+                Prefetch("g11_firstSem_subjects", queryset=subjects.objects.all(
+                ), to_attr="g11FirstSemSubs"),
+                Prefetch("g11_secondSem_subjects", queryset=subjects.objects.all(
+                ), to_attr="g11SecondSemSubs"),
+                Prefetch("g12_firstSem_subjects", queryset=subjects.objects.all(
+                ), to_attr="g12FirstSemSubs"),
+                Prefetch("g12_secondSem_subjects", queryset=subjects.objects.all(
+                ), to_attr="g12SecondSemSubs"),
+            ).annotate(
+                can_edit=Case(When(effective_date__gte=date.today(),
+                              then=Value(True)), default=Value(False))
+            )
+        except Exception as e:
+            qs = curriculum.objects.none()
+            messages.error(self.request, e)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "List of Curriculum"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class add_curriculum(SessionWizardView):
+    templates = {
+        "g11_firstSem": "adminportal/curriculum/addCurriculumHTMLfiles/g11firstsem.html",
+        "g11_secondSem": "adminportal/curriculum/addCurriculumHTMLfiles/g11secondsem.html",
+        "g12_firstSem": "adminportal/curriculum/addCurriculumHTMLfiles/g12firstsem.html",
+        "g12_secondSem": "adminportal/curriculum/addCurriculumHTMLfiles/g12secondsem.html",
+    }
+
+    form_list = [
+        ("g11_firstSem", g11_firstSem),
+        ("g11_secondSem", g11_secondSem),
+        ("g12_firstSem", g12_firstSem),
+        ("g12_secondSem", g12_secondSem),
+    ]
+
+    def get_template_names(self):
+        return [self.templates[self.steps.current]]
+
+    def done(self, form_list, **kwargs):
+        try:
+            g11_First_Sem = self.get_cleaned_data_for_step("g11_firstSem")
+            g11_Second_Sem = self.get_cleaned_data_for_step("g11_secondSem")
+            g12_First_Sem = self.get_cleaned_data_for_step("g12_firstSem")
+            g12_Second_Sem = self.get_cleaned_data_for_step("g12_secondSem")
+
+            new_curriculum = curriculum()
+            new_curriculum.effective_date = g11_First_Sem["effective_date"]
+            new_curriculum.save()
+
+            new_curriculum.g11_firstSem_subjects.add(
+                *g11_First_Sem["g11_firstSem_subjects"])
+            new_curriculum.g11_secondSem_subjects.add(
+                *g11_Second_Sem["g11_secondSem_subjects"])
+            new_curriculum.g12_firstSem_subjects.add(
+                *g12_First_Sem["g12_firstSem_subjects"])
+            new_curriculum.g12_secondSem_subjects.add(
+                *g12_Second_Sem["g12_secondSem_subjects"])
+            new_curriculum.save()
+
+            messages.success(
+                self.request, "New curriculum is saved successfully.")
+
+            return HttpResponseRedirect(reverse("adminportal:view_curriculum"))
+        except Exception as e:
+            return HttpResponseRedirect(reverse("adminportal:add_curriculum"))
+
+    def render_goto_step(self, goto_step, **kwargs):
+        form = self.get_form(data=self.request.POST, files=self.request.FILES)
+        if form.is_valid():
+            self.storage.set_step_data(
+                self.steps.current, self.process_step(form))
+            self.storage.set_step_files(
+                self.steps.current, self.process_step_files(form))
+        return super().render_goto_step(goto_step, **kwargs)
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form, **kwargs)
+        context['title'] = "New Curriculum"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if subjects.activeSubjects.all():
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            messages.warning(request, "Add subjects to create curriculum.")
+            return HttpResponseRedirect(reverse("adminportal:addSubjects"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class update_curriculum(SessionWizardView):
+    templates = {
+        "g11_firstSem": "adminportal/curriculum/addCurriculumHTMLfiles/g11firstsem.html",
+        "g11_secondSem": "adminportal/curriculum/addCurriculumHTMLfiles/g11secondsem.html",
+        "g12_firstSem": "adminportal/curriculum/addCurriculumHTMLfiles/g12firstsem.html",
+        "g12_secondSem": "adminportal/curriculum/addCurriculumHTMLfiles/g12secondsem.html",
+    }
+
+    form_list = [
+        ("g11_firstSem", g11_firstSem),
+        ("g11_secondSem", g11_secondSem),
+        ("g12_firstSem", g12_firstSem),
+        ("g12_secondSem", g12_secondSem),
+    ]
+
+    def get_form_initial(self, step):
+        initial = super().get_form_initial(step)
+
+        match step:
+            case "g11_firstSem":
+                initial["effective_date"] = self.get_saved_curriculum.effective_date
+                initial["g11_firstSem_subjects"] = tuple(
+                    [item.id for item in self.get_saved_curriculum.g11_firstSem_subjects.all()])
+
+            case "g11_secondSem":
+                initial["g11_secondSem_subjects"] = tuple(
+                    [item.id for item in self.get_saved_curriculum.g11_secondSem_subjects.all()])
+
+            case "g12_firstSem":
+                initial["g12_firstSem_subjects"] = tuple(
+                    [item.id for item in self.get_saved_curriculum.g12_firstSem_subjects.all()])
+
+            case "g12_secondSem":
+                initial["g12_secondSem_subjects"] = tuple(
+                    [item.id for item in self.get_saved_curriculum.g12_secondSem_subjects.all()])
+
+        return initial
+
+    def get_template_names(self):
+        return [self.templates[self.steps.current]]
+
+    def done(self, form_list, **kwargs):
+        try:
+            g11_First_Sem = self.get_cleaned_data_for_step("g11_firstSem")
+            g11_Second_Sem = self.get_cleaned_data_for_step("g11_secondSem")
+            g12_First_Sem = self.get_cleaned_data_for_step("g12_firstSem")
+            g12_Second_Sem = self.get_cleaned_data_for_step("g12_secondSem")
+
+            self.get_saved_curriculum.refresh_from_db()
+            self.get_saved_curriculum.effective_date = g11_First_Sem["effective_date"]
+            self.get_saved_curriculum.g11_firstSem_subjects.set(
+                [*g11_First_Sem["g11_firstSem_subjects"]])
+            self.get_saved_curriculum.g11_secondSem_subjects.set(
+                [*g11_Second_Sem["g11_secondSem_subjects"]])
+            self.get_saved_curriculum.g12_firstSem_subjects.set(
+                [*g12_First_Sem["g12_firstSem_subjects"]])
+            self.get_saved_curriculum.g12_secondSem_subjects.set(
+                [*g12_Second_Sem["g12_secondSem_subjects"]])
+            self.get_saved_curriculum.save()
+
+            return HttpResponseRedirect(reverse("adminportal:view_curriculum"))
+        except Exception as e:
+            messages.error(self.request, e)
+            return HttpResponseRedirect(reverse("adminportal:add_curriculum"))
+
+    def render_goto_step(self, goto_step, **kwargs):
+        form = self.get_form(data=self.request.POST, files=self.request.FILES)
+        if form.is_valid():
+            self.storage.set_step_data(
+                self.steps.current, self.process_step(form))
+            self.storage.set_step_files(
+                self.steps.current, self.process_step_files(form))
+        return super().render_goto_step(goto_step, **kwargs)
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form, **kwargs)
+        context['title'] = "Update Curriculum"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        self.get_saved_curriculum = curriculum.objects.filter(
+            pk=int(kwargs["pk"])).exclude(effective_date__lt=date.today()).first()
+        if self.get_saved_curriculum and subjects.activeSubjects.all():
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            if not subjects.activeSubjects.all():
+                messages.warning(request, "Add subjects to create curriculum.")
+            return HttpResponseRedirect(reverse("adminportal:view_curriculum"))
