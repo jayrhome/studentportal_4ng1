@@ -11,7 +11,8 @@
         <div class="row grid">
             {% for curriculum in curriculums %}
                 <div class="track_strand mb-3 " style="background: #fff;">
-                    <h3 class=""> Date Effective: {{curriculum.effective_date|date:"l, M j, Y"}} </h3>
+                    <h4 class="">{{curriculum.strand.track.track_name}}: {{curriculum.strand}} </h4>
+                    <h5 class=""> Date Effective: {{curriculum.effective_date|date:"l, M j, Y"}} </h5>
                     <div class="strand_box p-3 border-top border-primary">
 
                         {% for subject in curriculum.g11FirstSemSubs %}

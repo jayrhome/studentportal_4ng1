@@ -85,6 +85,8 @@ class addSubjectForm(forms.Form):
 class g11_firstSem(forms.Form):
     effective_date = forms.DateField(label="Effective Date", validators=[
                                      setup_form_DateValidation, ], widget=forms.DateInput(attrs={'type': 'date'}))
+    strand = forms.TypedChoiceField(label="Strand", choices=(
+        (strand.id, f"{strand.track.track_name}: {strand.strand_name}") for strand in shs_strand.objects.filter(is_deleted=False)), coerce=str)
     g11_firstSem_subjects = forms.TypedMultipleChoiceField(label="Grade 11 - First Semester Subjects", choices=(
         (subject.id, f"{subject.code}: {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)
 

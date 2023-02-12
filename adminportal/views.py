@@ -791,6 +791,8 @@ class add_curriculum(SessionWizardView):
 
             new_curriculum = curriculum()
             new_curriculum.effective_date = g11_First_Sem["effective_date"]
+            new_curriculum.strand = shs_strand.objects.filter(
+                pk=int(g11_First_Sem["strand"])).first()
             new_curriculum.save()
 
             new_curriculum.g11_firstSem_subjects.add(
@@ -854,6 +856,7 @@ class update_curriculum(SessionWizardView):
         match step:
             case "g11_firstSem":
                 initial["effective_date"] = self.get_saved_curriculum.effective_date
+                initial["strand"] = str(self.get_saved_curriculum.strand.id)
                 initial["g11_firstSem_subjects"] = tuple(
                     [item.id for item in self.get_saved_curriculum.g11_firstSem_subjects.all()])
 
@@ -883,6 +886,8 @@ class update_curriculum(SessionWizardView):
 
             self.get_saved_curriculum.refresh_from_db()
             self.get_saved_curriculum.effective_date = g11_First_Sem["effective_date"]
+            self.get_saved_curriculum.strand = shs_strand.objects.filter(
+                pk=int(g11_First_Sem["strand"])).first()
             self.get_saved_curriculum.g11_firstSem_subjects.set(
                 [*g11_First_Sem["g11_firstSem_subjects"]])
             self.get_saved_curriculum.g11_secondSem_subjects.set(

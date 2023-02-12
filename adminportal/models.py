@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.shortcuts import HttpResponseRedirect
 from django.urls import reverse
 from django.db import transaction
+from registrarportal.models import schoolYear
 
 User = get_user_model()
 
@@ -436,6 +437,9 @@ class subjects(models.Model):
 class curriculum(models.Model):
     effective_date = models.DateField()
 
+    strand = models.ForeignKey(
+        shs_strand, on_delete=models.RESTRICT, related_name="curriculum_strand")
+
     g11_firstSem_subjects = models.ManyToManyField(
         subjects, related_name="grade11_firstSem")
     g11_secondSem_subjects = models.ManyToManyField(
@@ -454,7 +458,14 @@ class curriculum(models.Model):
 
 
 class schoolSections(models.Model):
-    name = models.CharField(max_length=30, unique=True)
+    class year_levels(models.TextChoices):
+        grade_11 = '11', _('Grade 11')
+        grade_12 = '12', _('Grade 12')
+
+    name = models.CharField(max_length=30)
+    yearLevel = models.CharField(max_length=7, choices=year_levels.choices)
+    sy = models.ForeignKey(
+        schoolYear, on_delete=models.RESTRICT, related_name="sy_section")
     assignedStrand = models.ForeignKey(
         shs_strand, on_delete=models.RESTRICT, related_name="section_strand")
     assignedSubjects = models.ManyToManyField(
@@ -466,7 +477,7 @@ class schoolSections(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["-created_on"]
 
     def __str__(self):
         return self.name
@@ -477,7 +488,13 @@ class sectionSchedule(models.Model):
         schoolSections, on_delete=models.RESTRICT, related_name="section_schedule")
     subject = models.ForeignKey(
         subjects, on_delete=models.RESTRICT, related_name="subject_schedule")
-    class_schedule = models.JSONField()
+    time_in = models.TimeField()
+    time_out = models.TimeField()
+    created_on = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["time_in"]
 
     def __str__(self):
         return f"{self.section.name}: {self.subject.code} - {self.subject.title}"

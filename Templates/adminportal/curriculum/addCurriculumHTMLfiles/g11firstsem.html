@@ -19,6 +19,10 @@
             {% endfor %}
         {% else %}
 
+            {{ wizard.form.strand.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.strand.id_for_label }}" class="form-label"> {{ wizard.form.strand.label }} </label>
+            {{ wizard.form.strand|addclass:"form-control"}} <!-- Input Field -->
+
             {{ wizard.form.effective_date.errors }} <!-- Field errors -->
             <label for="{{ wizard.form.effective_date.id_for_label }}" class="form-label"> {{ wizard.form.effective_date.label }} </label>
             {{ wizard.form.effective_date|addclass:"form-control"}} <!-- Input Field -->
