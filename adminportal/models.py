@@ -76,7 +76,7 @@ class shs_track(models.Model):
 
 class shs_strand(models.Model):
     track = models.ForeignKey(
-        "shs_track", on_delete=models.PROTECT, related_name="track_strand")
+        "shs_track", on_delete=models.RESTRICT, related_name="track_strand")
     strand_name = models.CharField(max_length=100, unique=True)
     definition = models.TextField()
     date_added = models.DateTimeField(auto_now_add=True)
@@ -451,3 +451,33 @@ class curriculum(models.Model):
 
     class Meta:
         ordering = ["-effective_date"]
+
+
+class schoolSections(models.Model):
+    name = models.CharField(max_length=30, unique=True)
+    assignedStrand = models.ForeignKey(
+        shs_strand, on_delete=models.RESTRICT, related_name="section_strand")
+    assignedSubjects = models.ManyToManyField(
+        subjects, through="sectionSchedule", related_name="section")
+    # Model.m2mfield.through.objects.all()
+    allowedPopulation = models.IntegerField()
+    is_active = models.BooleanField(default=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class sectionSchedule(models.Model):
+    section = models.ForeignKey(
+        schoolSections, on_delete=models.RESTRICT, related_name="section_schedule")
+    subject = models.ForeignKey(
+        subjects, on_delete=models.RESTRICT, related_name="subject_schedule")
+    class_schedule = models.JSONField()
+
+    def __str__(self):
+        return f"{self.section.name}: {self.subject.code} - {self.subject.title}"
