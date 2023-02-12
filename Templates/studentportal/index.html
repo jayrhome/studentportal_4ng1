@@ -59,26 +59,7 @@
             {% endfor %}
         </div>
     </div>
-
-
-    <!-- Honored Students -->
-    {% if honoredStudents %}
-        <div class="track_and_strand_wrapper container py-5">
-            <center> <h4> Honored Students </h4> 
-                <p class="lead fw-normal"> Batch {{batchNumber}} </p>
-            </center>&nbsp;
-            <div class="row grid">
-                {% for student in honoredStudents %}
-                    <div class="track_strand mb-3 " style="background: #fff;">
-                        <img src="{{student.graduatePic.url}}" class="nav-link avatar" alt="" id="" height="200">
-                        <h5> {{student.name}} </h5>
-                        <p> {{student.course}} - {{student.honorType}} </p>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-    {% endif %}
-
+    
 
     <!-- Events -->
     {% if events %}
