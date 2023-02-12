@@ -32,7 +32,8 @@ INSTALLED_APPS = [
 
     'studentportal.apps.StudentportalConfig',
     'adminportal.apps.AdminportalConfig',
-    'teachersportal.apps.TeachersportalConfig',
+    'usersPortal.apps.UsersportalConfig',
+    'registrarportal.apps.RegistrarportalConfig',
 ]
 
 MIDDLEWARE = [
@@ -79,7 +80,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = "studentportal.User"
+AUTH_USER_MODEL = "usersPortal.User"
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -122,11 +123,11 @@ LOGGING = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Manila'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False  # Defaults to True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -144,11 +145,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'lukeadrian9@gmail.com'
-EMAIL_HOST_PASSWORD = 'ribkaignqipfdocj'  # App password
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''  # App password
 
 
-PASSWORD_RESET_TIMEOUT = 180  # 20 Minutes
+PASSWORD_RESET_TIMEOUT = 1200  # 20 Minutes
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

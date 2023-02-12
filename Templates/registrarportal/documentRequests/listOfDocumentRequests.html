@@ -1,0 +1,69 @@
+{% extends 'registrarportal/documentRequests/base1.html' %}
+{% block content %}
+{% include 'registrarportal/messages/messages.html' %}
+
+
+<div class="container col-md-12">
+    <table class="table">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Id</th>
+                <th scope="col">Document</th>
+                <th scope="col">Applicant</th>
+                <th scope="col">Schedule</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in listOfDocumentRequests %}
+                <tr>
+                    <th scope="row"> {{req.id}} </th>
+                    <td> {{req.document__documentName}} </td>
+                    <td> {{req.request_by__display_name|truncatewords:2}} </td>
+                    <td> {{req.scheduled_date|date:"D, M d, Y"}} </td>
+                    <td>
+                        <form method="post">
+                            {% csrf_token %}
+                            <button type="submit" name="pk" value="{{req.id}}"> Cancel </button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td> No document request... </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+   
+    <a href="{% url 'registrarportal:dashboard' %}" class="btn btn-primary"> Back </a>
+
+    
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm"> Prev </a>
+            {% endif %}
+
+            {% block pagination %}
+                {% for page_number in page_obj.paginator.get_elided_page_range %}
+                    {% if page_number == page_obj.paginator.ELLIPSIS %}
+                        {{page_number}}
+                    {% else %}
+                        <a href="?page={{page_number}}" class="btn btn-secondary btn-sm"> {{page_number}} </a>
+                    {% endif %}
+                {% endfor %}
+            {% endblock %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm"> Next </a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+        </span>
+    </div>
+    
+</div>
+
+{% endblock content %}

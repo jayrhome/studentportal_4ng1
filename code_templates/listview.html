@@ -1,0 +1,67 @@
+{% extends '/base1.html' %}
+{% block content %}
+{% include '' %}
+
+
+<a href=""> Add + </a>
+
+<div class="container-fluid" style="background: #fff;">
+
+    <div class="track_and_strand_wrapper container py-5">
+        <center> <h4>  </h4> 
+        </center>&nbsp;
+        <div class="row grid">
+            {% for key, value in object.items %}
+                <div class="track_strand mb-3 " style="background: #fff;">
+                    <h3 class=""> {{key}} </h3>
+                    <div class="strand_box p-3 border-top border-primary">
+                        {% for item in value %}
+                            <div class="strand">
+                                <i class="fa fa-caret-right" aria-hidden="true"></i>
+                                    <p> {{item.name|truncatewords:10}} </p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<a href="" class="btn btn-primary"> Back </a>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm"> Prev </a>
+        {% endif %}
+
+        {% block pagination %}
+            {% for page_number in page_obj.paginator.get_elided_page_range %}
+                {% if page_number == page_obj.paginator.ELLIPSIS %}
+                    {{page_number}}
+                {% else %}
+                    <a href="?page={{page_number}}" class="btn btn-secondary btn-sm"> {{page_number}} </a>
+                {% endif %}
+            {% endfor %}
+        {% endblock %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm"> Next </a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+    </span>
+</div>
+
+
+<style>
+    .box{
+        box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+    }
+</style>
+
+{% endblock content %}

@@ -1,0 +1,28 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+{% include 'studentportal/messages/messages.html' %}
+
+
+<div class="container">
+    <div class="col-md-8">
+        <a href="{% url 'studentportal:create_documentRequest' %}" class="btn btn-primary"> Request + </a>
+        <br>
+        <br>
+        {% for document in requestedDocuments %}
+            <p> Document: {{document.document}} </p>
+            <p> Date Scheduled: {{document.scheduled_date|date:"l, M d, o"}}  </p>
+            {% if document.can_resched %}
+                {% if document.is_cancelled %} <p> Registrar has cancelled your request. You can resched it to request again. </p> {% endif %}
+                <a href="{% url 'studentportal:reschedDocumentRequest' pk=document.id %}" class="btn btn-primary btn-sm"> Re-schedule </a>
+            {% endif %}
+            <br>
+            <br>
+            <br>
+        {% empty %}
+            <p> No requested documents... </p>
+        {% endfor %}
+    </div>
+</div>
+
+
+{% endblock content %}
