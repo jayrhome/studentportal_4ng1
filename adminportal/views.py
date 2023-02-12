@@ -17,6 +17,7 @@ from django.db.models import Q, FilteredRelation, Prefetch, Count, Case, When, V
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from formtools.wizard.views import SessionWizardView
+from string import ascii_uppercase as asp
 
 
 def superuser_only(user):
@@ -926,3 +927,54 @@ class update_curriculum(SessionWizardView):
             if not subjects.activeSubjects.all():
                 messages.warning(request, "Add subjects to create curriculum.")
             return HttpResponseRedirect(reverse("adminportal:view_curriculum"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class make_section(FormView):
+    template_name = "adminportal/schoolSection/makeSections.html"
+    success_url = "/School_admin/"
+    form_class = makeSectionForm
+
+    def form_valid(self, form):
+        try:
+            numberOfSection = int(form.cleaned_data["numberOfSection"])
+
+            for a, b in zip(asp, range(1, numberOfSection+1)):
+                new_section = schoolSections()
+                new_section.name = f"{form.cleaned_data['yearLevel']} - {self.get_strand(int(form.cleaned_data['strand'])) - {a}}"
+                new_section.yearLevel = form.cleaned_data['yearLevel']
+                new_section.sy = schoolYear.objects.first()
+                new_section.assignedStrand = shs_strand.objects.filter(
+                    id=int(form.cleaned_data['strand']))
+                new_section.allowedPopulation = int(
+                    form.cleaned_data['allowedPopulation'])
+                new_section.assignedSubjects.add(
+                    self.get_curriculumSubjects(int(form.cleaned_data["strand"])))
+                new_section.save()
+            messages.success(self.request, "Sections created successfully.")
+            return super().form_valid(form)
+        except Exception as e:
+            messages.error(self.request, e)
+            return self.form_invalid(form)
+
+    def get_curriculumSubjects(self, pk):
+        obj = curriculum.objects.filter(strand__id=pk).first()
+        united_objs = obj.g11_firstSem_subjects.all()
+        united_objs.union(obj.g11_secondSem_subjects.all(
+        ), obj.g12_firstSem_subjects.all(), obj.g12_secondSem_subjects.all())
+        return united_objs
+
+    def get_strand(self, pk):
+        strand_name = shs_strand.objects.filter(id=pk).first()
+        return strand_name.strand_name
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "New Section"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if schoolYear.objects.all():
+            return super().dispatch(request, *args, **kwargs)
+        messages.warning(request, "Must have school year to create sections.")
+        return HttpResponseRedirect(reverse("adminportal:index"))
