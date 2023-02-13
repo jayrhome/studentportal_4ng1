@@ -434,6 +434,11 @@ class subjects(models.Model):
         return f"{self.code}: {self.title}"
 
 
+class curriculumManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(effective_date__lte=date.today())
+
+
 class curriculum(models.Model):
     effective_date = models.DateField()
 
@@ -450,11 +455,19 @@ class curriculum(models.Model):
     g12_secondSem_subjects = models.ManyToManyField(
         subjects, related_name="grade12_secondSem")
 
+    allObjects = models.Manager()
+    objects = curriculumManager()
+
     def __str__(self):
         return str(self.pk)
 
     class Meta:
         ordering = ["-effective_date"]
+
+
+class sectionManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(sy__until__gte=date.today())
 
 
 class schoolSections(models.Model):
@@ -476,8 +489,12 @@ class schoolSections(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
+    objects = models.Manager()
+    latestSections = sectionManager()
+
     class Meta:
         ordering = ["-created_on"]
+        unique_together = ["sy", "name"]
 
     def __str__(self):
         return self.name
@@ -488,8 +505,8 @@ class sectionSchedule(models.Model):
         schoolSections, on_delete=models.RESTRICT, related_name="section_schedule")
     subject = models.ForeignKey(
         subjects, on_delete=models.RESTRICT, related_name="subject_schedule")
-    time_in = models.TimeField()
-    time_out = models.TimeField()
+    time_in = models.TimeField(null=True)
+    time_out = models.TimeField(null=True)
     created_on = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 

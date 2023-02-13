@@ -90,7 +90,8 @@ urlpatterns = [
     ])),
 
     path("Sections/", include([
-        path("", make_section.as_view(), name="new_section"),
+        path("", get_sections.as_view(), name="get_sections"),
+        path("Generate/", make_section.as_view(), name="new_section"),
     ]))
 
 ]

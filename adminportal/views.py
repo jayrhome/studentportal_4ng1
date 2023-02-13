@@ -740,7 +740,7 @@ class view_curriculum(ListView):
 
     def get_queryset(self):
         try:
-            qs = curriculum.objects.prefetch_related(
+            qs = curriculum.allObjects.prefetch_related(
                 Prefetch("g11_firstSem_subjects", queryset=subjects.objects.all(
                 ), to_attr="g11FirstSemSubs"),
                 Prefetch("g11_secondSem_subjects", queryset=subjects.objects.all(
@@ -919,7 +919,7 @@ class update_curriculum(SessionWizardView):
         return context
 
     def dispatch(self, request, *args, **kwargs):
-        self.get_saved_curriculum = curriculum.objects.filter(
+        self.get_saved_curriculum = curriculum.allObjects.filter(
             pk=int(kwargs["pk"])).exclude(effective_date__lt=date.today()).first()
         if self.get_saved_curriculum and subjects.activeSubjects.all():
             return super().dispatch(request, *args, **kwargs)
@@ -932,37 +932,39 @@ class update_curriculum(SessionWizardView):
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class make_section(FormView):
     template_name = "adminportal/schoolSection/makeSections.html"
-    success_url = "/School_admin/"
+    success_url = "/School_admin/Sections/"
     form_class = makeSectionForm
 
     def form_valid(self, form):
         try:
             numberOfSection = int(form.cleaned_data["numberOfSection"])
+            self.this_curriculum = curriculum.objects.filter(
+                strand__id=int(form.cleaned_data['strand'])).first()
 
             for a, b in zip(asp, range(1, numberOfSection+1)):
                 new_section = schoolSections()
-                new_section.name = f"{form.cleaned_data['yearLevel']} - {self.get_strand(int(form.cleaned_data['strand'])) - {a}}"
+                new_section.name = f"{form.cleaned_data['yearLevel']}-{self.get_strand(int(form.cleaned_data['strand']))}-{a}"
                 new_section.yearLevel = form.cleaned_data['yearLevel']
                 new_section.sy = schoolYear.objects.first()
-                new_section.assignedStrand = shs_strand.objects.filter(
-                    id=int(form.cleaned_data['strand']))
+                new_section.assignedStrand = self.this_curriculum.strand
                 new_section.allowedPopulation = int(
                     form.cleaned_data['allowedPopulation'])
+                new_section.save()
+                new_section.refresh_from_db()
                 new_section.assignedSubjects.add(
-                    self.get_curriculumSubjects(int(form.cleaned_data["strand"])))
+                    *self.get_curriculumSubjects(self.this_curriculum))
                 new_section.save()
             messages.success(self.request, "Sections created successfully.")
             return super().form_valid(form)
+        except IntegrityError:
+            messages.error(self.request, "Section already exist.")
+            return self.form_invalid(form)
         except Exception as e:
-            messages.error(self.request, e)
             return self.form_invalid(form)
 
-    def get_curriculumSubjects(self, pk):
-        obj = curriculum.objects.filter(strand__id=pk).first()
+    def get_curriculumSubjects(self, obj):
         united_objs = obj.g11_firstSem_subjects.all()
-        united_objs.union(obj.g11_secondSem_subjects.all(
-        ), obj.g12_firstSem_subjects.all(), obj.g12_secondSem_subjects.all())
-        return united_objs
+        return united_objs.union(obj.g11_secondSem_subjects.all(), obj.g12_firstSem_subjects.all(), obj.g12_secondSem_subjects.all())
 
     def get_strand(self, pk):
         strand_name = shs_strand.objects.filter(id=pk).first()
@@ -978,3 +980,26 @@ class make_section(FormView):
             return super().dispatch(request, *args, **kwargs)
         messages.warning(request, "Must have school year to create sections.")
         return HttpResponseRedirect(reverse("adminportal:index"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class get_sections(TemplateView):
+    template_name = "adminportal/schoolSection/getSections.html"
+    http_method_names = ["get"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "List of Sections"
+
+        sections = schoolSections.latestSections.all()
+        if sections:
+            dct = dict()
+            for section in sections:
+                if section.assignedStrand.strand_name not in dct:
+                    dct[section.assignedStrand.strand_name] = list()
+                    dct[section.assignedStrand.strand_name].append(section)
+                else:
+                    dct[section.assignedStrand.strand_name].append(section)
+            context["sections"] = dct
+
+        return context

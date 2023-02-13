@@ -1,0 +1,24 @@
+{% extends 'adminportal/schoolSection/base1.html' %}
+{% block content %}
+{% include 'adminportal/messages/messages.html' %}
+
+
+<a href="{% url 'adminportal:new_section' %}" class="btn btn-primary"> Make Section </a>
+<div class="container col-md-12">
+
+    {% for key, value in sections.items %}
+        <h4> {{key}} </h4>
+
+        {% for section in value %}
+            <p> {{section.name}} </p>
+        {% endfor %}
+
+    {% empty %}
+        <h4> No sections for ongoing school year... </h4>
+    {% endfor %}
+
+    <a href="{% url 'adminportal:index' %}" class="btn btn-primary"> Back </a>
+</div>
+
+
+{% endblock content %}
