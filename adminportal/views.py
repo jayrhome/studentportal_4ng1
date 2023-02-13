@@ -941,11 +941,18 @@ class make_section(FormView):
             self.this_curriculum = curriculum.objects.filter(
                 strand__id=int(form.cleaned_data['strand'])).first()
 
+            if self.check_for_sections(schoolYear.objects.filter(until__gte=date.today()).first()):
+                asp = self.custom_ascii_range(self.check_for_sections(
+                    schoolYear.objects.filter(until__gte=date.today()).first()))
+            else:
+                pass
+
             for a, b in zip(asp, range(1, numberOfSection+1)):
                 new_section = schoolSections()
                 new_section.name = f"{form.cleaned_data['yearLevel']}-{self.get_strand(int(form.cleaned_data['strand']))}-{a}"
                 new_section.yearLevel = form.cleaned_data['yearLevel']
-                new_section.sy = schoolYear.objects.first()
+                new_section.sy = schoolYear.objects.filter(
+                    until__gte=date.today()).first()
                 new_section.assignedStrand = self.this_curriculum.strand
                 new_section.allowedPopulation = int(
                     form.cleaned_data['allowedPopulation'])
@@ -962,6 +969,20 @@ class make_section(FormView):
         except Exception as e:
             return self.form_invalid(form)
 
+    def check_for_sections(self, sy):
+        self.latest_section = schoolSections.latestSections.filter(
+            sy=sy, assignedStrand=self.this_curriculum.strand).first()
+        if self.latest_section:
+            return self.latest_section.name[-1]
+        else:
+            return False
+
+    def custom_ascii_range(self, start):
+        start_index = asp.index(start)
+        ascii_range = [value for key, value in enumerate(
+            asp) if key > start_index]
+        return ''.join(ascii_range)
+
     def get_curriculumSubjects(self, obj):
         united_objs = obj.g11_firstSem_subjects.all()
         return united_objs.union(obj.g11_secondSem_subjects.all(), obj.g12_firstSem_subjects.all(), obj.g12_secondSem_subjects.all())
@@ -976,7 +997,8 @@ class make_section(FormView):
         return context
 
     def dispatch(self, request, *args, **kwargs):
-        if schoolYear.objects.all():
+        if schoolYear.objects.filter(until__gte=date.today()).exists():
+            # Must have an ongoing school year
             return super().dispatch(request, *args, **kwargs)
         messages.warning(request, "Must have school year to create sections.")
         return HttpResponseRedirect(reverse("adminportal:index"))
