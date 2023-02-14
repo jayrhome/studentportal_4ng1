@@ -125,3 +125,13 @@ class makeSectionForm(forms.Form):
                                         help_text="Minimum of 15 students", widget=forms.NumberInput, validators=[validate_sectionPopulation, ], max_length=2)
     numberOfSection = forms.CharField(label="Number of sections to create for this strand",
                                       help_text="Minimum of 1 section.", validators=[validate_sectionCount], max_length=2)
+
+
+class generate_schedule(forms.Form):
+    strand = forms.TypedChoiceField(label="Strand", choices=(
+        (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str)
+    class_hours = forms.CharField(
+        label="Number of class hours", widget=forms.NumberInput)
+    start_time = forms.TimeField(label="Start time")
+    break_time = forms.CharField(
+        label="Minutes of breaktime", widget=forms.NumberInput)
