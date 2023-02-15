@@ -1025,3 +1025,26 @@ class get_sections(TemplateView):
             context["sections"] = dct
 
         return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class generate_classSchedule(FormView):
+    template_name = "adminportal/schoolSection/generateSchedule.html"
+    success_url = "/School_admin/Sections/"
+    form_class = generate_schedule
+
+    def form_valid(self, form):
+        try:
+            strand = form.cleaned_data["strand"]
+            class_hours = form.cleaned_data["class_hours"]
+            start_time = form.cleaned_data["start_time"]
+            break_time = form.cleaned_data["break_time"]
+            return super().form_valid(form)
+        except Exception as e:
+            # messages.error(self.request, e)
+            return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Generate Class Schedule"
+        return context
