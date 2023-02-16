@@ -481,8 +481,10 @@ class schoolSections(models.Model):
         schoolYear, on_delete=models.RESTRICT, related_name="sy_section")
     assignedStrand = models.ForeignKey(
         shs_strand, on_delete=models.RESTRICT, related_name="section_strand")
-    assignedSubjects = models.ManyToManyField(
-        subjects, through="sectionSchedule", related_name="section")
+    first_sem_subjects = models.ManyToManyField(
+        subjects, through="firstSemSchedule", related_name="firstSemSubjects")
+    second_sem_subjects = models.ManyToManyField(
+        subjects, through="secondSemSchedule", related_name="secondSemSubjects")
     # Model.m2mfield.through.objects.all()
     allowedPopulation = models.IntegerField()
     is_active = models.BooleanField(default=True)
@@ -500,11 +502,11 @@ class schoolSections(models.Model):
         return self.name
 
 
-class sectionSchedule(models.Model):
+class firstSemSchedule(models.Model):
     section = models.ForeignKey(
-        schoolSections, on_delete=models.RESTRICT, related_name="section_schedule")
+        schoolSections, on_delete=models.RESTRICT, related_name="firstSemSched")
     subject = models.ForeignKey(
-        subjects, on_delete=models.RESTRICT, related_name="subject_schedule")
+        subjects, on_delete=models.RESTRICT, related_name="firstSemSubjectSchedule")
     time_in = models.TimeField(null=True)
     time_out = models.TimeField(null=True)
     created_on = models.DateTimeField(auto_now_add=True)
@@ -514,4 +516,21 @@ class sectionSchedule(models.Model):
         ordering = ["time_in"]
 
     def __str__(self):
-        return f"{self.section.name}: {self.subject.code} - {self.subject.title}"
+        return f"{self.section.name}: {self.subject.code}: {self.time_in} - {self.time_out}"
+
+
+class secondSemSchedule(models.Model):
+    section = models.ForeignKey(
+        schoolSections, on_delete=models.RESTRICT, related_name="secondSemSched")
+    subject = models.ForeignKey(
+        subjects, on_delete=models.RESTRICT, related_name="secondSemSubjectSchedule")
+    time_in = models.TimeField(null=True)
+    time_out = models.TimeField(null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["time_in"]
+
+    def __str__(self):
+        return f"{self.section.name}: {self.subject.code}: {self.time_in} - {self.time_out}"

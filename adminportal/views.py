@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from . forms import *
 from . models import *
 from django.db import IntegrityError, transaction
@@ -17,7 +17,7 @@ from django.db.models import Q, FilteredRelation, Prefetch, Count, Case, When, V
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from formtools.wizard.views import SessionWizardView
-from string import ascii_uppercase as asp
+from string import ascii_uppercase
 
 
 def superuser_only(user):
@@ -935,31 +935,60 @@ class make_section(FormView):
     success_url = "/School_admin/Sections/"
     form_class = makeSectionForm
 
+    def check_for_sections(self, sy, yl):
+        self.latest_section = schoolSections.latestSections.filter(
+            sy=sy, assignedStrand=self.this_curriculum.strand, yearLevel=yl).first()
+        if self.latest_section:
+            return self.latest_section.name[-1]
+        else:
+            return False
+
+    def custom_ascii_range(self, start):
+        start_index = ascii_uppercase.index(start)
+        ascii_range = [value for key, value in enumerate(
+            ascii_uppercase) if key > start_index]
+        return ''.join(ascii_range)
+
     def form_valid(self, form):
         try:
             numberOfSection = int(form.cleaned_data["numberOfSection"])
             self.this_curriculum = curriculum.objects.filter(
                 strand__id=int(form.cleaned_data['strand'])).first()
+            self.sy = schoolYear.objects.filter(
+                until__gte=date.today()).first()
+            yearLevel = str(form.cleaned_data["yearLevel"])
 
-            if self.check_for_sections(schoolYear.objects.filter(until__gte=date.today()).first()):
-                asp = self.custom_ascii_range(self.check_for_sections(
-                    schoolYear.objects.filter(until__gte=date.today()).first()))
+            if self.check_for_sections(self.sy, yearLevel):
+                asp = self.custom_ascii_range(
+                    self.check_for_sections(self.sy, yearLevel))
             else:
-                pass
+                asp = ascii_uppercase
 
             for a, b in zip(asp, range(1, numberOfSection+1)):
                 new_section = schoolSections()
                 new_section.name = f"{form.cleaned_data['yearLevel']}-{self.get_strand(int(form.cleaned_data['strand']))}-{a}"
                 new_section.yearLevel = form.cleaned_data['yearLevel']
-                new_section.sy = schoolYear.objects.filter(
-                    until__gte=date.today()).first()
+                new_section.sy = self.sy
                 new_section.assignedStrand = self.this_curriculum.strand
                 new_section.allowedPopulation = int(
                     form.cleaned_data['allowedPopulation'])
                 new_section.save()
                 new_section.refresh_from_db()
-                new_section.assignedSubjects.add(
-                    *self.get_curriculumSubjects(self.this_curriculum))
+
+                # new_section.first_sem_subjects.add(*self.get_curriculumSubjects(self.this_curriculum))
+                # new_section.second_sem_subjects.add(*self.get_curriculumSubjects(self.this_curriculum))
+
+                if str(form.cleaned_data["yearLevel"]) == "11":
+                    new_section.first_sem_subjects.add(
+                        *self.this_curriculum.g11_firstSem_subjects.all())
+                    new_section.second_sem_subjects.add(
+                        *self.this_curriculum.g11_secondSem_subjects.all())
+                else:
+                    new_section.first_sem_subjects.add(
+                        *self.this_curriculum.g12_firstSem_subjects.all())
+                    new_section.second_sem_subjects.add(
+                        *self.this_curriculum.g12_secondSem_subjects.all())
+
                 new_section.save()
             messages.success(self.request, "Sections created successfully.")
             return super().form_valid(form)
@@ -967,25 +996,8 @@ class make_section(FormView):
             messages.error(self.request, "Section already exist.")
             return self.form_invalid(form)
         except Exception as e:
+            messages.error(self.request, e)
             return self.form_invalid(form)
-
-    def check_for_sections(self, sy):
-        self.latest_section = schoolSections.latestSections.filter(
-            sy=sy, assignedStrand=self.this_curriculum.strand).first()
-        if self.latest_section:
-            return self.latest_section.name[-1]
-        else:
-            return False
-
-    def custom_ascii_range(self, start):
-        start_index = asp.index(start)
-        ascii_range = [value for key, value in enumerate(
-            asp) if key > start_index]
-        return ''.join(ascii_range)
-
-    def get_curriculumSubjects(self, obj):
-        united_objs = obj.g11_firstSem_subjects.all()
-        return united_objs.union(obj.g11_secondSem_subjects.all(), obj.g12_firstSem_subjects.all(), obj.g12_secondSem_subjects.all())
 
     def get_strand(self, pk):
         strand_name = shs_strand.objects.filter(id=pk).first()
@@ -1033,18 +1045,73 @@ class generate_classSchedule(FormView):
     success_url = "/School_admin/Sections/"
     form_class = generate_schedule
 
+    def count_FirstSemSubjects(self, strand):
+        return self.this_curriculum.g11_firstSem_subjects.count() if int(strand) == 11 else self.this_curriculum.g12_firstSem_subjects.count()
+
+    def count_SecondSemSubjects(self, strand):
+        return self.this_curriculum.g11_secondSem_subjects.count() if int(strand) == 11 else self.this_curriculum.g12_secondSem_subjects.count()
+
+    def get_semSubs(self, strand):
+        firstSem_subs = None
+        secondSem_subs = None
+        if int(strand) == 11:
+            firstSem_subs = self.this_curriculum.g11_firstSem_subjects.all()
+            secondSem_subs = self.this_curriculum.g11_secondSem_subjects.all()
+        else:
+            firstSem_subs = self.this_curriculum.g12_firstSem_subjects.all()
+            secondSem_subs = self.this_curriculum.g12_secondSem_subjects.all()
+        return [firstSem_subs, secondSem_subs]
+
+    def initialize_class_schedule(self, start_time, minutes_per_subjects, semesters):
+        first_sem = [(start_time.time(), self.get_next_time(start_time, minutes_per_subjects[0])) if key == 0 else (self.get_next_time(
+            start_time, minutes_per_subjects[0]*key), self.get_next_time(start_time, minutes_per_subjects[0]*(key+1))) for key, subject in enumerate(semesters[0])]
+        second_sem = [(start_time.time(), self.get_next_time(start_time, minutes_per_subjects[1])) if key == 0 else (self.get_next_time(
+            start_time, minutes_per_subjects[1]*key), self.get_next_time(start_time, minutes_per_subjects[1]*(key+1))) for key, subject in enumerate(semesters[1])]
+        return [first_sem, second_sem]
+
+    def get_next_time(self, start_time, add_minutes):
+        return datetime.strptime((start_time + timedelta(minutes=add_minutes)).strftime("%H:%M:%S"), "%H:%M:%S").time()
+
     def form_valid(self, form):
-        try:
-            strand = form.cleaned_data["strand"]
-            class_hours = form.cleaned_data["class_hours"]
-            start_time = form.cleaned_data["start_time"]
-            break_time = form.cleaned_data["break_time"]
-            return super().form_valid(form)
-        except Exception as e:
-            # messages.error(self.request, e)
-            return self.form_invalid(form)
+        # try:
+        strand = form.cleaned_data["strand"]
+        class_hours = int(form.cleaned_data["class_hours"])
+        start_time = datetime.strptime(
+            str(form.cleaned_data["start_time"]), "%H:%M:%S")
+
+        # strand[2:4] - will display the strand yearlevel
+        # strand[6:8] - will display the strand id
+
+        self.this_curriculum = curriculum.objects.get(
+            strand__id=int(strand[6:8]))
+
+        number_of_subjects_perSem = [self.count_FirstSemSubjects(
+            strand[2:4]), self.count_SecondSemSubjects(strand[2:4])]
+
+        minutes_per_subjects = [(class_hours * 60)/number_of_subjects_perSem[0],
+                                (class_hours * 60)/number_of_subjects_perSem[1]]
+
+        scheds = self.initialize_class_schedule(
+            start_time, minutes_per_subjects, self.get_semSubs(strand[2:4]))
+        messages.success(self.request, scheds)
+
+        # messages.success(self.request, str(start_time.time()))
+        # messages.success(
+        #     self.request, datetime.strptime((start_time + timedelta(minutes=minutes_per_subjects[0])).strftime("%I:%M %p"), "%I:%M %p").time())
+        return self.form_invalid(form)
+        # except Exception as e:
+        #     messages.error(self.request, e)
+        #     return self.form_invalid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Generate Class Schedule"
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if schoolSections.latestSections.all():
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            messages.warning(
+                request, "Must have sections from latest school year.")
+            return HttpResponseRedirect(reverse("adminportal:new_section"))
