@@ -1041,6 +1041,7 @@ class get_sections(TemplateView):
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
 class generate_classSchedule(FormView):
+    # Generate class schedule for all latest section from the given strand
     template_name = "adminportal/schoolSection/generateSchedule.html"
     success_url = "/School_admin/Sections/"
     form_class = generate_schedule
@@ -1063,14 +1064,60 @@ class generate_classSchedule(FormView):
         return [firstSem_subs, secondSem_subs]
 
     def initialize_class_schedule(self, start_time, minutes_per_subjects, semesters):
-        first_sem = [(start_time.time(), self.get_next_time(start_time, minutes_per_subjects[0])) if key == 0 else (self.get_next_time(
-            start_time, minutes_per_subjects[0]*key), self.get_next_time(start_time, minutes_per_subjects[0]*(key+1))) for key, subject in enumerate(semesters[0])]
-        second_sem = [(start_time.time(), self.get_next_time(start_time, minutes_per_subjects[1])) if key == 0 else (self.get_next_time(
-            start_time, minutes_per_subjects[1]*key), self.get_next_time(start_time, minutes_per_subjects[1]*(key+1))) for key, subject in enumerate(semesters[1])]
+        first_sem = [[start_time.time(), self.get_next_time(start_time, minutes_per_subjects[0])] if key == 0 else [self.get_next_time(
+            start_time, minutes_per_subjects[0]*key), self.get_next_time(start_time, minutes_per_subjects[0]*(key+1))] for key, subject in enumerate(semesters[0])]
+        second_sem = [[start_time.time(), self.get_next_time(start_time, minutes_per_subjects[1])] if key == 0 else [self.get_next_time(
+            start_time, minutes_per_subjects[1]*key), self.get_next_time(start_time, minutes_per_subjects[1]*(key+1))] for key, subject in enumerate(semesters[1])]
+
+        # for key, subject in enumerate(semesters[0]):
+        #     if key == 0:
+        #         first_sem.append((start_time.time(), self.get_next_time(
+        #             start_time, minutes_per_subjects[0])))
+        #     else:
+        #         self.get_next_time((start_time, minutes_per_subjects[0]*key), self.get_next_time(
+        #             start_time, minutes_per_subjects[0]*(key+1)))
+
+        # for key, subject in enumerate(semesters[1]):
+        #     if key == 0:
+        #         second_sem.append((start_time.time(), self.get_next_time(
+        #             start_time, minutes_per_subjects[1])))
+        #     else:
+        #         second_sem.append((self.get_next_time(
+        #             start_time, minutes_per_subjects[1]*key), self.get_next_time(start_time, minutes_per_subjects[1]*(key+1))))
+
         return [first_sem, second_sem]
 
     def get_next_time(self, start_time, add_minutes):
         return datetime.strptime((start_time + timedelta(minutes=add_minutes)).strftime("%H:%M:%S"), "%H:%M:%S").time()
+
+    def count_section(self, strand, yearLevel):
+        return schoolSections.latestSections.filter(yearLevel=yearLevel, assignedStrand__id=int(strand)).count()
+
+    def pop_schedules(self, schedule):
+        sched = schedule
+        a = sched.pop(0)
+        sched.append(a)
+        return sched
+
+    def generate_schedule(self, initial_scheds, strand, yearLevel):
+        count_section = self.count_section(strand, yearLevel)
+        new_schedule = []
+        private_sched = initial_scheds
+        # [ [section [semester [subject_sched], [subject_sched]], [semester, [subject_sched], [subject_sched]]], [section] ]
+
+        for section in range(count_section):
+            # for each section
+            new_schedule.append([])
+            for key, semester in enumerate(initial_scheds):
+                # for each semester
+                new_schedule[section].append([])
+                for id, subjectSchedule in enumerate(semester):
+                    a = private_sched[key].pop()
+                    private_sched[key].append(a)
+                    # messages.success(self.request, private_sched[key])
+
+        messages.success(self.request, private_sched)
+        return new_schedule
 
     def form_valid(self, form):
         # try:
@@ -1091,9 +1138,10 @@ class generate_classSchedule(FormView):
         minutes_per_subjects = [(class_hours * 60)/number_of_subjects_perSem[0],
                                 (class_hours * 60)/number_of_subjects_perSem[1]]
 
-        scheds = self.initialize_class_schedule(
+        initial_scheds = self.initialize_class_schedule(
             start_time, minutes_per_subjects, self.get_semSubs(strand[2:4]))
-        messages.success(self.request, scheds)
+
+        self.generate_schedule(initial_scheds, strand[6:8], strand[2:4])
 
         # messages.success(self.request, str(start_time.time()))
         # messages.success(
