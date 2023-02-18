@@ -1093,17 +1093,10 @@ class generate_classSchedule(FormView):
     def count_section(self, strand, yearLevel):
         return schoolSections.latestSections.filter(yearLevel=yearLevel, assignedStrand__id=int(strand)).count()
 
-    def pop_schedules(self, schedule):
-        sched = schedule
-        a = sched.pop(0)
-        sched.append(a)
-        return sched
-
     def generate_schedule(self, initial_scheds, strand, yearLevel):
         count_section = self.count_section(strand, yearLevel)
         new_schedule = []
         private_sched = initial_scheds
-        # [ [section [semester [subject_sched], [subject_sched]], [semester, [subject_sched], [subject_sched]]], [section] ]
 
         for section in range(count_section):
             # for each section
@@ -1112,11 +1105,16 @@ class generate_classSchedule(FormView):
                 # for each semester
                 new_schedule[section].append([])
                 for id, subjectSchedule in enumerate(semester):
-                    a = private_sched[key].pop()
-                    private_sched[key].append(a)
-                    # messages.success(self.request, private_sched[key])
+                    # for each schedule for a semester. A semester is a list that contains a pair of time-in and time-out on a list.
+                    if id == (len(semester)-1):
+                        new_schedule[section][key].append(
+                            private_sched[key][0])
+                    else:
+                        new_schedule[section][key].append(
+                            private_sched[key].pop(0))
+                        private_sched[key].append(
+                            new_schedule[section][key][id])
 
-        messages.success(self.request, private_sched)
         return new_schedule
 
     def form_valid(self, form):

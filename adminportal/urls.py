@@ -94,6 +94,6 @@ urlpatterns = [
         path("Generate/", make_section.as_view(), name="new_section"),
         path("Scheduling/", generate_classSchedule.as_view(),
              name="generate_classSchedule"),
-    ]))
+    ])),
 
 ]
