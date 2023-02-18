@@ -13,7 +13,7 @@ from . forms import *
 from . models import *
 from django.db import IntegrityError, transaction
 from django.contrib import messages
-from django.db.models import Q, FilteredRelation, Prefetch, Count, Case, When, Value
+from django.db.models import Q, FilteredRelation, Prefetch, Count, Case, When, Value, F
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from formtools.wizard.views import SessionWizardView
@@ -990,14 +990,71 @@ class make_section(FormView):
                         *self.this_curriculum.g12_secondSem_subjects.all())
 
                 new_section.save()
+
             messages.success(self.request, "Sections created successfully.")
-            return super().form_valid(form)
+            if self.create_schedule(yearLevel, self.this_curriculum.strand.id):
+                return super().form_valid(form)
+            else:
+                return HttpResponseRedirect(reverse("adminportal:generate_classSchedule"))
         except IntegrityError:
             messages.error(self.request, "Section already exist.")
             return self.form_invalid(form)
         except Exception as e:
             messages.error(self.request, e)
             return self.form_invalid(form)
+
+    def create_schedule(self, yearLevel, strand_id):
+        self.getschedule = schoolSections.latestSections.alias(count1Subjects=Count("first_sem_subjects"), count2Subjects=Count("second_sem_subjects"), sem1Scheds=Count("firstSemSched", filter=Q(firstSemSched__time_in__isnull=False, firstSemSched__time_out__isnull=False)), sem2Scheds=Count("firstSemSched", filter=Q(
+            secondSemSched__time_in__isnull=False, secondSemSched__time_out__isnull=False))).exclude(Q(count1Subjects__lt=F('sem1Scheds')) | Q(count1Subjects__gt=F('sem1Scheds')), Q(count2Subjects__lt=F('sem2Scheds')) | Q(count2Subjects__gt=F('sem2Scheds'))).filter(yearLevel=yearLevel, assignedStrand__id=strand_id).first()
+        if self.getschedule:
+            firstSemesterSchedule = [[sched.time_in, sched.time_out]
+                                     for sched in self.getschedule.firstSemSched.all()]
+            secondSemesterSchedule = [[sched.time_in, sched.time_out]
+                                      for sched in self.getschedule.secondSemSched.all()]
+            getSectionWithNoSched = schoolSections.latestSections.alias(count1Subjects=Count("first_sem_subjects"), count2Subjects=Count("second_sem_subjects"), sem1Scheds=Count("firstSemSched", filter=Q(firstSemSched__time_in__isnull=True, firstSemSched__time_out__isnull=True)), sem2Scheds=Count("firstSemSched", filter=Q(
+                secondSemSched__time_in__isnull=True, secondSemSched__time_out__isnull=True))).exclude(Q(count1Subjects__lt=F('sem1Scheds')) | Q(count1Subjects__gt=F('sem1Scheds')), Q(count2Subjects__lt=F('sem2Scheds')) | Q(count2Subjects__gt=F('sem2Scheds'))).filter(yearLevel=yearLevel, assignedStrand__id=strand_id)
+
+            if self.save_schedule(self.generate_schedule([firstSemesterSchedule, secondSemesterSchedule], getSectionWithNoSched.count()), getSectionWithNoSched):
+                return True
+            else:
+                return False
+        return False
+
+    def generate_schedule(self, initial_scheds, count_section):
+        new_schedule = []
+        private_sched = initial_scheds
+
+        for section in range(count_section):
+            # for each section
+            new_schedule.append([])
+            for key, semester in enumerate(initial_scheds):
+                # for each semester
+                new_schedule[section].append([])
+                for id, subjectSchedule in enumerate(semester):
+                    # for each schedule for a semester. A semester is a list that contains a pair of time-in and time-out on a list.
+                    if id == (len(semester)-1):
+                        new_schedule[section][key].append(
+                            private_sched[key][0])
+                    else:
+                        new_schedule[section][key].append(
+                            private_sched[key].pop(0))
+                        private_sched[key].append(
+                            new_schedule[section][key][id])
+
+        # new_schedule data structures = [ [[[time-in, time-out], [time-in, time-out], [time-in, time-out]], [[time-in, time-out], [time-in, time-out]]], [[], []] ]
+        return new_schedule
+
+    def save_schedule(self, generatedSchedules, strand_sections):
+        try:
+            for key, value in enumerate(strand_sections):
+                firstSemSchedule.save_sched(
+                    value.firstSemSched.all(), generatedSchedules[key][0])
+                secondSemSchedule.save_sched(
+                    value.secondSemSched.all(), generatedSchedules[key][1])
+            return True
+        except Exception as e:
+            messages.error(self.request, e)
+            return False
 
     def get_strand(self, pk):
         strand_name = shs_strand.objects.filter(id=pk).first()
