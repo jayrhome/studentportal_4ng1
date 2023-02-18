@@ -90,7 +90,8 @@ urlpatterns = [
     ])),
 
     path("Sections/", include([
-        path("", get_sections.as_view(), name="get_sections"),
+        re_path(r"(?:(?P<year>[0-9]+)/)?$",
+                get_sections.as_view(), name="get_sections"),
         path("Generate/", make_section.as_view(), name="new_section"),
         path("Scheduling/", generate_classSchedule.as_view(),
              name="generate_classSchedule"),

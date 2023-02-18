@@ -3,18 +3,34 @@
 {% include 'adminportal/messages/messages.html' %}
 
 
-<a href="{% url 'adminportal:new_section' %}" class="btn btn-primary"> Make Section </a>
 <div class="container col-md-12">
+    <a href="{% url 'adminportal:new_section' %}" class="btn btn-primary"> Make Section </a>
+    <a href="{% url 'adminportal:get_sections' year=11 %}" class="btn btn-primary btn-sm"> Grade 11 </a>
+    <a href="{% url 'adminportal:get_sections' year=12 %}" class="btn btn-primary btn-sm"> Grade 12 </a>
 
     {% for key, value in sections.items %}
+    <!-- Loop to display strand name -->
+    {% if forloop.counter == 1 %} <h2> {{yearLevel}} </h2> {% endif %}
         <h4> {{key}} </h4>
+        {% for item in value %}
+        <!-- Loop to display sections -->
+            <p> {{item.name}} </p>
 
-        {% for section in value %}
-            <p> {{section.name}} </p>
+            {% for subject in item.firstSemesterSubjects %}
+            <!-- Loop to display subjects and schedule on first semester for every section -->
+                {% if forloop.counter == 1 %} <h6> First Semester </h6> {% endif %}
+                <p> {{subject.subject.code}} | {{subject.time_in}} - {{subject.time_out}} </p>
+            {% endfor %}
+
+            {% for subject in item.secondSemesterSubjects %}
+            <!-- Loop to display subjects and schedule on second semester for every section -->
+                {% if forloop.counter == 1 %} <h6> Second Semester </h6> {% endif %}
+                <p> {{subject.subject.code}} | {{subject.time_in}} - {{subject.time_out}} </p>
+            {% endfor %}
+            <hr>
         {% endfor %}
-
     {% empty %}
-        <h4> No sections for ongoing school year... </h4>
+        <h4> No sections... </h4>
     {% endfor %}
 
     <a href="{% url 'adminportal:index' %}" class="btn btn-primary"> Back </a>

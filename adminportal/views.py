@@ -1025,18 +1025,28 @@ class get_sections(TemplateView):
         context = super().get_context_data(**kwargs)
         context["title"] = "List of Sections"
 
-        sections = schoolSections.latestSections.all()
+        sections = schoolSections.latestSections.filter(yearLevel=int(self.kwargs["year"])).prefetch_related(Prefetch("firstSemSched", queryset=firstSemSchedule.objects.all(
+        ), to_attr="firstSemesterSubjects"), Prefetch("secondSemSched", queryset=secondSemSchedule.objects.all(), to_attr="secondSemesterSubjects"))
         if sections:
             dct = dict()
             for section in sections:
-                if section.assignedStrand.strand_name not in dct:
-                    dct[section.assignedStrand.strand_name] = list()
-                    dct[section.assignedStrand.strand_name].append(section)
+                if section.assignedStrand.definition not in dct:
+                    dct[section.assignedStrand.definition] = list()
+                    dct[section.assignedStrand.definition].append(section)
                 else:
-                    dct[section.assignedStrand.strand_name].append(section)
+                    dct[section.assignedStrand.definition].append(section)
             context["sections"] = dct
+            context["yearLevel"] = sections[0].get_yearLevel_display()
 
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            if self.kwargs["year"] == "11" or self.kwargs["year"] == "12":
+                return super().dispatch(request, *args, **kwargs)
+            return HttpResponseRedirect(reverse("adminportal:get_sections", kwargs={"year": "11"}))
+        except Exception as e:
+            return HttpResponseRedirect(reverse("adminportal:get_sections", kwargs={"year": "11"}))
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
