@@ -1,7 +1,7 @@
 from django.db import models, transaction
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from datetime import date
+from datetime import date, datetime, timedelta
 from django.core.validators import RegexValidator
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
@@ -514,6 +514,19 @@ class firstSemSchedule(models.Model):
     class Meta:
         ordering = ["time_in"]
 
+    @classmethod
+    def save_sched(cls, firstSemSubjects, firstSemSchedules):
+        try:
+            for subject, schedule in zip(firstSemSubjects, firstSemSchedules):
+                with transaction.atomic():
+                    update_sched = cls.objects.select_for_update().get(pk=subject.id)
+                    update_sched.time_in = schedule[0]
+                    update_sched.time_out = schedule[1]
+                    update_sched.save()
+            return True
+        except Exception as e:
+            return False
+
     def __str__(self):
         return f"{self.section.name}: {self.subject.code}: {self.time_in} - {self.time_out}"
 
@@ -524,12 +537,27 @@ class secondSemSchedule(models.Model):
     subject = models.ForeignKey(
         subjects, on_delete=models.RESTRICT, related_name="secondSemSubjectSchedule")
     time_in = models.TimeField(null=True)
+    namo = models.CharField(max_length=20, null=True)
     time_out = models.TimeField(null=True)
     created_on = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["time_in"]
+
+    @classmethod
+    def save_sched(cls, secondSemSubjects, secondSemSchedules):
+        try:
+            for subject, schedule in zip(secondSemSubjects, secondSemSchedules):
+                with transaction.atomic():
+                    update_sched = cls.objects.select_for_update().get(pk=subject.id)
+                    update_sched.namo = "Hi"
+                    update_sched.time_in = schedule[0]
+                    update_sched.time_out = schedule[1]
+                    update_sched.save()
+            return True
+        except Exception as e:
+            return False
 
     def __str__(self):
         return f"{self.section.name}: {self.subject.code}: {self.time_in} - {self.time_out}"

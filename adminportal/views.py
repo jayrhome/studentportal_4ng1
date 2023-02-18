@@ -1053,8 +1053,6 @@ class generate_classSchedule(FormView):
         return self.this_curriculum.g11_secondSem_subjects.count() if int(strand) == 11 else self.this_curriculum.g12_secondSem_subjects.count()
 
     def get_semSubs(self, strand):
-        firstSem_subs = None
-        secondSem_subs = None
         if int(strand) == 11:
             firstSem_subs = self.this_curriculum.g11_firstSem_subjects.all()
             secondSem_subs = self.this_curriculum.g11_secondSem_subjects.all()
@@ -1091,6 +1089,8 @@ class generate_classSchedule(FormView):
         return datetime.strptime((start_time + timedelta(minutes=add_minutes)).strftime("%H:%M:%S"), "%H:%M:%S").time()
 
     def count_section(self, strand, yearLevel):
+        self.strand_sections = schoolSections.latestSections.filter(yearLevel=yearLevel, assignedStrand__id=int(
+            strand)).prefetch_related("first_sem_subjects", "second_sem_subjects")
         return schoolSections.latestSections.filter(yearLevel=yearLevel, assignedStrand__id=int(strand)).count()
 
     def generate_schedule(self, initial_scheds, strand, yearLevel):
@@ -1115,39 +1115,53 @@ class generate_classSchedule(FormView):
                         private_sched[key].append(
                             new_schedule[section][key][id])
 
+        # new_schedule data structures = [ [[[time-in, time-out], [time-in, time-out], [time-in, time-out]], [[time-in, time-out], [time-in, time-out]]], [[], []] ]
         return new_schedule
 
+    def save_schedule(self, generatedSchedules):
+        try:
+            for key, value in enumerate(self.strand_sections):
+                firstSemSchedule.save_sched(
+                    value.firstSemSched.all(), generatedSchedules[key][0])
+                secondSemSchedule.save_sched(
+                    value.secondSemSched.all(), generatedSchedules[key][1])
+            return True
+        except Exception as e:
+            messages.error(self.request, e)
+            return False
+
     def form_valid(self, form):
-        # try:
-        strand = form.cleaned_data["strand"]
-        class_hours = int(form.cleaned_data["class_hours"])
-        start_time = datetime.strptime(
-            str(form.cleaned_data["start_time"]), "%H:%M:%S")
+        try:
+            strand = form.cleaned_data["strand"]
+            class_hours = int(form.cleaned_data["class_hours"])
+            start_time = datetime.strptime(
+                str(form.cleaned_data["start_time"]), "%H:%M:%S")
 
-        # strand[2:4] - will display the strand yearlevel
-        # strand[6:8] - will display the strand id
+            # strand[2:4] - will display the strand yearlevel
+            # strand[6:8] - will display the strand id
 
-        self.this_curriculum = curriculum.objects.get(
-            strand__id=int(strand[6:8]))
+            self.this_curriculum = curriculum.objects.get(
+                strand__id=int(strand[6:8]))
 
-        number_of_subjects_perSem = [self.count_FirstSemSubjects(
-            strand[2:4]), self.count_SecondSemSubjects(strand[2:4])]
+            number_of_subjects_perSem = [self.count_FirstSemSubjects(
+                strand[2:4]), self.count_SecondSemSubjects(strand[2:4])]
 
-        minutes_per_subjects = [(class_hours * 60)/number_of_subjects_perSem[0],
-                                (class_hours * 60)/number_of_subjects_perSem[1]]
+            minutes_per_subjects = [(class_hours * 60)/number_of_subjects_perSem[0],
+                                    (class_hours * 60)/number_of_subjects_perSem[1]]
 
-        initial_scheds = self.initialize_class_schedule(
-            start_time, minutes_per_subjects, self.get_semSubs(strand[2:4]))
+            initial_scheds = self.initialize_class_schedule(
+                start_time, minutes_per_subjects, self.get_semSubs(strand[2:4]))
 
-        self.generate_schedule(initial_scheds, strand[6:8], strand[2:4])
+            generated_schedule = self.generate_schedule(
+                initial_scheds, strand[6:8], strand[2:4])
 
-        # messages.success(self.request, str(start_time.time()))
-        # messages.success(
-        #     self.request, datetime.strptime((start_time + timedelta(minutes=minutes_per_subjects[0])).strftime("%I:%M %p"), "%I:%M %p").time())
-        return self.form_invalid(form)
-        # except Exception as e:
-        #     messages.error(self.request, e)
-        #     return self.form_invalid(form)
+            if self.save_schedule(generated_schedule):
+                messages.success(self.request, "New schedule is saved.")
+
+            return super().form_valid(form)
+        except Exception as e:
+            messages.error(self.request, e)
+            return self.form_invalid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
