@@ -1004,14 +1004,14 @@ class make_section(FormView):
             return self.form_invalid(form)
 
     def create_schedule(self, yearLevel, strand_id):
-        self.getschedule = schoolSections.latestSections.alias(count1Subjects=Count("first_sem_subjects"), count2Subjects=Count("second_sem_subjects"), sem1Scheds=Count("firstSemSched", filter=Q(firstSemSched__time_in__isnull=False, firstSemSched__time_out__isnull=False)), sem2Scheds=Count("firstSemSched", filter=Q(
+        self.getschedule = schoolSections.latestSections.alias(count1Subjects=Count("first_sem_subjects"), count2Subjects=Count("second_sem_subjects"), sem1Scheds=Count("firstSemSched", filter=Q(firstSemSched__time_in__isnull=False, firstSemSched__time_out__isnull=False)), sem2Scheds=Count("secondSemSched", filter=Q(
             secondSemSched__time_in__isnull=False, secondSemSched__time_out__isnull=False))).exclude(Q(count1Subjects__lt=F('sem1Scheds')) | Q(count1Subjects__gt=F('sem1Scheds')), Q(count2Subjects__lt=F('sem2Scheds')) | Q(count2Subjects__gt=F('sem2Scheds'))).filter(yearLevel=yearLevel, assignedStrand__id=strand_id).first()
         if self.getschedule:
             firstSemesterSchedule = [[sched.time_in, sched.time_out]
                                      for sched in self.getschedule.firstSemSched.all()]
             secondSemesterSchedule = [[sched.time_in, sched.time_out]
                                       for sched in self.getschedule.secondSemSched.all()]
-            getSectionWithNoSched = schoolSections.latestSections.alias(count1Subjects=Count("first_sem_subjects"), count2Subjects=Count("second_sem_subjects"), sem1Scheds=Count("firstSemSched", filter=Q(firstSemSched__time_in__isnull=True, firstSemSched__time_out__isnull=True)), sem2Scheds=Count("firstSemSched", filter=Q(
+            getSectionWithNoSched = schoolSections.latestSections.alias(count1Subjects=Count("first_sem_subjects"), count2Subjects=Count("second_sem_subjects"), sem1Scheds=Count("firstSemSched", filter=Q(firstSemSched__time_in__isnull=True, firstSemSched__time_out__isnull=True)), sem2Scheds=Count("secondSemSched", filter=Q(
                 secondSemSched__time_in__isnull=True, secondSemSched__time_out__isnull=True))).exclude(Q(count1Subjects__lt=F('sem1Scheds')) | Q(count1Subjects__gt=F('sem1Scheds')), Q(count2Subjects__lt=F('sem2Scheds')) | Q(count2Subjects__gt=F('sem2Scheds'))).filter(yearLevel=yearLevel, assignedStrand__id=strand_id)
 
             if self.save_schedule(self.generate_schedule([firstSemesterSchedule, secondSemesterSchedule], getSectionWithNoSched.count()), getSectionWithNoSched):

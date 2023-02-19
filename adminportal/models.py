@@ -55,14 +55,6 @@ def current_school_year():
     return sy
 
 
-# class school_year(models.Model):
-#     sy = models.CharField(max_length=11, unique=True)
-#     date_created = models.DateTimeField(auto_now=True)
-
-#     def __str__(self):
-#         return self.sy
-
-
 class shs_track(models.Model):
     track_name = models.CharField(max_length=50, unique=True)
     definition = models.TextField()
@@ -301,17 +293,6 @@ class shs_strand(models.Model):
 
 #     def to_holdList(self):
 #         return reverse("adminportal:hold_enrollment_lists")
-
-
-# class enrollment_admission_setup(models.Model):
-#     ea_setup_sy = models.OneToOneField(
-#         school_year, on_delete=models.PROTECT, related_name="setup_sy")
-#     start_date = models.DateField()
-#     end_date = models.DateField()
-#     still_accepting = models.BooleanField(default=True)
-
-#     def __str__(self):
-#         return self.ea_setup_sy.sy
 
 
 # class for_review_admission(models.Model):

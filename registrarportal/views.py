@@ -10,7 +10,7 @@ from django.views.generic.edit import FormView, CreateView, DeletionMixin
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.db import IntegrityError, transaction
-from django.db.models import Prefetch, Count, Q, Case, When, Value
+from django.db.models import Prefetch, Count, Q, Case, When, Value, F
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from ratelimit.decorators import ratelimit
@@ -21,6 +21,8 @@ from django.db import IntegrityError
 from . models import *
 from studentportal.models import documentRequest
 from . forms import *
+from formtools.wizard.views import SessionWizardView
+from adminportal.models import curriculum, schoolSections, firstSemSchedule, secondSemSchedule
 
 
 User = get_user_model()
@@ -106,42 +108,74 @@ class view_schoolYears(ListView):
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(registrar_only, login_url="studentportal:index")], name="dispatch")
-class add_schoolYear(FormView):
-    form_class = add_schoolyear_form
-    http_method_names = ["get", "post"]
-    template_name = "registrarportal/schoolyear/addSchoolYear.html"
+class add_schoolYear(SessionWizardView):
+    templates = {
+        "add_schoolyear_form": "registrarportal/schoolyear/addSchoolYear.html",
+        "ea_setup_form": "registrarportal/schoolyear/admissionScheduling.html",
+    }
 
-    # For revision, redirect user to enrollment and admission scheduling
-    success_url = "/Registrar/schoolyear/"
+    form_list = [
+        ("add_schoolyear_form", add_schoolyear_form),
+        ("ea_setup_form", ea_setup_form),
+    ]
+
+    def get_template_names(self):
+        return [self.templates[self.steps.current]]
+
+    def done(self, form_list, **kwargs):
+        try:
+            sy = self.get_cleaned_data_for_step("add_schoolyear_form")
+            ea = self.get_cleaned_data_for_step("ea_setup_form")
+
+            return HttpResponseRedirect(reverse("registrarportal:addSchoolYear"))
+        except Exception as e:
+            return HttpResponseRedirect(reverse("registrarportal:addSchoolYear"))
+
+    def render_goto_step(self, goto_step, **kwargs):
+        form = self.get_form(data=self.request.POST, files=self.request.FILES)
+        if form.is_valid():
+            self.storage.set_step_data(
+                self.steps.current, self.process_step(form))
+            self.storage.set_step_files(
+                self.steps.current, self.process_step_files(form))
+        return super().render_goto_step(goto_step, **kwargs)
 
     def form_valid(self, form):
         try:
-            start_on = form.cleaned_data["start_on"]
-            until = form.cleaned_data["until"]
+            # start_on = form.cleaned_data["start_on"]
+            # until = form.cleaned_data["until"]
 
-            if start_on < until:
-                self.new_sy = schoolYear.objects.create(
-                    start_on=start_on, until=until)
-                messages.success(
-                    self.request, f"SY: {self.new_sy.display_sy()} is created.")
-                return super().form_valid(form)
-            else:
-                messages.warning(self.request, "Invalid Period. Try again.")
-                return self.form_invalid(form)
+            # if start_on < until:
+            #     self.new_sy = schoolYear.objects.create(
+            #         start_on=start_on, until=until)
+            #     messages.success(
+            #         self.request, f"SY: {self.new_sy.display_sy()} is created.")
+            #     return super().form_valid(form)
+            # else:
+            #     messages.warning(self.request, "Invalid Period. Try again.")
+            #     return self.form_invalid(form)
+
+            pass
 
         except Exception as e:
-            return self.form_invalid(form)
+            pass
 
     def dispatch(self, request, *args, **kwargs):
         self.get_sy = schoolYear.objects.first()
-        if self.get_sy and not validate_latestSchoolYear(self.get_sy):
+        if ((self.get_sy and not validate_latestSchoolYear(self.get_sy)) or not self.get_sy) and curriculum.objects.all() and schoolSections.latestSections.all() and not self.return_sectionCount():
             return super().dispatch(request, *args, **kwargs)
         else:
-            if not self.get_sy:
-                return super().dispatch(request, *args, **kwargs)
-            messages.warning(
-                self.request, "Current school year is still ongoing.")
+            if self.get_sy and curriculum.objects.all() and schoolSections.latestSections.all() and not self.return_sectionCount():
+                messages.warning(
+                    self.request, "Current school year is still ongoing.")
+                messages.warning(self.request, self.return_sectionCount())
+            else:
+                messages.warning(
+                    request, "Must have a curriculum, sections, and all sections must have schedules on all subjects.")
             return HttpResponseRedirect(reverse("registrarportal:schoolyear"))
+
+    def return_sectionCount(self):
+        return schoolSections.latestSections.alias(count1Subjects=Count("first_sem_subjects"), count2Subjects=Count("second_sem_subjects"), sem1Scheds=Count("firstSemSched", filter=Q(firstSemSched__time_in__isnull=False, firstSemSched__time_out__isnull=False)), sem2Scheds=Count("secondSemSched", filter=Q(secondSemSched__time_in__isnull=False, secondSemSched__time_out__isnull=False))).exclude(Q(count1Subjects=F('sem1Scheds')), Q(count2Subjects=F('sem2Scheds'))).count()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
