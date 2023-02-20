@@ -30,6 +30,7 @@ class enrollment_admission_setup(models.Model):
         schoolYear, on_delete=models.PROTECT, related_name="e_a_setup")
     start_date = models.DateField()
     end_date = models.DateField()
+    students_perBatch = models.IntegerField()
     acceptResponses = models.BooleanField(default=True)
     modified_on = models.DateTimeField(auto_now=True)
     created_on = models.DateTimeField(auto_now_add=True)

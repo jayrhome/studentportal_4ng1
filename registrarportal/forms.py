@@ -34,6 +34,8 @@ class ea_setup_form(forms.Form):
                                  setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(label="End Date", validators=[
                                setup_form_DateValidation], widget=forms.DateInput(attrs={'type': 'date'}))
+    students_perBatch = forms.CharField(
+        label="Number of applicants per batch", widget=forms.NumberInput, max_length=2)
 
 
 # class extend_enrollment(forms.Form):

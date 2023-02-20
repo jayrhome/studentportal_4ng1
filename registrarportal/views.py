@@ -127,7 +127,20 @@ class add_schoolYear(SessionWizardView):
             sy = self.get_cleaned_data_for_step("add_schoolyear_form")
             ea = self.get_cleaned_data_for_step("ea_setup_form")
 
-            return HttpResponseRedirect(reverse("registrarportal:addSchoolYear"))
+            if sy["start_on"] >= sy["until"]:
+                messages.warning(
+                    self.request, "Invalid dates for creating a school year.")
+                return self.render_revalidation_failure("add_schoolyear_form", add_schoolyear_form)
+            elif ea["start_date"] >= ea["end_date"]:
+                messages.warning(
+                    self.request, "Invalid dates to start the admission.")
+                return self.render_revalidation_failure("ea_setup_form", ea_setup_form)
+            else:
+                self.create_schoolyear(sy)
+                self.start_admission(ea)
+                messages.success(
+                    self.request, f"SY: {self.new_sy.display_sy()} is created.")
+            return HttpResponseRedirect(reverse("registrarportal:schoolyear"))
         except Exception as e:
             return HttpResponseRedirect(reverse("registrarportal:addSchoolYear"))
 
@@ -140,38 +153,32 @@ class add_schoolYear(SessionWizardView):
                 self.steps.current, self.process_step_files(form))
         return super().render_goto_step(goto_step, **kwargs)
 
-    def form_valid(self, form):
+    def create_schoolyear(self, form):
         try:
-            # start_on = form.cleaned_data["start_on"]
-            # until = form.cleaned_data["until"]
-
-            # if start_on < until:
-            #     self.new_sy = schoolYear.objects.create(
-            #         start_on=start_on, until=until)
-            #     messages.success(
-            #         self.request, f"SY: {self.new_sy.display_sy()} is created.")
-            #     return super().form_valid(form)
-            # else:
-            #     messages.warning(self.request, "Invalid Period. Try again.")
-            #     return self.form_invalid(form)
-
+            self.new_sy = schoolYear.objects.create(
+                start_on=form["start_on"], until=form["until"])
+        except Exception as e:
             pass
 
+    def start_admission(self, form):
+        try:
+            enrollment_admission_setup.objects.create(
+                ea_setup_sy=self.new_sy, start_date=form["start_date"], end_date=form["end_date"], students_perBatch=form["students_perBatch"])
         except Exception as e:
             pass
 
     def dispatch(self, request, *args, **kwargs):
         self.get_sy = schoolYear.objects.first()
-        if ((self.get_sy and not validate_latestSchoolYear(self.get_sy)) or not self.get_sy) and curriculum.objects.all() and schoolSections.latestSections.all() and not self.return_sectionCount():
+        if ((self.get_sy and not validate_latestSchoolYear(self.get_sy)) or not self.get_sy) and curriculum.objects.all():
             return super().dispatch(request, *args, **kwargs)
         else:
-            if self.get_sy and curriculum.objects.all() and schoolSections.latestSections.all() and not self.return_sectionCount():
+            if self.get_sy and curriculum.objects.all():
                 messages.warning(
                     self.request, "Current school year is still ongoing.")
                 messages.warning(self.request, self.return_sectionCount())
             else:
                 messages.warning(
-                    request, "Must have a curriculum, sections, and all sections must have schedules on all subjects.")
+                    request, "Must have a curriculum to start the admission.")
             return HttpResponseRedirect(reverse("registrarportal:schoolyear"))
 
     def return_sectionCount(self):
