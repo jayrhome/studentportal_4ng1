@@ -127,22 +127,34 @@ class add_schoolYear(SessionWizardView):
             sy = self.get_cleaned_data_for_step("add_schoolyear_form")
             ea = self.get_cleaned_data_for_step("ea_setup_form")
 
-            if sy["start_on"] >= sy["until"]:
-                messages.warning(
-                    self.request, "Invalid dates for creating a school year.")
-                return self.render_revalidation_failure("add_schoolyear_form", add_schoolyear_form)
-            elif ea["start_date"] >= ea["end_date"]:
+            if ea["start_date"] >= ea["end_date"]:
                 messages.warning(
                     self.request, "Invalid dates to start the admission.")
-                return self.render_revalidation_failure("ea_setup_form", ea_setup_form)
-            else:
-                self.create_schoolyear(sy)
-                self.start_admission(ea)
-                messages.success(
-                    self.request, f"SY: {self.new_sy.display_sy()} is created.")
+                return HttpResponseRedirect(reverse("registrarportal:addSchoolYear"))
+            self.create_schoolyear(sy)
+            self.start_admission(ea)
+            messages.success(
+                self.request, f"SY: {self.new_sy.display_sy()} is created.")
             return HttpResponseRedirect(reverse("registrarportal:schoolyear"))
         except Exception as e:
             return HttpResponseRedirect(reverse("registrarportal:addSchoolYear"))
+
+    def render_next_step(self, form, **kwargs):
+        get_data = self.get_cleaned_data_for_step(self.storage.current_step)
+        if self.storage.current_step == "add_schoolyear_form" and get_data["start_on"] >= get_data["until"]:
+            messages.warning(
+                self.request, "Invalid dates for creating a school year.")
+            return self.render_goto_step(self.storage.current_step, **kwargs)
+        else:
+            next_step = self.steps.next
+            new_form = self.get_form(
+                next_step,
+                data=self.storage.get_step_data(next_step),
+                files=self.storage.get_step_files(next_step),
+            )
+            # change the stored current step
+            self.storage.current_step = next_step
+            return self.render(new_form, **kwargs)
 
     def render_goto_step(self, goto_step, **kwargs):
         form = self.get_form(data=self.request.POST, files=self.request.FILES)
@@ -172,10 +184,9 @@ class add_schoolYear(SessionWizardView):
         if ((self.get_sy and not validate_latestSchoolYear(self.get_sy)) or not self.get_sy) and curriculum.objects.all():
             return super().dispatch(request, *args, **kwargs)
         else:
-            if self.get_sy and curriculum.objects.all():
+            if validate_latestSchoolYear(self.get_sy):
                 messages.warning(
                     self.request, "Current school year is still ongoing.")
-                messages.warning(self.request, self.return_sectionCount())
             else:
                 messages.warning(
                     request, "Must have a curriculum to start the admission.")
