@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 import re
 from adminportal.models import *
 from registrarportal.models import *
-from usersPortal.forms import validate_imageSize
+# from usersPortal.forms import validate_imageSize
 
 User = get_user_model()
 
@@ -115,29 +115,29 @@ class jhs_details(forms.Form):
 
 class admissionRequirementsForm(forms.Form):
     good_moral = forms.ImageField(label="Good Moral Certificate", widget=forms.ClearableFileInput(
-        attrs={"style": "display:none;"}), validators=[validate_imageSize, ])
+        attrs={"style": "display:none;"}), validators=["usersPortal.validate_imageSize", ])
     report_card = forms.ImageField(label="Report Card", widget=forms.ClearableFileInput(
-        attrs={"style": "display:none;"}), validators=[validate_imageSize, ])
+        attrs={"style": "display:none;"}), validators=["usersPortal.validate_imageSize", ])
     psa = forms.ImageField(label="Philippine Birth Certificate", widget=forms.ClearableFileInput(
-        attrs={"style": "display:none;"}), validators=[validate_imageSize, ])
+        attrs={"style": "display:none;"}), validators=["usersPortal.validate_imageSize", ])
 
 
 class foreignApplicantForm(admissionRequirementsForm):
     alien_certificate_of_registration = forms.ImageField(label="Alien Certificate of Registration", widget=forms.ClearableFileInput(
-        attrs={"style": "display:none;"}), validators=[validate_imageSize, ])
+        attrs={"style": "display:none;"}), validators=["usersPortal.validate_imageSize", ])
     study_permit = forms.ImageField(label="Study Permit", widget=forms.ClearableFileInput(
-        attrs={"style": "display:none;"}), validators=[validate_imageSize, ])
+        attrs={"style": "display:none;"}), validators=["usersPortal.validate_imageSize", ])
     f137 = forms.ImageField(label="School Permanent Record (F137)", widget=forms.ClearableFileInput(
-        attrs={"style": "display:none;"}), validators=[validate_imageSize, ])
+        attrs={"style": "display:none;"}), validators=["usersPortal.validate_imageSize", ])
 
 
 class dualCitizenApplicantForm(admissionRequirementsForm):
     dual_citizenship = forms.ImageField(label="Certificate of Dual Citizenship", widget=forms.ClearableFileInput(
-        attrs={"style": "display:none;"}), validators=[validate_imageSize, ])
+        attrs={"style": "display:none;"}), validators=["usersPortal.validate_imageSize", ])
     philippine_passport = forms.ImageField(label="Philippine Passport", widget=forms.ClearableFileInput(
-        attrs={"style": "display:none;"}), validators=[validate_imageSize, ])
+        attrs={"style": "display:none;"}), validators=["usersPortal.validate_imageSize", ])
     f137 = forms.ImageField(label="School Permanent Record (F137)", widget=forms.ClearableFileInput(
-        attrs={"style": "display:none;"}), validators=[validate_imageSize, ])
+        attrs={"style": "display:none;"}), validators=["usersPortal.validate_imageSize", ])
 
 
 # class enrollment_form(forms.Form):

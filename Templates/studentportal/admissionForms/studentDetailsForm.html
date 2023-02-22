@@ -2,11 +2,12 @@
 {% block content %}
 {% load i18n %}
 {% load std_portal %}
+{% include 'studentportal/messages/messages.html' %}
 
 <h4> Student Details </h4>
 
 <div class="container col-md-8">
-    <form id="adm1" method="post">
+    <form id="postForm" method="post">
 
         {{ wizard.form.non_field_errors }}
         {% csrf_token %}
@@ -64,11 +65,5 @@
 </div>
 
 <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
-
-<script>
-    $('#adm1').one('submit', function() {
-        $(this).find('input[type="submit"]').attr('disabled','disabled');
-    }); 
-</script>
 
 {% endblock content %}

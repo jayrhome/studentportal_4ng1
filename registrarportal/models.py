@@ -1,7 +1,6 @@
 from django.db import models
 from datetime import date
 from django.conf import settings
-# from adminportal.models import curriculum as cur, shs_strand as shss
 from django.utils.translation import gettext_lazy as _
 
 
@@ -46,6 +45,11 @@ class enrollment_admission_setup(models.Model):
 
 
 class student_admission_details(models.Model):
+
+    class applicant_type(models.TextChoices):
+        PINOY = '1', _('Philippine Born')
+        FOREIGN_CITIZEN = '2', _('Foreign Citizen')
+        DUAL_CITIZEN = '3', _('Dual Citizen')
 
     class SexChoices(models.TextChoices):
         MALE = 'M', _('Male')
@@ -96,10 +100,7 @@ class student_admission_details(models.Model):
         "adminportal.shs_strand", on_delete=models.RESTRICT, related_name="second_strand")
     assigned_curriculum = models.ForeignKey(
         "adminportal.curriculum", on_delete=models.RESTRICT, related_name="with_admission")
-    batch_number = models.IntegerField()
-
-    foreign_citizen = models.BooleanField(default=False)
-    dual_citizen = models.BooleanField(default=False)
+    type = models.CharField(max_length=1, choices=applicant_type.choices)
 
     is_denied = models.BooleanField(default=False)  # if denied, for review
     modified_on = models.DateTimeField(auto_now=True)
@@ -192,3 +193,19 @@ class dual_citizen_documents(admission_requirements):
 
     def __str__(self):
         return self.id
+
+
+class admission_batch(models.Model):
+    sy = models.ForeignKey(
+        schoolYear, on_delete=models.RESTRICT, related_name="sy_admission_batches")
+    batch_number = models.IntegerField()
+    members = models.ManyToManyField(
+        student_admission_details, related_name="admission_batch_member")
+    modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["batch_number"]
+
+    def __str__(self):
+        return self.batch_number
