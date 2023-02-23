@@ -28,6 +28,9 @@ from usersPortal.models import user_photo
 from . models import *
 from . email_token import *
 from adminportal.models import *
+from collections import OrderedDict
+from django.core.files.storage import FileSystemStorage
+from registrarportal.models import student_admission_details
 
 User = get_user_model()
 
@@ -98,88 +101,102 @@ class index(TemplateView):
                     dct[event.start_on.strftime("%B")].append(event)
             context["events"] = dct
 
-        # context["enroll_now"] = self.enroll_now(self.request)
-
-        # context["sy"] = "S.Y. %s" % self.determine_valid_sy(
-        # ) if self.determine_valid_sy() else False
-
-        # if context["sy"]:
-        #     # if the latest school year is valid
-        #     if context["enroll_now"] == "enroll":
-        #         context["end_date_enrollment"] = enrollment_admission_setup.objects.get(
-        #             ea_setup_sy__sy=self.determine_valid_sy())
-        #     elif context["enroll_now"] == "start_soon":
-        #         context["start_date_enrollment"] = enrollment_admission_setup.objects.get(
-        #             ea_setup_sy__sy=self.determine_valid_sy())
-        #     else:
-        #         pass
-
         context["user_profilePicture"] = load_userPic(
             self.request.user) if self.request.user.is_authenticated else ""
 
         return context
 
-    # def enroll_now(self, request):
-    #     if request.user.is_authenticated:
-    #         if request.user.is_student:
-    #             try:
-    #                 sy = school_year.objects.latest('date_created')
-    #                 if validate_enrollmentSetup(request, sy):
-    #                     if enrollment_admission_setup.objects.filter(ea_setup_sy=sy).exists():
-    #                         # if the latest school year have admission setup
-    #                         setup_obj = enrollment_admission_setup.objects.filter(
-    #                             ea_setup_sy=sy).first()
-    #                         if setup_obj.start_date <= date.today() and setup_obj.end_date >= date.today():
-    #                             # If enrollment and admission dates are ongoing
-    #                             if setup_obj.still_accepting:
-    #                                 get_admission = student_admission_details.objects.filter(
-    #                                     admission_owner__id=request.user.id).first()
 
-    #                                 if get_admission:
-    #                                     # If student have admission
-    #                                     if get_admission.is_validated and not get_admission.is_denied:
-    #                                         # if student admission is validated and not denied
-    #                                         if not student_enrollment_details.objects.filter(admission_details=get_admission, enrolled_schoolyear=sy).exists():
-    #                                             # if a valid admission have no enrollment on current school year
-    #                                             return "enroll"
-    #                                     else:
-    #                                         if get_admission.admission_sy == sy:
-    #                                             if not student_enrollment_details.objects.filter(admission_details=get_admission, enrolled_schoolyear=sy).exists():
-    #                                                 # For student with not yet validated admission and no submitted enrollment
-    #                                                 return "enroll"
-    #                                         else:
-    #                                             # For student with previous admission but not valid and school_year is previous, they can submit new admission
-    #                                             return "enroll"
-    #                                 else:
-    #                                     # If the logged-in user have no admission
-    #                                     return "enroll"
-    #                             else:
-    #                                 return "postpone"
-    #                         elif setup_obj.start_date > date.today() and setup_obj.end_date > date.today():
-    #                             return "start_soon"
-    #                         else:
-    #                             pass
-    #             except:
-    #                 pass
-    #     else:
-    #         # if anonymous user
-    #         pass
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class select_admission_type(TemplateView):
+    template_name = "studentportal/admissionForms/chooseAdmissionType.html"
+    http_method_names = ["get"]
 
-    # def determine_valid_sy(self):
-    #     try:
-    #         sy = school_year.objects.order_by('-date_created').first()
-    #         if validate_enrollmentSetup(self.request, sy):
-    #             return sy.sy
-    #         return False
-    #     except:
-    #         return False
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Type of Applicant"
+        context["types"] = student_admission_details.applicant_type.choices
+        return context
 
 
-admission_templates = {
-    "adm1": "studentportal/admission_HTMLs/admission_student_details.html",
-    "adm2": "studentportal/admission_HTMLs/admission_elementary_details.html",
-    "adm3": "studentportal/admission_HTMLs/admission_jhs_details.html",
-}
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class admission(SessionWizardView):
+    templates = {
+        "admission_personal_details": "studentportal/admissionForms/studentDetailsForm.html",
+        "elementary_school_details": "studentportal/admissionForms/addPrimarySchoolForm.html",
+        "jhs_details": "studentportal/admissionForms/addJHSForm.html",
+        "admissionRequirementsForm": "studentportal/admissionForms/phBornDocumentForm.html",
+        "foreignApplicantForm": "studentportal/admissionForms/foreignApplicantDocumentForm.html",
+        "dualCitizenApplicantForm": "studentportal/admissionForms/dualCitizenApplicantDocumentForm.html",
+    }
+
+    form_list = [
+        ("admission_personal_details", admission_personal_details),
+        ("elementary_school_details", elementary_school_details),
+        ("jhs_details", jhs_details),
+        ("admissionRequirementsForm", admissionRequirementsForm),
+        ("foreignApplicantForm", foreignApplicantForm),
+        ("dualCitizenApplicantForm", dualCitizenApplicantForm),
+    ]
+
+    file_storage = FileSystemStorage()
+
+    def get_form_list(self):
+        form_list = OrderedDict()
+
+        form_list["admission_personal_details"] = admission_personal_details
+        form_list["elementary_school_details"] = elementary_school_details
+        form_list["jhs_details"] = jhs_details
+
+        if self.kwargs["pk"] == "1":
+            form_list["admissionRequirementsForm"] = admissionRequirementsForm
+        elif self.kwargs["pk"] == "2":
+            form_list["foreignApplicantForm"] = foreignApplicantForm
+        else:
+            form_list["dualCitizenApplicantForm"] = dualCitizenApplicantForm
+
+        return form_list
+
+    def done(self, form_list, **kwargs):
+        try:
+            messages.success(self.request, "Pass")
+
+        except Exception as e:
+            messages.error(self.request, e)
+
+        return HttpResponseRedirect(reverse("studentportal:index"))
+
+    def get_template_names(self):
+        return [self.templates[self.steps.current]]
+
+    def render_goto_step(self, goto_step, **kwargs):
+        form = self.get_form(data=self.request.POST, files=self.request.FILES)
+        if form.is_valid():
+            self.storage.set_step_data(
+                self.steps.current, self.process_step(form))
+            self.storage.set_step_files(
+                self.steps.current, self.process_step_files(form))
+        return super().render_goto_step(goto_step, **kwargs)
+
+    def get_context_data(self, form, **kwargs):
+        context = super().get_context_data(form, **kwargs)
+        context["title"] = "Admission"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            if kwargs["pk"] == "1" or kwargs["pk"] == "2" or kwargs["pk"] == "3":
+                return super().dispatch(request, *args, **kwargs)
+            else:
+                return HttpResponseRedirect(reverse("studentportal:select_type"))
+        except:
+            return HttpResponseRedirect(reverse("studentportal:select_type"))
+
+# admission_templates = {
+#     "adm1": "studentportal/admission_HTMLs/admission_student_details.html",
+#     "adm2": "studentportal/admission_HTMLs/admission_elementary_details.html",
+#     "adm3": "studentportal/admission_HTMLs/admission_jhs_details.html",
+# }
 
 
 # @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")

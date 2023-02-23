@@ -1,0 +1,131 @@
+@method_decorator(user_passes_test(student_and_anonymous, login_url="adminportal:index"), name="dispatch")
+class index(TemplateView):
+    template_name = "studentportal/index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Newfangled Senior High School"
+
+        context["courses"] = shs_track.objects.filter(is_deleted=False).prefetch_related(Prefetch(
+            "track_strand", queryset=shs_strand.objects.filter(is_deleted=False).order_by("strand_name"), to_attr="strands")).order_by("track_name")
+
+        context["contacts"] = school_contact_number.objects.filter(
+            is_deleted=False).first()
+
+        context["emails"] = school_email.objects.filter(
+            is_deleted=False).first()
+
+        getEvents = school_events.ongoingEvents.all()
+        if getEvents:
+            dct = dict()
+            for event in getEvents:
+                if event.start_on.strftime("%B") not in dct:
+                    dct[event.start_on.strftime("%B")] = list()
+                    dct[event.start_on.strftime("%B")].append(event)
+                else:
+                    dct[event.start_on.strftime("%B")].append(event)
+            context["events"] = dct
+
+        # context["enroll_now"] = self.enroll_now(self.request)
+
+        # context["sy"] = "S.Y. %s" % self.determine_valid_sy(
+        # ) if self.determine_valid_sy() else False
+
+        # if context["sy"]:
+        #     # if the latest school year is valid
+        #     if context["enroll_now"] == "enroll":
+        #         context["end_date_enrollment"] = enrollment_admission_setup.objects.get(
+        #             ea_setup_sy__sy=self.determine_valid_sy())
+        #     elif context["enroll_now"] == "start_soon":
+        #         context["start_date_enrollment"] = enrollment_admission_setup.objects.get(
+        #             ea_setup_sy__sy=self.determine_valid_sy())
+        #     else:
+        #         pass
+
+        context["user_profilePicture"] = load_userPic(
+            self.request.user) if self.request.user.is_authenticated else ""
+
+        return context
+
+    # def enroll_now(self, request):
+    #     if request.user.is_authenticated:
+    #         if request.user.is_student:
+    #             try:
+    #                 sy = school_year.objects.latest('date_created')
+    #                 if validate_enrollmentSetup(request, sy):
+    #                     if enrollment_admission_setup.objects.filter(ea_setup_sy=sy).exists():
+    #                         # if the latest school year have admission setup
+    #                         setup_obj = enrollment_admission_setup.objects.filter(
+    #                             ea_setup_sy=sy).first()
+    #                         if setup_obj.start_date <= date.today() and setup_obj.end_date >= date.today():
+    #                             # If enrollment and admission dates are ongoing
+    #                             if setup_obj.still_accepting:
+    #                                 get_admission = student_admission_details.objects.filter(
+    #                                     admission_owner__id=request.user.id).first()
+
+    #                                 if get_admission:
+    #                                     # If student have admission
+    #                                     if get_admission.is_validated and not get_admission.is_denied:
+    #                                         # if student admission is validated and not denied
+    #                                         if not student_enrollment_details.objects.filter(admission_details=get_admission, enrolled_schoolyear=sy).exists():
+    #                                             # if a valid admission have no enrollment on current school year
+    #                                             return "enroll"
+    #                                     else:
+    #                                         if get_admission.admission_sy == sy:
+    #                                             if not student_enrollment_details.objects.filter(admission_details=get_admission, enrolled_schoolyear=sy).exists():
+    #                                                 # For student with not yet validated admission and no submitted enrollment
+    #                                                 return "enroll"
+    #                                         else:
+    #                                             # For student with previous admission but not valid and school_year is previous, they can submit new admission
+    #                                             return "enroll"
+    #                                 else:
+    #                                     # If the logged-in user have no admission
+    #                                     return "enroll"
+    #                             else:
+    #                                 return "postpone"
+    #                         elif setup_obj.start_date > date.today() and setup_obj.end_date > date.today():
+    #                             return "start_soon"
+    #                         else:
+    #                             pass
+    #             except:
+    #                 pass
+    #     else:
+    #         # if anonymous user
+    #         pass
+
+    # def determine_valid_sy(self):
+    #     try:
+    #         sy = school_year.objects.order_by('-date_created').first()
+    #         if validate_enrollmentSetup(self.request, sy):
+    #             return sy.sy
+    #         return False
+    #     except:
+    #         return False
+
+
+    
+
+    # def get_form_list(self):
+    #     form_list = OrderedDict()
+
+    #     # form_list["admission_personal_details"] = admission_personal_details
+    #     # form_list["elementary_school_details"] = elementary_school_details
+    #     # form_list["jhs_details"] = jhs_details
+
+    #     # if self.kwargs["pk"] == "ph":
+    #     #     form_list["admissionRequirementsForm"] = admissionRequirementsForm
+    #     # elif self.kwargs["pk"] == "foreign":
+    #     #     form_list["foreignApplicantForm"] = foreignApplicantForm
+    #     # else:
+    #     #     form_list["dualCitizenApplicantForm"] = dualCitizenApplicantForm
+
+    #     for form_key, form_class in self.form_list.items():
+    #         # try to fetch the value from condition list, by default, the form
+    #         # gets passed to the new list.
+    #         condition = self.condition_dict.get(form_key, True)
+    #         if callable(condition):
+    #             # call the value if needed, passes the current instance.
+    #             condition = condition(self)
+    #         if condition:
+    #             form_list[form_key] = form_class
+    #     return form_list

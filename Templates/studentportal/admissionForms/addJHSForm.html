@@ -2,6 +2,7 @@
 {% block content %}
 {% load i18n %}
 {% load std_portal %}
+{% include 'studentportal/messages/messages.html' %}
 
 
 <h4> Junior High School Details </h4>
@@ -73,7 +74,7 @@
         </table>
 
         <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-primary btn-sm">{% trans "Prev" %}</button>
-        <input type="submit" name="wizard_goto_step" value="Proceed" class="btn btn-primary btn-sm">
+        <input type="submit" name="wizard_goto_step" value="Next" class="btn btn-primary btn-sm">
 
     </form>
 </div>

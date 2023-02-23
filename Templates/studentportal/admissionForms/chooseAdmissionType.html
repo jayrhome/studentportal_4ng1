@@ -1,0 +1,17 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+{% include 'studentportal/messages/messages.html' %}
+
+
+<div class="container col-md-12">
+
+    <h6> Type of Applicant </h6>
+    {% for type in types %}
+        <a href="{% url 'studentportal:admission' pk=type.0 %}" class="btn btn-primary btn-sm"> {{type.1}} </a> <br><br>
+    {% endfor %}
+
+    <a href="{% url 'studentportal:index' %}" class="btn btn-primary"> Back </a>
+</div>
+
+
+{% endblock content %}
