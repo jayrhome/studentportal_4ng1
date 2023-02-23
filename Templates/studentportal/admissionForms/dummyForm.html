@@ -1,0 +1,35 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+{% load i18n %}
+{% load std_portal %}
+{% include 'studentportal/messages/messages.html' %}
+
+
+<h4> Confirm Your Submission </h4>
+
+<div class="container col-md-8">
+    <form id="postForm" method="post">
+
+        {{ wizard.form.non_field_errors }}
+        {% csrf_token %}
+        <table>
+        {{ wizard.management_form }}
+        {% if wizard.form.forms %}
+            {{ wizard.form.management_form }}
+            {% for form in wizard.form.forms %}
+                {{ form }}
+            {% endfor %}
+        {% else %}
+
+        {% endif %}
+        </table>
+
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-primary btn-sm">{% trans "Prev" %}</button>
+        <input type="submit" name="wizard_goto_step" value="Submit" class="btn btn-primary btn-sm">
+
+    </form>
+</div>
+
+<p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+
+{% endblock content %}

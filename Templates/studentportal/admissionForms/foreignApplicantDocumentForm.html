@@ -8,7 +8,7 @@
 <h4> For Submission... </h4>
 
 <div class="container col-md-8">
-    <form id="postForm" method="post">
+    <form id="postForm" method="post" enctype="multipart/form-data">
 
         {{ wizard.form.non_field_errors }}
         {% csrf_token %}
@@ -50,7 +50,7 @@
         </table>
 
         <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-primary btn-sm">{% trans "Prev" %}</button>
-        <input type="submit" name="wizard_goto_step" value="Submit" class="btn btn-primary btn-sm">
+        <input type="submit" name="wizard_goto_step" value="Next" class="btn btn-primary btn-sm">
 
     </form>
 </div>

@@ -9,6 +9,12 @@ from registrarportal.models import *
 User = get_user_model()
 
 
+def validate_imageSize(picture):
+    if picture.size > 2*1024*1024:
+        raise ValidationError(
+            "File size is too big. 2mb is the maximum allowed size.")
+
+
 def validate_email_chars(email):
     regex_email = re.compile(r"""^([a-zA-Z0-9_\.]+)
                             @
@@ -124,29 +130,33 @@ class jhs_details(forms.Form):
 
 class admissionRequirementsForm(forms.Form):
     good_moral = forms.ImageField(label="Good Moral Certificate", widget=forms.ClearableFileInput(
-    ), validators=["usersPortal.validate_imageSize", ], required=False)
+    ), validators=[validate_imageSize, ])
     report_card = forms.ImageField(label="Report Card", widget=forms.ClearableFileInput(
-    ), validators=["usersPortal.validate_imageSize", ], required=False)
+    ), validators=[validate_imageSize, ], required=False)
     psa = forms.ImageField(label="Philippine Birth Certificate", widget=forms.ClearableFileInput(
-    ), validators=["usersPortal.validate_imageSize", ], required=False)
+    ), validators=[validate_imageSize, ], required=False)
 
 
 class foreignApplicantForm(admissionRequirementsForm):
     alien_certificate_of_registration = forms.ImageField(label="Alien Certificate of Registration", widget=forms.ClearableFileInput(
-    ), validators=["usersPortal.validate_imageSize", ], required=False)
+    ), validators=[validate_imageSize, ])
     study_permit = forms.ImageField(label="Study Permit", widget=forms.ClearableFileInput(
-    ), validators=["usersPortal.validate_imageSize", ], required=False)
+    ), validators=[validate_imageSize, ])
     f137 = forms.ImageField(label="School Permanent Record (F137)", widget=forms.ClearableFileInput(
-    ), validators=["usersPortal.validate_imageSize", ], required=False)
+    ), validators=[validate_imageSize, ])
 
 
 class dualCitizenApplicantForm(admissionRequirementsForm):
     dual_citizenship = forms.ImageField(label="Certificate of Dual Citizenship", widget=forms.ClearableFileInput(
-    ), validators=["usersPortal.validate_imageSize", ], required=False)
+    ), validators=[validate_imageSize, ])
     philippine_passport = forms.ImageField(label="Philippine Passport", widget=forms.ClearableFileInput(
-    ), validators=["usersPortal.validate_imageSize", ], required=False)
+    ), validators=[validate_imageSize, ])
     f137 = forms.ImageField(label="School Permanent Record (F137)", widget=forms.ClearableFileInput(
-    ), validators=["usersPortal.validate_imageSize", ], required=False)
+    ), validators=[validate_imageSize, ])
+
+
+class dummy_form(forms.Form):
+    name = forms.CharField(max_length=20, label="Nothing...", required=False)
 
 
 # class enrollment_form(forms.Form):
