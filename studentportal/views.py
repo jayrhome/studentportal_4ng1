@@ -33,7 +33,10 @@ from django.core.files.storage import DefaultStorage
 from registrarportal.models import student_admission_details
 import cv2
 import pytesseract
+from PIL import Image
 
+
+pytesseract.pytesseract.tesseract_cmd = 'C:\\Users\\Administrator\\AppData\\Local\\Programs\\Tesseract-OCR\\tesseract.exe'
 User = get_user_model()
 
 
@@ -200,11 +203,13 @@ class admission(SessionWizardView):
         return [self.templates[self.steps.current]]
 
     def render_next_step(self, form, **kwargs):
-        get_imgs = self.get_cleaned_data_for_step(self.storage.current_step)
         if self.storage.current_step == "admissionRequirementsForm":
-            img = cv2.imread("Media/nn.jpg")
-            txt = ""
-            messages.warning(self.request, img)
+            get_imgs = self.get_cleaned_data_for_step(
+                self.storage.current_step)
+            # img = Image.open(get_imgs["good_moral"])
+            with Image.open(get_imgs["good_moral"]) as img:
+                txt = pytesseract.image_to_string(img)
+            messages.success(self.request, txt)
             return self.render_goto_step(self.storage.current_step, **kwargs)
         else:
             next_step = self.steps.next

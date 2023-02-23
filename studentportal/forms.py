@@ -129,11 +129,11 @@ class jhs_details(forms.Form):
 
 
 class admissionRequirementsForm(forms.Form):
-    good_moral = forms.ImageField(label="Good Moral Certificate", widget=forms.ClearableFileInput(
+    good_moral = forms.FileField(label="Good Moral Certificate", widget=forms.ClearableFileInput(
     ), validators=[validate_imageSize, ])
-    report_card = forms.ImageField(label="Report Card", widget=forms.ClearableFileInput(
+    report_card = forms.FileField(label="Report Card", widget=forms.ClearableFileInput(
     ), validators=[validate_imageSize, ], required=False)
-    psa = forms.ImageField(label="Philippine Birth Certificate", widget=forms.ClearableFileInput(
+    psa = forms.FileField(label="Philippine Birth Certificate", widget=forms.ClearableFileInput(
     ), validators=[validate_imageSize, ], required=False)
 
 
