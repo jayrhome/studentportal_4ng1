@@ -138,20 +138,20 @@ class admissionRequirementsForm(forms.Form):
 
 
 class foreignApplicantForm(admissionRequirementsForm):
-    alien_certificate_of_registration = forms.ImageField(label="Alien Certificate of Registration", widget=forms.ClearableFileInput(
+    alien_certificate_of_registration = forms.FileField(label="Alien Certificate of Registration", widget=forms.ClearableFileInput(
     ), validators=[validate_imageSize, ])
-    study_permit = forms.ImageField(label="Study Permit", widget=forms.ClearableFileInput(
+    study_permit = forms.FileField(label="Study Permit", widget=forms.ClearableFileInput(
     ), validators=[validate_imageSize, ])
-    f137 = forms.ImageField(label="School Permanent Record (F137)", widget=forms.ClearableFileInput(
+    f137 = forms.FileField(label="School Permanent Record (F137)", widget=forms.ClearableFileInput(
     ), validators=[validate_imageSize, ])
 
 
 class dualCitizenApplicantForm(admissionRequirementsForm):
-    dual_citizenship = forms.ImageField(label="Certificate of Dual Citizenship", widget=forms.ClearableFileInput(
+    dual_citizenship = forms.FileField(label="Certificate of Dual Citizenship", widget=forms.ClearableFileInput(
     ), validators=[validate_imageSize, ])
-    philippine_passport = forms.ImageField(label="Philippine Passport", widget=forms.ClearableFileInput(
+    philippine_passport = forms.FileField(label="Philippine Passport", widget=forms.ClearableFileInput(
     ), validators=[validate_imageSize, ])
-    f137 = forms.ImageField(label="School Permanent Record (F137)", widget=forms.ClearableFileInput(
+    f137 = forms.FileField(label="School Permanent Record (F137)", widget=forms.ClearableFileInput(
     ), validators=[validate_imageSize, ])
 
 

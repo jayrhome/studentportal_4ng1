@@ -202,14 +202,30 @@ class admission(SessionWizardView):
     def get_template_names(self):
         return [self.templates[self.steps.current]]
 
+    def rescale_frame(self, frame, scale=0.25):
+        width = int(frame.shape[1] * scale)
+        height = int(frame.shape[0] * scale)
+        dimension = (width, height)
+        return cv2.resize(frame, dimension, interpolation=cv2.INTER_AREA)
+
     def render_next_step(self, form, **kwargs):
+        get_reqs = self.get_cleaned_data_for_step(self.storage.current_step)
+        t_methods = [cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_CCORR,
+                     cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
+
         if self.storage.current_step == "admissionRequirementsForm":
-            get_imgs = self.get_cleaned_data_for_step(
-                self.storage.current_step)
-            # img = Image.open(get_imgs["good_moral"])
-            with Image.open(get_imgs["good_moral"]) as img:
-                txt = pytesseract.image_to_string(img)
-            messages.success(self.request, txt)
+            with Image.open(get_reqs["good_moral"]) as goodMoral:
+                depedSeal = cv2.imread("Media/Seals/DepedSeal.png")
+                testSeal = cv2.imread("Media/Seals/sampleSeals.jpg")
+                depedSeal_h, depedSeal_w, _ = depedSeal.shape
+            # with Image.open(get_imgs["good_moral"]) as img:
+            #     txt = pytesseract.image_to_string(img)
+
+            result = cv2.matchTemplate(
+                testSeal, self.rescale_frame(depedSeal), cv2.TM_CCOEFF)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+            messages.success(self.request, (min_loc, max_loc))
+
             return self.render_goto_step(self.storage.current_step, **kwargs)
         else:
             next_step = self.steps.next
