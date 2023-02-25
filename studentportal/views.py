@@ -189,10 +189,78 @@ class admission(SessionWizardView):
 
         return form_list
 
+    def initialize_row(self, myDict):
+        for key, value in myDict.items():
+            match key:
+                case ("first_chosen_strand" | "second_chosen_strand"):
+                    setattr(self.get_admission, key,
+                            shs_strand.objects.get(id=int(value)))
+                case "elem_pept_date_completion":
+                    setattr(self.get_admission, key,
+                            value if myDict["elem_pept_passer"] else None)
+                case "elem_ae_date_completion":
+                    setattr(self.get_admission, key,
+                            value if myDict["elem_ae_passer"] else None)
+                case "jhs_pept_date_completion":
+                    setattr(self.get_admission, key,
+                            value if myDict["jhs_pept_passer"] else None)
+                case "jhs_ae_date_completion":
+                    setattr(self.get_admission, key,
+                            value if myDict["jhs_ae_passer"] else None)
+                case _:
+                    setattr(self.get_admission, key, value)
+
+    def initialize_foreignTables(self, myDict):
+        for key, value in myDict.items():
+            setattr(self.init_docu, key, value)
+
     def done(self, form_list, **kwargs):
         try:
-            phh = self.get_cleaned_data_for_step("admissionRequirementsForm")
-            messages.success(self.request, phh)
+            personalDetails = self.get_cleaned_data_for_step(
+                "admission_personal_details")
+            primarySchoolDetails = self.get_cleaned_data_for_step(
+                "elementary_school_details")
+            secondarySchoolDetails = self.get_cleaned_data_for_step(
+                "jhs_details")
+            documents = ""
+
+            if kwargs["pk"] == "1":
+                documents = self.get_cleaned_data_for_step(
+                    "admissionRequirementsForm")
+                self.init_docu = ph_born()
+            elif kwargs["pk"] == "2":
+                documents = self.get_cleaned_data_for_step(
+                    "foreignApplicantForm")
+                self.init_docu = foreign_citizen_documents()
+            else:
+                documents = self.get_cleaned_data_for_step(
+                    "dualCitizenApplicantForm")
+                self.init_docu = dual_citizen_documents()
+
+            self.get_admission = student_admission_details.objects.filter(
+                admission_owner=self.request.user).first()
+            if not self.get_admission:
+                self.get_admission = student_admission_details()
+
+            self.get_admission.admission_owner = self.request.user
+            self.get_admission.is_accepted = False
+            self.get_admission.is_denied = False
+            self.get_admission.type = int(kwargs["pk"])
+            self.get_admission.admission_sy = schoolYear.objects.filter(
+                until__gt=date.today()).first()
+            self.get_admission.assigned_curriculum = curriculum.objects.filter(
+                strand__id=int(personalDetails["first_chosen_strand"])).first()
+            self.initialize_row(personalDetails)
+            self.initialize_row(primarySchoolDetails)
+            self.initialize_row(secondarySchoolDetails)
+            self.get_admission.save()
+
+            self.init_docu.admission = self.get_admission
+            self.initialize_foreignTables(documents)
+            self.init_docu.save()
+
+            messages.success(
+                self.request, "Admission saved. Kindly wait for the registrar to validate your request.")
 
         except Exception as e:
             messages.error(self.request, e)
@@ -202,41 +270,41 @@ class admission(SessionWizardView):
     def get_template_names(self):
         return [self.templates[self.steps.current]]
 
-    def rescale_frame(self, frame, scale=0.25):
-        width = int(frame.shape[1] * scale)
-        height = int(frame.shape[0] * scale)
-        dimension = (width, height)
-        return cv2.resize(frame, dimension, interpolation=cv2.INTER_AREA)
+    # def rescale_frame(self, frame, scale=0.25):
+    #     width = int(frame.shape[1] * scale)
+    #     height = int(frame.shape[0] * scale)
+    #     dimension = (width, height)
+    #     return cv2.resize(frame, dimension, interpolation=cv2.INTER_AREA)
 
-    def render_next_step(self, form, **kwargs):
-        get_reqs = self.get_cleaned_data_for_step(self.storage.current_step)
-        t_methods = [cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_CCORR,
-                     cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
+    # def render_next_step(self, form, **kwargs):
+    #     get_reqs = self.get_cleaned_data_for_step(self.storage.current_step)
+    #     t_methods = [cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_CCORR,
+    #                  cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
 
-        if self.storage.current_step == "admissionRequirementsForm":
-            with Image.open(get_reqs["good_moral"]) as goodMoral:
-                depedSeal = cv2.imread("Media/Seals/DepedSeal.png")
-                testSeal = cv2.imread("Media/Seals/sampleSeals.jpg")
-                depedSeal_h, depedSeal_w, _ = depedSeal.shape
-            # with Image.open(get_imgs["good_moral"]) as img:
-            #     txt = pytesseract.image_to_string(img)
+    #     if self.storage.current_step == "admissionRequirementsForm":
+    #         with Image.open(get_reqs["good_moral"]) as goodMoral:
+    #             depedSeal = cv2.imread("Media/Seals/DepedSeal.png")
+    #             testSeal = cv2.imread("Media/Seals/sampleSeals.jpg")
+    #             depedSeal_h, depedSeal_w, _ = depedSeal.shape
+    #         # with Image.open(get_imgs["good_moral"]) as img:
+    #         #     txt = pytesseract.image_to_string(img)
 
-            result = cv2.matchTemplate(
-                testSeal, self.rescale_frame(depedSeal), cv2.TM_CCOEFF)
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-            messages.success(self.request, (min_loc, max_loc))
+    #         result = cv2.matchTemplate(
+    #             testSeal, self.rescale_frame(depedSeal), cv2.TM_CCOEFF)
+    #         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+    #         messages.success(self.request, (min_loc, max_loc))
 
-            return self.render_goto_step(self.storage.current_step, **kwargs)
-        else:
-            next_step = self.steps.next
-            new_form = self.get_form(
-                next_step,
-                data=self.storage.get_step_data(next_step),
-                files=self.storage.get_step_files(next_step),
-            )
-            # change the stored current step
-            self.storage.current_step = next_step
-            return self.render(new_form, **kwargs)
+    #         return self.render_goto_step(self.storage.current_step, **kwargs)
+    #     else:
+    #         next_step = self.steps.next
+    #         new_form = self.get_form(
+    #             next_step,
+    #             data=self.storage.get_step_data(next_step),
+    #             files=self.storage.get_step_files(next_step),
+    #         )
+    #         # change the stored current step
+    #         self.storage.current_step = next_step
+    #         return self.render(new_form, **kwargs)
 
     def render_goto_step(self, goto_step, **kwargs):
         form = self.get_form(data=self.request.POST, files=self.request.FILES)

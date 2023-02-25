@@ -154,7 +154,7 @@ class ph_born(admission_requirements):
         ordering = ["-created_on"]
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 
 class foreign_citizen_documents(admission_requirements):
@@ -173,7 +173,7 @@ class foreign_citizen_documents(admission_requirements):
         ordering = ["-created_on"]
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 
 class dual_citizen_documents(admission_requirements):
@@ -192,20 +192,19 @@ class dual_citizen_documents(admission_requirements):
         ordering = ["-created_on"]
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 
 class admission_batch(models.Model):
     sy = models.ForeignKey(
         schoolYear, on_delete=models.RESTRICT, related_name="sy_admission_batches")
-    batch_number = models.IntegerField()
     members = models.ManyToManyField(
         student_admission_details, related_name="admission_batch_member")
     modified_on = models.DateTimeField(auto_now=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["batch_number"]
+        ordering = ["-created_on"]
 
     def __str__(self):
-        return self.batch_number
+        return str(self.id)

@@ -70,8 +70,8 @@ class admission_personal_details(forms.Form):
         label="Last Name", max_length=20, required=False)
     sex = forms.ChoiceField(
         label="Sex", choices=student_admission_details.SexChoices.choices, required=False)
-    birth_date = forms.DateField(label="Birthdate", validators=[
-                                 birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}), required=False)
+    date_of_birth = forms.DateField(label="Birthdate", validators=[
+        birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}), required=False)
     birthplace = forms.CharField(
         label="Place of birth", max_length=200, required=False)
     nationality = forms.CharField(
@@ -132,9 +132,9 @@ class admissionRequirementsForm(forms.Form):
     good_moral = forms.FileField(label="Good Moral Certificate", widget=forms.ClearableFileInput(
     ), validators=[validate_imageSize, ])
     report_card = forms.FileField(label="Report Card", widget=forms.ClearableFileInput(
-    ), validators=[validate_imageSize, ], required=False)
+    ), validators=[validate_imageSize, ])
     psa = forms.FileField(label="Philippine Birth Certificate", widget=forms.ClearableFileInput(
-    ), validators=[validate_imageSize, ], required=False)
+    ), validators=[validate_imageSize, ])
 
 
 class foreignApplicantForm(admissionRequirementsForm):
