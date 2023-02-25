@@ -13,5 +13,9 @@ urlpatterns = [
         path("", view_schoolYears.as_view(), name="schoolyear"),
         path("Add/", add_schoolYear.as_view(), name="addSchoolYear"),
         path("Update/<pk>/", update_schoolYear.as_view(), name="updateSchoolYear"),
+    ])),
+
+    path("Admission/", include([
+        path("", get_admissions.as_view(), name="view_admissions"),
     ]))
 ]

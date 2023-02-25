@@ -261,3 +261,37 @@ class update_schoolYear(FormView):
         messages.warning(
             request, "Invalid Primary Key or object can no longer be edited.")
         return HttpResponseRedirect(reverse("registrarportal:schoolyear"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(registrar_only, login_url="studentportal:index")], name="dispatch")
+class get_admissions(ListView, DeletionMixin):
+    allow_empty = True
+    context_object_name = "batches"
+    paginate_by = 1
+    template_name = "registrarportal/admission/getRequests.html"
+    http_method_names = ["get", "post"]
+    success_url = "/Registrar/Admission/"
+
+    def delete(self, request, *args, **kwargs):
+        self.denied_this_admission.is_denied = True
+        self.denied_this_admission.save()
+        return HttpResponseRedirect(self.success_url + f"?page={request.POST.get('page')}")
+
+    def get_queryset(self):
+        try:
+            qs = admission_batch.new_batches.alias(count_applicants=Count("members", filter=Q(members__is_accepted=False, members__is_denied=False))).filter(count_applicants__gte=1).prefetch_related(Prefetch("members", queryset=student_admission_details.objects.filter(is_accepted=False, is_denied=False).prefetch_related(Prefetch(
+                "softCopy_admissionRequirements_phBorn", queryset=ph_born.objects.all(), to_attr="phborn"), Prefetch("softCopy_admissionRequirements_foreigner", queryset=foreign_citizen_documents.objects.all(), to_attr="foreign"), Prefetch("softCopy_admissionRequirements_dualCitizen", queryset=dual_citizen_documents.objects.all(), to_attr="dualcitizen")), to_attr="applicants"))
+        except Exception as e:
+            qs = admission_batch.new_batches.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Admission"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if ("decPk" in request.POST) and request.method == "POST":
+            self.denied_this_admission = student_admission_details.objects.filter(
+                id=int(request.POST["decPk"])).first()
+        return super().dispatch(request, *args, **kwargs)

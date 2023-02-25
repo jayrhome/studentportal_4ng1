@@ -195,6 +195,11 @@ class dual_citizen_documents(admission_requirements):
         return str(self.id)
 
 
+class batch_manager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(sy__until__gte=date.today())
+
+
 class admission_batch(models.Model):
     sy = models.ForeignKey(
         schoolYear, on_delete=models.RESTRICT, related_name="sy_admission_batches")
@@ -202,6 +207,9 @@ class admission_batch(models.Model):
         student_admission_details, related_name="admission_batch_member")
     modified_on = models.DateTimeField(auto_now=True)
     created_on = models.DateTimeField(auto_now_add=True)
+
+    objects = models.Manager()
+    new_batches = batch_manager()
 
     class Meta:
         ordering = ["-created_on"]
