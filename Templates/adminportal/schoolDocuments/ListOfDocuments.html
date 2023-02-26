@@ -2,15 +2,33 @@
 {% block content %}
 {% include 'adminportal/messages/messages.html' %}
 
-<div class="container">
-    <div class="col-md-8">
-        <a href="{% url 'adminportal:addEditDocument' %}" class="btn btn-primary"> Add Document + </a>
-        {% for document in availableDocuments %}
-            <p> {{document.documentName}} - <a href="{% url 'adminportal:hideDocument' pk=document.id %}" class="btn btn-primary btn-sm"> Hide </a> - <a href="{% url 'adminportal:addEditDocument' docuId=document.id %}" class="btn btn-primary btn-sm"> Edit </a> </p>
-        {% empty %}
-            <p> No documents can be requested now. </p>
-        {% endfor %}
+<div class="container pt-5 d-flex flex-column">
+    <a href="{% url 'adminportal:addEditDocument' %}" class="add_docu btn btn-success btn-lg">
+        <i class="bi bi-plus lg">
+        </i>
+        Add Document
+    </a>
+    {% for document in availableDocuments %}
+    <div class="docu-parent p-3 mt-3 mb-2 bg-white text-dark border rounded">
+        <div class="docu d-flex justify-content-between">
+            <div class="document">
+                <h4> {{document.documentName}}
+                </h4>
+
+            </div>
+            <div class="action d-flex justify-content-center align-items-start ms-2">
+                <a href="{% url 'adminportal:hideDocument' pk=document.id %}" class="btn btn-danger btn-lg"> Hide </a>
+                <a href="{% url 'adminportal:addEditDocument' docuId=document.id %}" class="btn btn-primary btn-lg">
+                    Edit </a> </p>
+
+            </div>
+
+        </div>
+
     </div>
+    {% empty %}
+    <p> No documents can be requested now. </p>
+    {% endfor %}
 </div>
 
 {% endblock content %}

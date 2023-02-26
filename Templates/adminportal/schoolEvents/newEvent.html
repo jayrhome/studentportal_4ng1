@@ -4,13 +4,20 @@
 {% include 'adminportal/messages/messages.html' %}
 
 
-<div class="container col-md-12">
-    <form id="postForm" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <!-- List of errors from forms.py -->
-        {{ form.non_field_errors }}
-    
-        <h4> New Event </h4>
+
+<form id="postForm" class="px-2 pb-5" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <!-- List of errors from forms.py -->
+    {{ form.non_field_errors }}
+
+
+
+    <div class="container col-md-8 mt-4 p-3 bg-white box_shadow border rounded">
+
+        <h4 class="py-2">
+            <b>New Event</b>
+
+        </h4>
 
         <div class="form-outline mb-4">
             <label for="{{ form.name.id_for_label }}" class="form-label"> {{ form.name.label }}: </label>
@@ -24,11 +31,11 @@
             {{ form.start_on.errors }} <!-- Field errors -->
         </div>
 
-        <input type="submit" value="Add" class="btn btn-primary btn-block mb-4">
-    </form>
+        <input type="submit" value="Add" class="btn btn-primary btn-block">
+        <a href="{% url 'adminportal:get_ongoingSchoolEvents' %}" class="btn btn-secondary"> Back </a>
+    </div>
+</form>
 
-    <a href="{% url 'adminportal:get_ongoingSchoolEvents' %}" class="btn btn-primary"> Back </a>
-</div>
 
 
 {% endblock content %}

@@ -3,29 +3,40 @@
 {% include 'adminportal/messages/messages.html' %}
 
 
-<div class="container col-md-8 p-5">
+
+
+<div class="container mt-3">
     {% for key, value in events.items %}
+    <div class="event p-3 mt-1 mb-3 bg-white text-dark border rounded">
         <h4> {{key}} </h4> <!-- Display month -->
-        {% for event in value %}
-            <p> <a href="{% url 'adminportal:edit_schoolEvent' pk=event.id %}" class="btn btn-primary btn-sm"> Edit </a>
+        <div class="d-flex flex-row-reverse justify-content-between">
+            {% for event in value %}
+            <div class="buttons d-flex">
+                <a href="{% url 'adminportal:edit_schoolEvent' pk=event.id %}" class="btn btn-primary btn-lg"> Edit </a>
                 {% if event.can_cancel %}
-                    <form id="postForm" method="post">
-                        {% csrf_token %}
-                        <button type="submit" name="pk" value="{{event.id}}" class="btn btn-primary btn-sm"> Cancel </button>
-                    </form>
+                <form id="postForm" method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="pk" value="{{event.id}}" class="btn btn-danger btn-lg"> Cancel </button>
+                </form>
                 {% endif %}
-                {{event.name|truncatewords:10}} - {{event.start_on|date:"l, M j, Y"}} </p>
-        {% endfor %}
-        <br>
-        <p> ------------------------------------------------------ </p>
-    {% empty %}
-        <h4> No event... </h4>
+
+            </div>
+
+            <span>
+                {{event.name|truncatewords:10}} - {{event.start_on|date:"l, M j, Y"}}
+
+            </span>
+
+
+
+        </div>
+
+    </div>
     {% endfor %}
 
-    <br>
-    <br>
-
+    {% empty %}
+    <h4> No event... </h4>
+    {% endfor %}
 </div>
-
 
 {% endblock content %}
