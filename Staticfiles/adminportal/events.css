@@ -1,0 +1,67 @@
+
+*{
+    margin: 0;
+    padding: 0;
+}
+html,
+body{
+    font-family: 'Poppins', sans-serif !important;
+}
+.navbar{
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
+}
+
+
+.add_track{
+    /* background: #173979; */
+    color: #fff;
+    padding: 10px;
+    text-decoration: none;
+    transition: 0.3s ease;
+    margin-left: auto;
+    border-radius: 5px;
+}
+.add_track:hover{
+    /* background: #2FB47D; */
+    color: #fff;
+}
+
+.btn-success {
+    color: #fff;
+    background-color: #198754;
+    border-color: #198754;
+}
+.main{
+    background: #D7E5D8;
+    min-height: 89vh;
+    height: 100%;
+}
+.main .track_parent{
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+}
+
+.collapsing {
+    transition: height 0.4s ease;
+  }
+/* courses view */
+.track h3{
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 460;
+}
+
+.text-bold{
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 500;
+}
+
+
+/* create */
+.input_wrapper{
+    max-width: 400px;
+    width: 100%;
+}
+
+
+.box_shadow{
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px;
+}

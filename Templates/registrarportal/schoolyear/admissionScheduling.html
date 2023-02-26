@@ -1,0 +1,45 @@
+{% extends 'registrarportal/schoolyear/base1.html' %}
+{% block content %}
+{% load registrar_Tags %}
+{% load i18n %}
+{% include 'registrarportal/messages/messages.html' %}
+
+
+<div class="container col-md-8">
+    <form id="postForm" method="post">
+
+        {{ wizard.form.non_field_errors }}
+        {% csrf_token %}
+        <table>
+        {{ wizard.management_form }}
+        {% if wizard.form.forms %}
+            {{ wizard.form.management_form }}
+            {% for form in wizard.form.forms %}
+                {{ form }}
+            {% endfor %}
+        {% else %}
+
+            {{ wizard.form.start_date.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.start_date.id_for_label }}" class="form-label"> {{ wizard.form.start_date.label }} </label>
+            {{ wizard.form.start_date|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.end_date.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.end_date.id_for_label }}" class="form-label"> {{ wizard.form.end_date.label }} </label>
+            {{ wizard.form.end_date|addclass:"form-control"}} <!-- Input Field -->
+
+            {{ wizard.form.students_perBatch.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.students_perBatch.id_for_label }}" class="form-label"> {{ wizard.form.students_perBatch.label }} </label>
+            {{ wizard.form.students_perBatch|addclass:"form-control"}} <!-- Input Field -->
+
+        {% endif %}
+        </table>
+
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-primary btn-sm">{% trans "Prev" %}</button>
+        <input type="submit" name="wizard_goto_step" value="Submit" class="btn btn-primary btn-sm">
+
+    </form>
+</div>
+
+<p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+
+{% endblock content %}

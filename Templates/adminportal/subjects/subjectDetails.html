@@ -6,7 +6,8 @@
 
 <div class="container">
     <div class="col-md-8">
-        <form id ="postForm" method="post">
+
+        <form id="postForm" method="post">
             {% csrf_token %}
             <!-- List of errors from forms.py -->
             {{ form.non_field_errors }}
@@ -27,8 +28,9 @@
                 </div>
 
                 <input type="submit" value="Submit" class="btn btn-primary btn-sm">
-                {% if for_update %} <button type="submit" name="removeSub" class="btn btn-primary btn-sm"> Remove </button> {% endif %}
-                <a href="{% url 'adminportal:getSubjects' %}" class="btn btn-primary btn-sm" > Cancel </a>
+                {% if for_update %} <button type="submit" name="removeSub" class="btn btn-primary btn-sm"> Remove
+                </button> {% endif %}
+                <a href="{% url 'adminportal:getSubjects' %}" class="btn btn-primary btn-sm"> Cancel </a>
             </div>
 
         </form>

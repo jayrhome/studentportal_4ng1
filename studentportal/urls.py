@@ -28,4 +28,10 @@ urlpatterns = [
         path("resched/<pk>", reschedDocumentRequest.as_view(),
              name="reschedDocumentRequest"),
     ])),
+
+    path("admission/", include([
+        path("applicantType/", select_admission_type.as_view(), name="select_type"),
+        re_path(r"type/(?:(?P<pk>[0-9]+)/)?$",
+                admission.as_view(), name="admission"),
+    ])),
 ]
