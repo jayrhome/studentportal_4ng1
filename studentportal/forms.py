@@ -68,18 +68,18 @@ class admission_personal_details(forms.Form):
         label="Middle Name", max_length=20, required=False)
     last_name = forms.CharField(
         label="Last Name", max_length=20, required=False)
-    sex = forms.ChoiceField(
-        label="Sex", choices=student_admission_details.SexChoices.choices, required=False)
+    # sex = forms.ChoiceField(
+    #     label="Sex", choices=student_admission_details.SexChoices.choices, required=False)
     date_of_birth = forms.DateField(label="Birthdate", validators=[
         birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}), required=False)
     birthplace = forms.CharField(
         label="Place of birth", max_length=200, required=False)
     nationality = forms.CharField(
         label="Nationality", max_length=50, required=False)
-    first_chosen_strand = forms.TypedChoiceField(label="Choose First Strand", choices=(
-        (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str, required=False)
-    second_chosen_strand = forms.TypedChoiceField(label="Choose Second Strand", choices=(
-        (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str, required=False)
+    # first_chosen_strand = forms.TypedChoiceField(label="Choose First Strand", choices=(
+    #     (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str, required=False)
+    # second_chosen_strand = forms.TypedChoiceField(label="Choose Second Strand", choices=(
+    #     (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str, required=False)
 
 
 class elementary_school_details(forms.Form):
@@ -254,8 +254,8 @@ class dummy_form(forms.Form):
 
 
 class makeDocumentRequestForm(forms.Form):
-    documents = forms.TypedChoiceField(
-        label="Document Type", choices=studentDocument.activeObjects.values_list("pk", "documentName"), coerce=str)
+    # documents = forms.TypedChoiceField(
+    #     label="Document Type", choices=studentDocument.activeObjects.values_list("pk", "documentName"), coerce=str)
     scheduled_date = forms.DateField(label="Schedule", validators=[
                                      validate_schedule], widget=forms.DateInput(attrs={'type': 'date'}))
 
