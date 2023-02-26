@@ -34,6 +34,7 @@ from registrarportal.models import student_admission_details
 import cv2
 import pytesseract
 from PIL import Image
+from registrarportal.tokenGenerators import generate_enrollment_token
 
 
 # pytesseract.pytesseract.tesseract_cmd = 'C:\\Users\\Administrator\\AppData\\Local\\Programs\\Tesseract-OCR\\tesseract.exe'
@@ -439,3 +440,37 @@ class reschedDocumentRequest(FormView):
         if self.obj:
             return super().dispatch(request, *args, **kwargs)
         return HttpResponseRedirect(reverse("studentportal:view_myDocumentRequest"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class enrollment(FormView):
+    template_name = "studentportal/enrollmentForms/enrollment.html"
+    success_url = "/"
+    form_class = enrollment_form1
+
+    def form_valid(self, form):
+        try:
+            return super().form_valid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Enrollment"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            uid = force_str(urlsafe_base64_decode(self.kwargs['uidb64']))
+            admObj = student_admission_details.objects.get(pk=uid)
+        except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+            admObj = None
+
+        if admObj is not None and generate_enrollment_token.check_token(admObj, self.kwargs['token']):
+            # Return true if token is still valid
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            # if there's no user found, or the token is no longer valid, or both.
+            messages.error(
+                self.request, "Enrollment link is no longer valid!")
+            return HttpResponseRedirect(reverse("studentportal:index"))

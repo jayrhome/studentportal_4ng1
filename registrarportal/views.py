@@ -23,6 +23,7 @@ from studentportal.models import documentRequest
 from . forms import *
 from formtools.wizard.views import SessionWizardView
 from adminportal.models import curriculum, schoolSections, firstSemSchedule, secondSemSchedule
+from . emailSenders import send_enrollment_link
 
 
 User = get_user_model()
@@ -282,6 +283,8 @@ class get_admissions(ListView, DeletionMixin):
                 studAdms = student_admission_details.objects.filter(
                     admission_batch_member__id=self.get_batch.id, is_accepted=False).exclude(is_denied=True).values_list('id', flat=True)
                 student_admission_details.admit_this_students(studAdms)
+                send_enrollment_link(
+                    request, student_admission_details.objects.filter(pk__in=studAdms))
             messages.warning(
                 request, "School must have new sections for grade 11 admission.")
 

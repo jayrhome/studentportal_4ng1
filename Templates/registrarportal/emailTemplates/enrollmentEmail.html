@@ -1,0 +1,12 @@
+{% autoescape off %}
+    Enroll Now
+
+    Hello {{ user_name }},
+
+    Your admission has been validated and you can now continue with your enrollment.
+    To continue, please click the link below to access your enrollment form.
+    The link will only work to your account. Other users will not be able to access it with their accounts.
+    Note: The activation link will expire on {{expiration_date}}.
+
+    http://{{domain}}{% url "studentportal:enrollment" uidb64=uid token=token %}
+{% endautoescape %}

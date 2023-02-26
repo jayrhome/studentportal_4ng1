@@ -103,6 +103,7 @@ class student_admission_details(models.Model):
     type = models.CharField(max_length=1, choices=applicant_type.choices)
 
     is_denied = models.BooleanField(default=False)  # if denied, for review
+    with_enrollment = models.BooleanField(default=False)
     modified_on = models.DateTimeField(auto_now=True)
     created_on = models.DateTimeField(auto_now_add=True)
 

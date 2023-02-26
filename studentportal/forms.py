@@ -159,20 +159,21 @@ class dummy_form(forms.Form):
     name = forms.CharField(max_length=20, label="Nothing...", required=False)
 
 
-# class enrollment_form(forms.Form):
-#     full_name = forms.CharField(
-#         max_length=60, label='Full Name (Surname, First Name, Middle Name)')
-#     # selected_strand = forms.ChoiceField(label="Select Strand", choices=(
-#     #     (strand.id, strand.track.track_name + " - " + strand.strand_name) for strand in shs_strand.objects.select_related('track').exclude(is_deleted=True)
-#     # ))
-#     home_address = forms.CharField(max_length=50, label='Home address')
-#     age = forms.IntegerField(label="Age", min_value=1, max_value=100)
-#     contact_number = forms.CharField(
-#         label="Contact Number", widget=forms.NumberInput, validators=[validate_cp_number])
-#     card = forms.ImageField(
-#         label="Report card", help_text="Report card from previous year or quarter")
-#     profile_image = forms.ImageField(
-#         label="Student Photo", help_text="White background with no filters")
+class enrollment_form1(forms.Form):
+    # Form for g11 and transferees
+    full_name = forms.CharField(
+        max_length=60, label='Full Name (Surname, First Name, Middle Name)')
+    select_strand = forms.TypedChoiceField(label="Select Strand", choices=(
+        (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str, required=False)
+    home_address = forms.CharField(
+        max_length=50, label='Home address (Current)')
+    age = forms.IntegerField(label="Age", min_value=1, max_value=100)
+    contact_number = forms.CharField(
+        label="Contact Number", widget=forms.NumberInput, validators=[validate_cp_number])
+    card = forms.ImageField(
+        label="Report card", help_text="Report card from previous year or quarter")
+    profile_image = forms.ImageField(
+        label="Student Photo", help_text="White background with no filters")
 
 
 # class all_admission_forms(forms.Form):
