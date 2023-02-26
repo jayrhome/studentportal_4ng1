@@ -26,6 +26,11 @@ body{
     color: #fff;
 }
 
+.btn-success {
+    color: #fff;
+    background-color: #198754;
+    border-color: #198754;
+}
 .main{
     background: #D7E5D8;
     min-height: 89vh;
@@ -43,19 +48,6 @@ body{
     font-family: 'Poppins', sans-serif !important;
     font-weight: 460;
 }
-
-/* .accordion-button{
-    background:#25c784 !important;
-    color: #fff !important;
-} */
-.accordion-collapse.collapse.show  .accordion-header .accordion-button{
-    transform: rotate(120deg) !important;     
-    /* background: red !important; */
-}
-.accordion-button::after{
-    background: none;
-}
-.accordion-button::after{}
 
 .text-bold{
     font-family: 'Poppins', sans-serif !important;
