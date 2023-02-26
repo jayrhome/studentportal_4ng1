@@ -8,15 +8,16 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from . forms import *
 from . models import *
 from django.db import IntegrityError, transaction
 from django.contrib import messages
-from django.db.models import Q, FilteredRelation, Prefetch, Count, Case, When, Value
+from django.db.models import Q, FilteredRelation, Prefetch, Count, Case, When, Value, F
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from formtools.wizard.views import SessionWizardView
+from string import ascii_uppercase
 
 
 def superuser_only(user):
@@ -739,7 +740,7 @@ class view_curriculum(ListView):
 
     def get_queryset(self):
         try:
-            qs = curriculum.objects.prefetch_related(
+            qs = curriculum.allObjects.prefetch_related(
                 Prefetch("g11_firstSem_subjects", queryset=subjects.objects.all(
                 ), to_attr="g11FirstSemSubs"),
                 Prefetch("g11_secondSem_subjects", queryset=subjects.objects.all(
@@ -791,6 +792,8 @@ class add_curriculum(SessionWizardView):
 
             new_curriculum = curriculum()
             new_curriculum.effective_date = g11_First_Sem["effective_date"]
+            new_curriculum.strand = shs_strand.objects.filter(
+                pk=int(g11_First_Sem["strand"])).first()
             new_curriculum.save()
 
             new_curriculum.g11_firstSem_subjects.add(
@@ -854,6 +857,7 @@ class update_curriculum(SessionWizardView):
         match step:
             case "g11_firstSem":
                 initial["effective_date"] = self.get_saved_curriculum.effective_date
+                initial["strand"] = str(self.get_saved_curriculum.strand.id)
                 initial["g11_firstSem_subjects"] = tuple(
                     [item.id for item in self.get_saved_curriculum.g11_firstSem_subjects.all()])
 
@@ -883,6 +887,8 @@ class update_curriculum(SessionWizardView):
 
             self.get_saved_curriculum.refresh_from_db()
             self.get_saved_curriculum.effective_date = g11_First_Sem["effective_date"]
+            self.get_saved_curriculum.strand = shs_strand.objects.filter(
+                pk=int(g11_First_Sem["strand"])).first()
             self.get_saved_curriculum.g11_firstSem_subjects.set(
                 [*g11_First_Sem["g11_firstSem_subjects"]])
             self.get_saved_curriculum.g11_secondSem_subjects.set(
@@ -913,7 +919,7 @@ class update_curriculum(SessionWizardView):
         return context
 
     def dispatch(self, request, *args, **kwargs):
-        self.get_saved_curriculum = curriculum.objects.filter(
+        self.get_saved_curriculum = curriculum.allObjects.filter(
             pk=int(kwargs["pk"])).exclude(effective_date__lt=date.today()).first()
         if self.get_saved_curriculum and subjects.activeSubjects.all():
             return super().dispatch(request, *args, **kwargs)
@@ -921,3 +927,318 @@ class update_curriculum(SessionWizardView):
             if not subjects.activeSubjects.all():
                 messages.warning(request, "Add subjects to create curriculum.")
             return HttpResponseRedirect(reverse("adminportal:view_curriculum"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class make_section(FormView):
+    template_name = "adminportal/schoolSection/makeSections.html"
+    success_url = "/School_admin/Sections/"
+    form_class = makeSectionForm
+
+    def check_for_sections(self, sy, yl):
+        self.latest_section = schoolSections.latestSections.filter(
+            sy=sy, assignedStrand=self.this_curriculum.strand, yearLevel=yl).first()
+        if self.latest_section:
+            return self.latest_section.name[-1]
+        else:
+            return False
+
+    def custom_ascii_range(self, start):
+        start_index = ascii_uppercase.index(start)
+        ascii_range = [value for key, value in enumerate(
+            ascii_uppercase) if key > start_index]
+        return ''.join(ascii_range)
+
+    def form_valid(self, form):
+        try:
+            numberOfSection = int(form.cleaned_data["numberOfSection"])
+            self.this_curriculum = curriculum.objects.filter(
+                strand__id=int(form.cleaned_data['strand'])).first()
+            self.sy = schoolYear.objects.filter(
+                until__gte=date.today()).first()
+            yearLevel = str(form.cleaned_data["yearLevel"])
+
+            if self.check_for_sections(self.sy, yearLevel):
+                asp = self.custom_ascii_range(
+                    self.check_for_sections(self.sy, yearLevel))
+            else:
+                asp = ascii_uppercase
+
+            for a, b in zip(asp, range(1, numberOfSection+1)):
+                new_section = schoolSections()
+                new_section.name = f"{form.cleaned_data['yearLevel']}-{self.get_strand(int(form.cleaned_data['strand']))}-{a}"
+                new_section.yearLevel = form.cleaned_data['yearLevel']
+                new_section.sy = self.sy
+                new_section.assignedStrand = self.this_curriculum.strand
+                new_section.allowedPopulation = int(
+                    form.cleaned_data['allowedPopulation'])
+                new_section.save()
+                new_section.refresh_from_db()
+
+                # new_section.first_sem_subjects.add(*self.get_curriculumSubjects(self.this_curriculum))
+                # new_section.second_sem_subjects.add(*self.get_curriculumSubjects(self.this_curriculum))
+
+                if str(form.cleaned_data["yearLevel"]) == "11":
+                    new_section.first_sem_subjects.add(
+                        *self.this_curriculum.g11_firstSem_subjects.all())
+                    new_section.second_sem_subjects.add(
+                        *self.this_curriculum.g11_secondSem_subjects.all())
+                else:
+                    new_section.first_sem_subjects.add(
+                        *self.this_curriculum.g12_firstSem_subjects.all())
+                    new_section.second_sem_subjects.add(
+                        *self.this_curriculum.g12_secondSem_subjects.all())
+
+                new_section.save()
+
+            messages.success(self.request, "Sections created successfully.")
+            if self.create_schedule(yearLevel, self.this_curriculum.strand.id):
+                return super().form_valid(form)
+            else:
+                return HttpResponseRedirect(reverse("adminportal:generate_classSchedule"))
+        except IntegrityError:
+            messages.error(self.request, "Section already exist.")
+            return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, e)
+            return self.form_invalid(form)
+
+    def create_schedule(self, yearLevel, strand_id):
+        self.getschedule = schoolSections.latestSections.alias(count1Subjects=Count("first_sem_subjects"), count2Subjects=Count("second_sem_subjects"), sem1Scheds=Count("firstSemSched", filter=Q(firstSemSched__time_in__isnull=False, firstSemSched__time_out__isnull=False)), sem2Scheds=Count("secondSemSched", filter=Q(
+            secondSemSched__time_in__isnull=False, secondSemSched__time_out__isnull=False))).exclude(Q(count1Subjects__lt=F('sem1Scheds')) | Q(count1Subjects__gt=F('sem1Scheds')), Q(count2Subjects__lt=F('sem2Scheds')) | Q(count2Subjects__gt=F('sem2Scheds'))).filter(yearLevel=yearLevel, assignedStrand__id=strand_id).first()
+        if self.getschedule:
+            firstSemesterSchedule = [[sched.time_in, sched.time_out]
+                                     for sched in self.getschedule.firstSemSched.all()]
+            secondSemesterSchedule = [[sched.time_in, sched.time_out]
+                                      for sched in self.getschedule.secondSemSched.all()]
+            getSectionWithNoSched = schoolSections.latestSections.alias(count1Subjects=Count("first_sem_subjects"), count2Subjects=Count("second_sem_subjects"), sem1Scheds=Count("firstSemSched", filter=Q(firstSemSched__time_in__isnull=True, firstSemSched__time_out__isnull=True)), sem2Scheds=Count("secondSemSched", filter=Q(
+                secondSemSched__time_in__isnull=True, secondSemSched__time_out__isnull=True))).exclude(Q(count1Subjects__lt=F('sem1Scheds')) | Q(count1Subjects__gt=F('sem1Scheds')), Q(count2Subjects__lt=F('sem2Scheds')) | Q(count2Subjects__gt=F('sem2Scheds'))).filter(yearLevel=yearLevel, assignedStrand__id=strand_id)
+
+            if self.save_schedule(self.generate_schedule([firstSemesterSchedule, secondSemesterSchedule], getSectionWithNoSched.count()), getSectionWithNoSched):
+                return True
+            else:
+                return False
+        return False
+
+    def generate_schedule(self, initial_scheds, count_section):
+        new_schedule = []
+        private_sched = initial_scheds
+
+        for section in range(count_section):
+            # for each section
+            new_schedule.append([])
+            for key, semester in enumerate(initial_scheds):
+                # for each semester
+                new_schedule[section].append([])
+                for id, subjectSchedule in enumerate(semester):
+                    # for each schedule for a semester. A semester is a list that contains a pair of time-in and time-out on a list.
+                    if id == (len(semester)-1):
+                        new_schedule[section][key].append(
+                            private_sched[key][0])
+                    else:
+                        new_schedule[section][key].append(
+                            private_sched[key].pop(0))
+                        private_sched[key].append(
+                            new_schedule[section][key][id])
+
+        # new_schedule data structures = [ [[[time-in, time-out], [time-in, time-out], [time-in, time-out]], [[time-in, time-out], [time-in, time-out]]], [[], []] ]
+        return new_schedule
+
+    def save_schedule(self, generatedSchedules, strand_sections):
+        try:
+            for key, value in enumerate(strand_sections):
+                firstSemSchedule.save_sched(
+                    value.firstSemSched.all(), generatedSchedules[key][0])
+                secondSemSchedule.save_sched(
+                    value.secondSemSched.all(), generatedSchedules[key][1])
+            return True
+        except Exception as e:
+            messages.error(self.request, e)
+            return False
+
+    def get_strand(self, pk):
+        strand_name = shs_strand.objects.filter(id=pk).first()
+        return strand_name.strand_name
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "New Section"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if schoolYear.objects.filter(until__gte=date.today()).exists():
+            # Must have an ongoing school year
+            return super().dispatch(request, *args, **kwargs)
+        messages.warning(request, "Must have school year to create sections.")
+        return HttpResponseRedirect(reverse("adminportal:index"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class get_sections(TemplateView):
+    template_name = "adminportal/schoolSection/getSections.html"
+    http_method_names = ["get"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "List of Sections"
+
+        sections = schoolSections.latestSections.filter(yearLevel=int(self.kwargs["year"])).prefetch_related(Prefetch("firstSemSched", queryset=firstSemSchedule.objects.all(
+        ), to_attr="firstSemesterSubjects"), Prefetch("secondSemSched", queryset=secondSemSchedule.objects.all(), to_attr="secondSemesterSubjects"))
+        if sections:
+            dct = dict()
+            for section in sections:
+                if section.assignedStrand.definition not in dct:
+                    dct[section.assignedStrand.definition] = list()
+                    dct[section.assignedStrand.definition].append(section)
+                else:
+                    dct[section.assignedStrand.definition].append(section)
+            context["sections"] = dct
+            context["yearLevel"] = sections[0].get_yearLevel_display()
+
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            if self.kwargs["year"] == "11" or self.kwargs["year"] == "12":
+                return super().dispatch(request, *args, **kwargs)
+            return HttpResponseRedirect(reverse("adminportal:get_sections", kwargs={"year": "11"}))
+        except Exception as e:
+            return HttpResponseRedirect(reverse("adminportal:get_sections", kwargs={"year": "11"}))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(superuser_only, login_url="registrarportal:dashboard")], name="dispatch")
+class generate_classSchedule(FormView):
+    # Generate class schedule for all latest section from the given strand
+    template_name = "adminportal/schoolSection/generateSchedule.html"
+    success_url = "/School_admin/Sections/"
+    form_class = generate_schedule
+
+    def count_FirstSemSubjects(self, strand):
+        return self.this_curriculum.g11_firstSem_subjects.count() if int(strand) == 11 else self.this_curriculum.g12_firstSem_subjects.count()
+
+    def count_SecondSemSubjects(self, strand):
+        return self.this_curriculum.g11_secondSem_subjects.count() if int(strand) == 11 else self.this_curriculum.g12_secondSem_subjects.count()
+
+    def get_semSubs(self, strand):
+        if int(strand) == 11:
+            firstSem_subs = self.this_curriculum.g11_firstSem_subjects.all()
+            secondSem_subs = self.this_curriculum.g11_secondSem_subjects.all()
+        else:
+            firstSem_subs = self.this_curriculum.g12_firstSem_subjects.all()
+            secondSem_subs = self.this_curriculum.g12_secondSem_subjects.all()
+        return [firstSem_subs, secondSem_subs]
+
+    def initialize_class_schedule(self, start_time, minutes_per_subjects, semesters):
+        first_sem = [[start_time.time(), self.get_next_time(start_time, minutes_per_subjects[0])] if key == 0 else [self.get_next_time(
+            start_time, minutes_per_subjects[0]*key), self.get_next_time(start_time, minutes_per_subjects[0]*(key+1))] for key, subject in enumerate(semesters[0])]
+        second_sem = [[start_time.time(), self.get_next_time(start_time, minutes_per_subjects[1])] if key == 0 else [self.get_next_time(
+            start_time, minutes_per_subjects[1]*key), self.get_next_time(start_time, minutes_per_subjects[1]*(key+1))] for key, subject in enumerate(semesters[1])]
+
+        # for key, subject in enumerate(semesters[0]):
+        #     if key == 0:
+        #         first_sem.append((start_time.time(), self.get_next_time(
+        #             start_time, minutes_per_subjects[0])))
+        #     else:
+        #         self.get_next_time((start_time, minutes_per_subjects[0]*key), self.get_next_time(
+        #             start_time, minutes_per_subjects[0]*(key+1)))
+
+        # for key, subject in enumerate(semesters[1]):
+        #     if key == 0:
+        #         second_sem.append((start_time.time(), self.get_next_time(
+        #             start_time, minutes_per_subjects[1])))
+        #     else:
+        #         second_sem.append((self.get_next_time(
+        #             start_time, minutes_per_subjects[1]*key), self.get_next_time(start_time, minutes_per_subjects[1]*(key+1))))
+
+        return [first_sem, second_sem]
+
+    def get_next_time(self, start_time, add_minutes):
+        return datetime.strptime((start_time + timedelta(minutes=add_minutes)).strftime("%H:%M:%S"), "%H:%M:%S").time()
+
+    def count_section(self, strand, yearLevel):
+        self.strand_sections = schoolSections.latestSections.filter(yearLevel=yearLevel, assignedStrand__id=int(
+            strand)).prefetch_related("first_sem_subjects", "second_sem_subjects")
+        return schoolSections.latestSections.filter(yearLevel=yearLevel, assignedStrand__id=int(strand)).count()
+
+    def generate_schedule(self, initial_scheds, strand, yearLevel):
+        count_section = self.count_section(strand, yearLevel)
+        new_schedule = []
+        private_sched = initial_scheds
+
+        for section in range(count_section):
+            # for each section
+            new_schedule.append([])
+            for key, semester in enumerate(initial_scheds):
+                # for each semester
+                new_schedule[section].append([])
+                for id, subjectSchedule in enumerate(semester):
+                    # for each schedule for a semester. A semester is a list that contains a pair of time-in and time-out on a list.
+                    if id == (len(semester)-1):
+                        new_schedule[section][key].append(
+                            private_sched[key][0])
+                    else:
+                        new_schedule[section][key].append(
+                            private_sched[key].pop(0))
+                        private_sched[key].append(
+                            new_schedule[section][key][id])
+
+        # new_schedule data structures = [ [[[time-in, time-out], [time-in, time-out], [time-in, time-out]], [[time-in, time-out], [time-in, time-out]]], [[], []] ]
+        return new_schedule
+
+    def save_schedule(self, generatedSchedules):
+        try:
+            for key, value in enumerate(self.strand_sections):
+                firstSemSchedule.save_sched(
+                    value.firstSemSched.all(), generatedSchedules[key][0])
+                secondSemSchedule.save_sched(
+                    value.secondSemSched.all(), generatedSchedules[key][1])
+            return True
+        except Exception as e:
+            messages.error(self.request, e)
+            return False
+
+    def form_valid(self, form):
+        try:
+            strand = form.cleaned_data["strand"]
+            class_hours = int(form.cleaned_data["class_hours"])
+            start_time = datetime.strptime(
+                str(form.cleaned_data["start_time"]), "%H:%M:%S")
+
+            # strand[2:4] - will display the strand yearlevel
+            # strand[6:8] - will display the strand id
+
+            self.this_curriculum = curriculum.objects.get(
+                strand__id=int(strand[6:8]))
+
+            number_of_subjects_perSem = [self.count_FirstSemSubjects(
+                strand[2:4]), self.count_SecondSemSubjects(strand[2:4])]
+
+            minutes_per_subjects = [(class_hours * 60)/number_of_subjects_perSem[0],
+                                    (class_hours * 60)/number_of_subjects_perSem[1]]
+
+            initial_scheds = self.initialize_class_schedule(
+                start_time, minutes_per_subjects, self.get_semSubs(strand[2:4]))
+
+            generated_schedule = self.generate_schedule(
+                initial_scheds, strand[6:8], strand[2:4])
+
+            if self.save_schedule(generated_schedule):
+                messages.success(self.request, "New schedule is saved.")
+
+            return super().form_valid(form)
+        except Exception as e:
+            messages.error(self.request, e)
+            return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Generate Class Schedule"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if schoolSections.latestSections.all():
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            messages.warning(
+                request, "Must have sections from latest school year.")
+            return HttpResponseRedirect(reverse("adminportal:new_section"))

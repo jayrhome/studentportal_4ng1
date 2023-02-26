@@ -1,3 +1,0 @@
-{% for enrollment_sy in enrolled_sy %}
-    <a href="{% url 'studentportal:enrollment_details' pk=enrollment_sy.id %}" class="btn btn-primary btn-sm"> S.Y. {{enrollment_sy.enrolled_schoolyear__sy}} </a>
-{% endfor %}

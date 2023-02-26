@@ -47,12 +47,12 @@
             <ul class="navbar-nav w-100 mb-2 mb-lg-0 d-flex">
               <li class="nav-item ms-auto">
                 {% if user.is_authenticated %}
-                <a href="{% url 'adminportal:index' %}" class="nav-link"> Home </a>
+                <a href="{% url 'adminportal:index' %}" class="btn btn-outline-primary"> Dashboard </a>
                 {% endif %}
               </li>
               <li class="nav-item">
                 {% if user.is_authenticated %}
-                <a href="{% url 'usersPortal:logout' %}" class="nav-link"> Logout </a>
+                <a href="{% url 'usersPortal:logout' %}" class="btn btn-outline-danger"> Logout </a>
                 {% endif %}  
             </li>
             </ul>

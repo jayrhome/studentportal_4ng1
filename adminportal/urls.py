@@ -88,4 +88,13 @@ urlpatterns = [
         path("Add/", add_curriculum.as_view(), name="add_curriculum"),
         path("Update/<pk>", update_curriculum.as_view(), name="update_curriculum"),
     ])),
+
+    path("Sections/", include([
+        re_path(r"(?:(?P<year>[0-9]+)/)?$",
+                get_sections.as_view(), name="get_sections"),
+        path("Generate/", make_section.as_view(), name="new_section"),
+        path("Scheduling/", generate_classSchedule.as_view(),
+             name="generate_classSchedule"),
+    ])),
+
 ]

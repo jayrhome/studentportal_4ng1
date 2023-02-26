@@ -5,7 +5,7 @@
 
 
 <div class="container py-3 d-flex justify-content-end">
-    <a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary" > Back </a>
+    
 </div>
 
 <form id="postForm" class="px-2" method="post">
@@ -36,6 +36,7 @@
 
         <input type="submit" value="Add" class="btn btn-primary btn-block mb-4">
         <button type="submit" name="another" class="btn btn-primary btn-block mb-4"> Save and Add another </button>
+        <a href="{% url 'adminportal:view_courses' %}" class="btn btn-primary mb-4" > Back </a>
     </div>
 
 </form>

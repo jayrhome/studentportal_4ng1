@@ -1,0 +1,48 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+{% load i18n %}
+{% load std_portal %}
+{% include 'studentportal/messages/messages.html' %}
+
+
+<h4> Submit Your Previous School Documents in Soft Copies </h4>
+
+<div class="container col-md-8">
+    <form id="postForm" method="post" enctype="multipart/form-data">
+
+        {{ wizard.form.non_field_errors }}
+        {% csrf_token %}
+        <table>
+        {{ wizard.management_form }}
+        {% if wizard.form.forms %}
+            {{ wizard.form.management_form }}
+            {% for form in wizard.form.forms %}
+                {{ form }}
+            {% endfor %}
+        {% else %}
+            <p>hi</p>
+
+            {{ wizard.form.good_moral.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.good_moral.id_for_label }}" class="form-label"> {{ wizard.form.good_moral.label }} </label>
+            {{ wizard.form.good_moral|addclass:"form-control"}} <!-- Auto-fill junior high school name -->
+            
+            {{ wizard.form.report_card.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.report_card.id_for_label }}" class="form-label"> {{ wizard.form.report_card.label }} </label>
+            {{ wizard.form.report_card|addclass:"form-control"}} <!-- Auto-fill based on selected or entered jhs name -->
+
+            {{ wizard.form.psa.errors }} <!-- Field errors -->
+            <label for="{{ wizard.form.psa.id_for_label }}" class="form-label"> {{ wizard.form.psa.label }} </label>
+            {{ wizard.form.psa|addclass:"form-control"}} <!-- Auto-fill based on selected or entered jhs name -->
+
+        {% endif %}
+        </table>
+
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-primary btn-sm">{% trans "Prev" %}</button>
+        <input type="submit" name="wizard_goto_step" value="Next" class="btn btn-primary btn-sm">
+
+    </form>
+</div>
+
+<p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+
+{% endblock content %}

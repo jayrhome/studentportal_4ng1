@@ -1,14 +1,14 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from datetime import date
+from datetime import date, datetime, timedelta
 from django.core.validators import RegexValidator
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
 from django.db.models import Q
 from django.shortcuts import HttpResponseRedirect
 from django.urls import reverse
-from django.db import transaction
+from registrarportal.models import schoolYear
 
 User = get_user_model()
 
@@ -55,14 +55,6 @@ def current_school_year():
     return sy
 
 
-# class school_year(models.Model):
-#     sy = models.CharField(max_length=11, unique=True)
-#     date_created = models.DateTimeField(auto_now=True)
-
-#     def __str__(self):
-#         return self.sy
-
-
 class shs_track(models.Model):
     track_name = models.CharField(max_length=50, unique=True)
     definition = models.TextField()
@@ -77,8 +69,8 @@ class shs_track(models.Model):
 class shs_strand(models.Model):
     track = models.ForeignKey(
         "shs_track", on_delete=models.RESTRICT, related_name="track_strand")
-    strand_name = models.CharField(max_length=100, unique=True)
-    definition = models.TextField()
+    strand_name = models.CharField(max_length=5, unique=True)
+    definition = models.CharField(max_length=50)
     date_added = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
@@ -303,17 +295,6 @@ class shs_strand(models.Model):
 #         return reverse("adminportal:hold_enrollment_lists")
 
 
-# class enrollment_admission_setup(models.Model):
-#     ea_setup_sy = models.OneToOneField(
-#         school_year, on_delete=models.PROTECT, related_name="setup_sy")
-#     start_date = models.DateField()
-#     end_date = models.DateField()
-#     still_accepting = models.BooleanField(default=True)
-
-#     def __str__(self):
-#         return self.ea_setup_sy.sy
-
-
 # class for_review_admission(models.Model):
 #     to_review = models.ForeignKey(
 #         student_admission_details, on_delete=models.CASCADE, related_name="admission_review")
@@ -433,8 +414,16 @@ class subjects(models.Model):
         return f"{self.code}: {self.title}"
 
 
+class curriculumManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(effective_date__lte=date.today())
+
+
 class curriculum(models.Model):
     effective_date = models.DateField()
+
+    strand = models.ForeignKey(
+        shs_strand, on_delete=models.RESTRICT, related_name="curriculum_strand")
 
     g11_firstSem_subjects = models.ManyToManyField(
         subjects, related_name="grade11_firstSem")
@@ -446,6 +435,9 @@ class curriculum(models.Model):
     g12_secondSem_subjects = models.ManyToManyField(
         subjects, related_name="grade12_secondSem")
 
+    allObjects = models.Manager()
+    objects = curriculumManager()
+
     def __str__(self):
         return str(self.pk)
 
@@ -453,31 +445,100 @@ class curriculum(models.Model):
         ordering = ["-effective_date"]
 
 
+class sectionManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(sy__until__gte=date.today())
+
+
 class schoolSections(models.Model):
-    name = models.CharField(max_length=30, unique=True)
+    class year_levels(models.TextChoices):
+        grade_11 = '11', _('Grade 11')
+        grade_12 = '12', _('Grade 12')
+
+    name = models.CharField(max_length=30)
+    yearLevel = models.CharField(max_length=7, choices=year_levels.choices)
+    sy = models.ForeignKey(
+        schoolYear, on_delete=models.RESTRICT, related_name="sy_section")
     assignedStrand = models.ForeignKey(
         shs_strand, on_delete=models.RESTRICT, related_name="section_strand")
-    assignedSubjects = models.ManyToManyField(
-        subjects, through="sectionSchedule", related_name="section")
+    first_sem_subjects = models.ManyToManyField(
+        subjects, through="firstSemSchedule", related_name="firstSemSubjects")
+    second_sem_subjects = models.ManyToManyField(
+        subjects, through="secondSemSchedule", related_name="secondSemSubjects")
     # Model.m2mfield.through.objects.all()
     allowedPopulation = models.IntegerField()
     is_active = models.BooleanField(default=True)
     created_on = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
+    objects = models.Manager()
+    latestSections = sectionManager()
+
     class Meta:
-        ordering = ["name"]
+        ordering = ["-created_on"]
+        unique_together = ["sy", "name"]
 
     def __str__(self):
         return self.name
 
 
-class sectionSchedule(models.Model):
+class firstSemSchedule(models.Model):
     section = models.ForeignKey(
-        schoolSections, on_delete=models.RESTRICT, related_name="section_schedule")
+        schoolSections, on_delete=models.RESTRICT, related_name="firstSemSched")
     subject = models.ForeignKey(
-        subjects, on_delete=models.RESTRICT, related_name="subject_schedule")
-    class_schedule = models.JSONField()
+        subjects, on_delete=models.RESTRICT, related_name="firstSemSubjectSchedule")
+    time_in = models.TimeField(null=True)
+    time_out = models.TimeField(null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["time_in"]
+
+    @classmethod
+    def save_sched(cls, firstSemSubjects, firstSemSchedules):
+        try:
+            for subject, schedule in zip(firstSemSubjects, firstSemSchedules):
+                with transaction.atomic():
+                    update_sched = cls.objects.select_for_update().get(pk=subject.id)
+                    update_sched.time_in = schedule[0]
+                    update_sched.time_out = schedule[1]
+                    update_sched.save()
+            return True
+        except Exception as e:
+            return False
 
     def __str__(self):
-        return f"{self.section.name}: {self.subject.code} - {self.subject.title}"
+        return f"{self.section.name}: {self.subject.code}: {self.time_in} - {self.time_out}"
+
+
+class secondSemSchedule(models.Model):
+    section = models.ForeignKey(
+        schoolSections, on_delete=models.RESTRICT, related_name="secondSemSched")
+    subject = models.ForeignKey(
+        subjects, on_delete=models.RESTRICT, related_name="secondSemSubjectSchedule")
+    time_in = models.TimeField(null=True)
+    namo = models.CharField(max_length=20, null=True)
+    time_out = models.TimeField(null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["time_in"]
+
+    @classmethod
+    def save_sched(cls, secondSemSubjects, secondSemSchedules):
+        try:
+            for subject, schedule in zip(secondSemSubjects, secondSemSchedules):
+                with transaction.atomic():
+                    update_sched = cls.objects.select_for_update().get(pk=subject.id)
+                    update_sched.namo = "Hi"
+                    update_sched.time_in = schedule[0]
+                    update_sched.time_out = schedule[1]
+                    update_sched.save()
+            return True
+        except Exception as e:
+            return False
+
+    def __str__(self):
+        return f"{self.section.name}: {self.subject.code}: {self.time_in} - {self.time_out}"
