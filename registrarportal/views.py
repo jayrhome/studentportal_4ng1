@@ -273,8 +273,14 @@ class get_admissions(ListView, DeletionMixin):
     success_url = "/Registrar/Admission/"
 
     def delete(self, request, *args, **kwargs):
-        self.denied_this_admission.is_denied = True
-        self.denied_this_admission.save()
+        if "decPk" in request.POST:
+            self.denied_this_admission.is_denied = True
+            self.denied_this_admission.save()
+        if "batchId" in request.POST:
+            studAdms = student_admission_details.objects.filter(
+                admission_batch_member__id=self.get_batch.id, is_accepted=False).exclude(is_denied=True).values_list('id', flat=True)
+            student_admission_details.admit_this_students(studAdms)
+
         return HttpResponseRedirect(self.success_url + f"?page={request.POST.get('page')}")
 
     def get_queryset(self):
@@ -294,4 +300,8 @@ class get_admissions(ListView, DeletionMixin):
         if ("decPk" in request.POST) and request.method == "POST":
             self.denied_this_admission = student_admission_details.objects.filter(
                 id=int(request.POST["decPk"])).first()
+
+        if ("batchId" in request.POST) and request.method == "POST":
+            self.get_batch = admission_batch.new_batches.filter(
+                id=int(request.POST["batchId"])).first()
         return super().dispatch(request, *args, **kwargs)

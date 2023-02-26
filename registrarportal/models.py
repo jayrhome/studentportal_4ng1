@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from datetime import date
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -118,6 +118,16 @@ class student_admission_details(models.Model):
 
     def jhs(self):
         return self.jhs_name
+
+    @classmethod
+    def admit_this_students(cls, iDs):
+        for id in iDs:
+            with transaction.atomic():
+                obj = cls.objects.select_for_update().get(id=id)
+                obj.is_accepted = True
+                if obj.is_denied:
+                    obj.is_denied = False
+                obj.save()
 
     # def to_pendingList(self):
     #     return reverse("adminportal:admission")
