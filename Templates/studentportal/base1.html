@@ -16,7 +16,7 @@
     <!-- google fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
      
 
     <!-- Css -->
@@ -40,15 +40,21 @@
     <!-- fontawesome icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Domine:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- aos -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 </head>
 <body>
     {% if not user.is_authenticated or user.is_student %}
         <nav class="navbar navbar-expand-lg navbar-dark p-0 d-flex flex-column">
             <div class="container py-3 justify-content-start">
                 <div class="logo">logo</div>
-                <a class="navbar-brand" href="#">Newfangled</a>
+                <a class="navbar-brand" href="#">Leandro Integrated School</a>
             </div>
-            <div class="container-fluid" style="background: #173979">
+            <div class="container-fluid" style="background: #800000">
                 <div class="container px-0 px-md-2 py-2 py-md-1" >
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon">
@@ -61,10 +67,10 @@
                                 <a href="{% url 'studentportal:index' %}" class="nav-link"> Home </a>
                             </li>
                             <li class="nav-item">
-                                <a href="#" class="nav-link"> Courses </a>
+                                <a href="#courses" class="nav-link"> Courses </a>
                             </li>
                             <li class="nav-item">
-                                <a href="#" class="nav-link"> Contact Us </a> <!-- redirect to about us page -->
+                                <a href="#contact" class="nav-link"> Contact Us </a> <!-- redirect to about us page -->
                             </li>
         
                             <li class="nav-item ms-auto d-flex">
@@ -102,7 +108,11 @@
     {% block content %}{% endblock content %}
     
     <script src="{% static 'studentportal/js/formSubmit.js' %}"></script>
+    <script src="{% static 'studentportal/js/login.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
-    
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+      </script>
 </body>
 </html>
