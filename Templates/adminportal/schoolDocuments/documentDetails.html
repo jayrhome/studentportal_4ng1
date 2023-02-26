@@ -3,28 +3,32 @@
 {% load std_portal %}
 {% include 'adminportal/messages/messages.html' %}
 
+<div class="container py-3 d-flex justify-content-end">
 
-<div class="container">
-    <div class="col-md-8">
-        <form id ="postForm" method="post">
-            {% csrf_token %}
-            <!-- List of errors from forms.py -->
-            {{ form.non_field_errors }}
 
-            <div class="cards_create">
-                <h4> Add/Edit Document </h4>
-                <div class="form-outline mb-4">
-                    {{ form.documentName.errors }} <!-- Field errors -->
-                    <label for="{{ form.documentName.id_for_label }}" class="form-label"> {{form.documentName.label}} </label>
-                    {{ form.documentName|addclass:"form-control"}} <!-- Input Field -->
-                </div>
+</div>
 
-                <input type="submit" value="Submit" class="btn btn-primary btn-sm">
-                <a href="{% url 'adminportal:schoolDocuments' %}" class="btn btn-primary btn-sm" > Cancel </a>
-            </div>
+<form id="postForm" class="px-2 pb-5" method="post">
+    {% csrf_token %}
+    <!-- List of errors from forms.py -->
+    {{ form.non_field_errors }}
 
-        </form>
+    <div class="container col-md-8 mt-4 p-3 bg-white box_shadow border rounded">
+        <h4 class="py-2">
+            <B>Add/Edit Document</B>
+        </h4>
+        <div class="form-outline mb-4">
+            {{ form.documentName.errors }} <!-- Field errors -->
+            <label for="{{ form.documentName.id_for_label }}" class="form-label"> {{form.documentName.label}} </label>
+            {{ form.documentName|addclass:"form-control"}} <!-- Input Field -->
+        </div>
+
+        <input type="submit" value="Submit" class="btn btn-primary btn-sm">
+        <a href="{% url 'adminportal:schoolDocuments' %}" class="btn btn-primary btn-sm"> Cancel </a>
     </div>
+
+</form>
+</div>
 </div>
 
 

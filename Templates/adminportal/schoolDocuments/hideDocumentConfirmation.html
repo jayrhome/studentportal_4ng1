@@ -3,22 +3,27 @@
 {% load std_portal %}
 {% include 'adminportal/messages/messages.html' %}
 
+<div class="container py-3 d-flex justify-content-end">
 
-<div class="container">
-    <div class="col-md-8">
-        <form id ="postForm" method="post">
-            {% csrf_token %}
-            <!-- List of errors from forms.py -->
 
-            <div class="cards_create">
-                <h4> Do you want to hide {{documentName}} ? </h4>
+</div>
 
-                <input type="submit" value="Yes" class="btn btn-primary btn-sm">
-                <a href="{% url 'adminportal:schoolDocuments' %}" class="btn btn-primary btn-sm" > Cancel </a>
-            </div>
+<form id="postForm" class="px-2 pb-5" method="post">
+    {% csrf_token %}
+    <!-- List of errors from forms.py -->
 
-        </form>
+    <div class="container col-md-8 mb-4 mt-4 p-3 bg-white box_shadow border rounded">
+
+        <h4 class="form-outline mb-5">
+            <b>Do you want to hide {{documentName}} ? </b>
+        </h4>
+
+        <input type="submit" value="Yes" class="btn btn-danger btn-lg mb-4">
+        <a href="{% url 'adminportal:schoolDocuments' %}" class="btn btn-primary btn-lg mb-4"> Cancel </a>
     </div>
+
+</form>
+</div>
 </div>
 
 {% endblock content %}
