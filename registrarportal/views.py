@@ -276,10 +276,14 @@ class get_admissions(ListView, DeletionMixin):
         if "decPk" in request.POST:
             self.denied_this_admission.is_denied = True
             self.denied_this_admission.save()
+
         if "batchId" in request.POST:
-            studAdms = student_admission_details.objects.filter(
-                admission_batch_member__id=self.get_batch.id, is_accepted=False).exclude(is_denied=True).values_list('id', flat=True)
-            student_admission_details.admit_this_students(studAdms)
+            if schoolSections.latestSections.filter(sy=self.get_batch.sy, yearLevel="11").exists():
+                studAdms = student_admission_details.objects.filter(
+                    admission_batch_member__id=self.get_batch.id, is_accepted=False).exclude(is_denied=True).values_list('id', flat=True)
+                student_admission_details.admit_this_students(studAdms)
+            messages.warning(
+                request, "School must have new sections for grade 11 admission.")
 
         return HttpResponseRedirect(self.success_url + f"?page={request.POST.get('page')}")
 
