@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 import re
 from datetime import date, datetime
 from . models import user_profile
-from studentportal.forms import validate_username, birthdate_validator, validate_cp_number
+# from studentportal.forms import validate_username, birthdate_validator, validate_cp_number
 
 User = get_user_model()
 
@@ -25,7 +25,7 @@ class accountRegistrationForm(forms.Form):
     email = forms.EmailField(
         label="Email", max_length=50, validators=[validate_emailIntegrity])
     display_name = forms.CharField(
-        label="Username", max_length=25, validators=[validate_username])
+        label="Username", max_length=25, validators=["studentportal.validate_username", ])
     password = forms.CharField(
         label="Password", widget=forms.PasswordInput)
     confirmpassword = forms.CharField(
@@ -55,11 +55,11 @@ class profileDetailsForm(forms.Form):
     middle_name = forms.CharField(label="Middle Name", max_length=20)
     last_name = forms.CharField(label="Last Name", max_length=50)
     birth_date = forms.DateField(label="Birthdate", widget=forms.DateInput(
-        attrs={'type': 'date'}), validators=[birthdate_validator, ])
+        attrs={'type': 'date'}), validators=["studentportal.birthdate_validator", ])
     sex = forms.TypedChoiceField(
         label="sex", choices=user_profile.sexChoices.choices, coerce=str)
     userContact = forms.CharField(
-        label="Contact Number", widget=forms.NumberInput, validators=[validate_cp_number])
+        label="Contact Number", widget=forms.NumberInput, validators=["studentportal.validate_cp_number"])
     userAddress = forms.CharField(label="Permanent Address", max_length=100)
     image = forms.ImageField(label="Profile Picture", help_text="Max of 2 MB size.", required=False,
                              widget=forms.ClearableFileInput(attrs={"style": "display:none;"}), validators=[validate_imageSize, ])
