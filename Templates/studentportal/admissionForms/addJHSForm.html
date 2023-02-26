@@ -2,12 +2,13 @@
 {% block content %}
 {% load i18n %}
 {% load std_portal %}
+{% include 'studentportal/messages/messages.html' %}
 
 
 <h4> Junior High School Details </h4>
 
 <div class="container col-md-8">
-    <form id="adm3" method="post">
+    <form id="postForm" method="post">
 
         {{ wizard.form.non_field_errors }}
         {% csrf_token %}
@@ -73,17 +74,11 @@
         </table>
 
         <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-primary btn-sm">{% trans "Prev" %}</button>
-        <input type="submit" name="wizard_goto_step" value="Submit" class="btn btn-primary btn-sm">
+        <input type="submit" name="wizard_goto_step" value="Next" class="btn btn-primary btn-sm">
 
     </form>
 </div>
 
 <p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
-
-<script>
-    $('#adm3').one('submit', function() {
-        $(this).find('input[type="submit"]').attr('disabled','disabled');
-    }); 
-</script>
 
 {% endblock content %}
