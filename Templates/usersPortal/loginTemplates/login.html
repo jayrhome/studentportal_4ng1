@@ -1,35 +1,53 @@
-{% extends 'studentportal/base1.html' %}
-{% block content %}
-{% load std_portal %}
-{% include 'usersPortal/messages/messages.html' %}
-
+{% extends 'studentportal/base1.html' %} {% block content %} {% load std_portal
+%} {% include 'usersPortal/messages/messages.html' %}
 
 <div class="main">
-    <div class="submain">
-        <form id="postForm" method="post">
-            {% csrf_token %}
-        
-            <!-- List of errors from forms.py -->
-            {{ form.non_field_errors }}
-        
-            <div class="card_login">
-                <h4> Login your Account </h4>        
-                {{ form.email.errors }}
-                <label for="{{ form.email.id_for_label }}" class="form-label"> Email: </label>
-                {{ form.email|addclass:"form-control mb-3"}} <!-- Input Field -->
-        
-                {{ form.password.errors }}
-                <label for="{{ form.password.id_for_label }}" class="form-label"> Password: </label>
-                {{ form.password|addclass:"form-control mb-1"}} <!-- Input Field -->
-                <a href="{% url 'usersPortal:forgotpassword' %}" class="mb-4"> Forgot Password? </a>
-        
-                <input type="submit" value="Login" class="btn_login btn-block mb-3">
-                <div class="text">
-                    <p>Not a member? <a href="{% url 'usersPortal:create_useraccount' %}">Register</a></p>
-                </div>
-            </div>
-        </form>
-    </div>
+  <div class="submain">
+    <form id="postForm" method="post">
+      {% csrf_token %}
+
+      <!-- List of errors from forms.py -->
+      {{ form.non_field_errors }}
+
+      <div class="card_login">
+        <h4>Login your Account</h4>
+        <div class="txt_field">
+          {{ form.email.errors }} {{ form.email|addclass:"email form-control
+          shadow-none"}}
+          <!-- Input Field -->
+          <span class="line" id="eyeicon2"></span>
+          <label for="{{ form.email.id_for_label }}" class="em form-label">
+            Email:
+          </label>
+        </div>
+        <div class="txt_field">
+          {{ form.password.errors }} {{ form.password|addclass:"pass
+          form-control shadow-none"}}
+          <!-- Input Field -->
+          <div class="img d-flex align-items-center">
+            <i id="eyeicon" class="fa fa-eye-slash"></i>
+          </div>
+
+          <span></span>
+          <label for="{{ form.password.id_for_label }}" class="form-label">
+            Password:
+          </label>
+        </div>
+
+        <a href="{% url 'usersPortal:forgotpassword' %}" class="mb-4">
+          Forgot Password?
+        </a>
+
+        <input type="submit" value="Login" class="btn_login btn-block mb-3" />
+        <div class="text">
+          <p>
+            Not a member?
+            <a href="{% url 'usersPortal:create_useraccount' %}">Register</a>
+          </p>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Email: admin@gmail.com Password: admin  -->
