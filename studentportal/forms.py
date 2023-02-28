@@ -167,7 +167,6 @@ class enrollment_form1(forms.Form):
         (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str, required=False)
     home_address = forms.CharField(
         max_length=50, label='Home address (Current)')
-    age = forms.IntegerField(label="Age", min_value=1, max_value=100)
     contact_number = forms.CharField(
         label="Contact Number", widget=forms.NumberInput, validators=[validate_cp_number])
     card = forms.ImageField(
