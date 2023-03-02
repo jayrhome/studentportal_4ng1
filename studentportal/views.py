@@ -444,7 +444,7 @@ class reschedDocumentRequest(FormView):
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
-class enrollment(FormView):
+class enrollment_g11(FormView):
     template_name = "studentportal/enrollmentForms/enrollment.html"
     success_url = "/"
     form_class = enrollment_form1
@@ -461,6 +461,7 @@ class enrollment(FormView):
             get_age = user_profile.objects.get(user=self.request.user)
             save_this.age = int(get_age.user_age())
             save_this.enrolled_school_year = schoolYear.objects.first()
+            save_this.year_level = '11'
             save_this.save()
 
             student_home_address.objects.create(
