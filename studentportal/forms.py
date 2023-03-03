@@ -68,8 +68,8 @@ class admission_personal_details(forms.Form):
         label="Middle Name", max_length=20, required=False)
     last_name = forms.CharField(
         label="Last Name", max_length=20, required=False)
-    # sex = forms.ChoiceField(
-    #     label="Sex", choices=student_admission_details.SexChoices.choices, required=False)
+    sex = forms.ChoiceField(
+        label="Sex", choices=student_admission_details.SexChoices.choices, required=False)
     date_of_birth = forms.DateField(label="Birthdate", validators=[
         birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}), required=False)
     birthplace = forms.CharField(
@@ -77,9 +77,9 @@ class admission_personal_details(forms.Form):
     nationality = forms.CharField(
         label="Nationality", max_length=50, required=False)
     first_chosen_strand = forms.TypedChoiceField(label="Choose First Strand", choices=(
-        (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str, required=False)
+        (strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}") for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand')), coerce=str)
     second_chosen_strand = forms.TypedChoiceField(label="Choose Second Strand", choices=(
-        (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str, required=False)
+        (strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}") for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand')), coerce=str)
 
 
 class elementary_school_details(forms.Form):
@@ -163,8 +163,10 @@ class enrollment_form1(forms.Form):
     # Form for g11 and transferees
     full_name = forms.CharField(
         max_length=60, label='Full Name (Surname, First Name, Middle Name)')
+    year_level = forms.TypedChoiceField(
+        label="Year Level (Now)", choices=student_enrollment_details.year_levels.choices, coerce=str)
     select_strand = forms.TypedChoiceField(label="Select Strand", choices=(
-        (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str, required=False)
+        (strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}") for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand')), coerce=str)
     home_address = forms.CharField(
         max_length=50, label='Home address (Current)')
     contact_number = forms.CharField(

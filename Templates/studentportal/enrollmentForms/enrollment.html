@@ -1,10 +1,10 @@
-{% extends 'adminportal/Shs_courses/courses_base.html' %}
+{% extends 'studentportal/base1.html' %}
 {% block content %}
 {% load std_portal %}
 {% include 'studentportal/messages/messages.html' %}
 
 
-<form id="enrollment_form" class="p-3" method="post" enctype="multipart/form-data">
+<form id="postForm" method="post" class="p-3" enctype="multipart/form-data">
     {% csrf_token %}
     <!-- List of errors from forms.py -->
     {{ form.non_field_errors }}
@@ -16,6 +16,12 @@
             {{ form.full_name.errors }} <!-- Field errors -->
             <label for="{{ form.full_name.id_for_label }}" class="form-label"> {{ form.full_name.label }}: </label>
             {{ form.full_name|addclass:"form-control"}} <!-- Input Field -->
+        </div>
+
+        <div class="form-outline mb-4">
+            {{ form.year_level.errors }} <!-- Field errors -->
+            <label for="{{ form.year_level.id_for_label }}" class="form-label"> {{ form.year_level.label }}: </label>
+            {{ form.year_level|addclass:"form-control"}} <!-- Input Field -->
         </div>
 
         <div class="form-outline mb-4">

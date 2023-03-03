@@ -37,6 +37,6 @@ urlpatterns = [
 
     path("Enrollment/", include([
         path("apply/<uidb64>/<token>/",
-             enrollment_g11.as_view(), name="enrollment_g11"),
+             enrollment_new_admission.as_view(), name="enrollment_new_admission"),
     ])),
 ]

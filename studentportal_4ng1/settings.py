@@ -146,7 +146,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'nami.chwan2022.2023@gmail.com'
-EMAIL_HOST_PASSWORD = 'egwarzzfkzrdlfot'  # App password
+EMAIL_HOST_PASSWORD = 'khxxdjajpxvpnxlz'  # App password
 
 
 PASSWORD_RESET_TIMEOUT = 60  # 20 Minutes

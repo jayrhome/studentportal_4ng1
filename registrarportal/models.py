@@ -3,6 +3,7 @@ from datetime import date
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
+from . emailSenders import send_enrollment_link
 
 
 def add_school_year(start_year, year):
@@ -122,7 +123,8 @@ class student_admission_details(models.Model):
         return self.jhs_name
 
     @classmethod
-    def admit_this_students(cls, iDs):
+    def admit_this_students(cls, request, iDs):
+        lst = []
         for id in iDs:
             with transaction.atomic():
                 obj = cls.objects.select_for_update().get(id=id)
@@ -130,21 +132,9 @@ class student_admission_details(models.Model):
                 if obj.is_denied:
                     obj.is_denied = False
                 obj.save()
-
-    # def to_pendingList(self):
-    #     return reverse("adminportal:admission")
-
-    # def to_admittedList(self):
-    #     return reverse("adminportal:admitted_students")
-
-    # def to_reviewList(self):
-    #     return reverse("adminportal:forReviewAdmission")
-
-    # def to_deniedList(self):
-    #     return reverse("adminportal:denied_admissions")
-
-    # def to_holdList(self):
-    #     return reverse("adminportal:hold_admissions")
+                lst.append(obj)
+        else:
+            send_enrollment_link(request, lst)
 
 
 class admission_requirements(models.Model):
@@ -259,9 +249,6 @@ class student_enrollment_details(models.Model):
     objects = models.Manager()
     validatedObjects = enrollment_manager()
 
-    def __str__(self):
-        return self.id
-
     class Meta:
         ordering = ["-enrolled_school_year__id", "created_on"]
         unique_together = ["applicant", "admission", "enrolled_school_year"]
@@ -286,7 +273,7 @@ class student_contact_number(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, related_name="user_contact")
     cp_number_regex = RegexValidator(regex=r"^(09)([0-9]{9})$")
     cellphone_number = models.CharField(
-        max_length=11, unique=True, validators=[cp_number_regex])
+        max_length=11, validators=[cp_number_regex])
     modified_on = models.DateTimeField(auto_now=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
@@ -305,7 +292,7 @@ class student_report_card(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
     class Meta:
         ordering = ["-created_on"]
@@ -319,7 +306,7 @@ class student_id_picture(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
     class Meta:
         ordering = ["-created_on"]
@@ -348,3 +335,14 @@ class enrollment_batch(models.Model):
 
     def __str__(self):
         return str(self.id)
+
+
+class enrollment_invitations(models.Model):
+    invitation_to = models.OneToOneField(
+        student_admission_details, on_delete=models.RESTRICT, related_name="invitation")
+    is_accepted = models.BooleanField(default=False)
+    modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_on"]
