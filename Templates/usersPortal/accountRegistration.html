@@ -1,8 +1,10 @@
-{% extends 'studentportal/base1.html' %} {% block content %} {% load std_portal
-%} {% include 'usersPortal/messages/messages.html' %}
+{% extends 'studentportal/base1.html' %}
+{% block content %} 
+{% load std_portal%} 
+{% include 'usersPortal/messages/messages.html' %}
 
 <div class="main">
-  <div class="submain">
+  <div class="submain">   
     <form id="postForm" method="post">
       {% csrf_token %}
       <!-- List of errors from forms.py -->
@@ -26,7 +28,7 @@
 
         <div class="form-outline">
           <div class="txt_field">
-            {{ form.display_name.errors }}
+
             <!-- Field errors -->
             {{ form.display_name|addclass:"form-control shadow-none"}}
             <!-- Input Field -->
@@ -37,6 +39,7 @@
             >
               Username:
             </label>
+            {{ form.display_name.errors }}
           </div>
         </div>
 

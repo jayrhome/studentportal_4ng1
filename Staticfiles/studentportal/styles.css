@@ -203,7 +203,7 @@
                     }
                     .card_login .txt_field label{
                         position: absolute;
-                        top: 50%;
+                        top: -5px !important;
                         left: 5px;
                         color: #adadad; 
                         transform: translateY(-50%);
@@ -216,7 +216,7 @@
                     }
                     .card_login .txt_field label.active{
                         top: -5px !important;
-                        color:#173979 !important;                        
+                        color:#800000 !important;                        
                     }
                      .txt_field span::before{
                         content: '';
