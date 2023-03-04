@@ -38,6 +38,24 @@ eyeicon2.addEventListener('click', () => {
 
 
 // })
+
+if(document.readyState == 'loading'){
+    document.addEventListener('DOMContentLoaded', ready)
+}else{
+    ready()
+}
+
+function ready() {
+
+    if(email.value == ""){
+        em.classList.remove('active')
+        line.classList.remove('active')
+    }else{
+        console.log('sad')
+        em.classList.add('active')
+        line.classList.add('active')
+    }
+}
 email.addEventListener('change', () => {
     if(email.value == ""){
         em.classList.remove('active')

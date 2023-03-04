@@ -3,42 +3,57 @@
 {% load i18n %}
 {% load adminportal_tags %}
 
-<h4> Grade 11 - First Semester </h4>
 
-<div class="container col-md-8">
+<div class="container pt-5 d-flex flex-column">
+    <h1 style="color:green">Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</h1>
+</div>
+<div class="container col-md-8 mt-4 p-3 bg-white box_shadow border rounded">
     <form id="postForm" method="post">
 
+        <h4 class="py-2"> Grade 11 - First Semester </h4>
         {{ wizard.form.non_field_errors }}
         {% csrf_token %}
         <table>
-        {{ wizard.management_form }}
-        {% if wizard.form.forms %}
+            {{ wizard.management_form }}
+            {% if wizard.form.forms %}
             {{ wizard.form.management_form }}
             {% for form in wizard.form.forms %}
-                {{ form }}
+            {{ form }}
             {% endfor %}
-        {% else %}
+            {% else %}
 
-            {{ wizard.form.strand.errors }} <!-- Field errors -->
-            <label for="{{ wizard.form.strand.id_for_label }}" class="form-label"> {{ wizard.form.strand.label }} </label>
-            {{ wizard.form.strand|addclass:"form-control"}} <!-- Input Field -->
 
-            {{ wizard.form.effective_date.errors }} <!-- Field errors -->
-            <label for="{{ wizard.form.effective_date.id_for_label }}" class="form-label"> {{ wizard.form.effective_date.label }} </label>
-            {{ wizard.form.effective_date|addclass:"form-control"}} <!-- Input Field -->
+            <div class="form-outline mb-4">
+                {{ wizard.form.strand.errors }} <!-- Field errors -->
+                <div class="form-outline mb-4"></div>
+                <label for="{{ wizard.form.strand.id_for_label }}" class="form-label"> {{ wizard.form.strand.label }}
+                </label>
+                {{ wizard.form.strand|addclass:"form-control"}} <!-- Input Field -->
+            </div>
+            <div class="form-outline mb-4">
+                {{ wizard.form.effective_date.errors }} <!-- Field errors -->
+                <label for="{{ wizard.form.effective_date.id_for_label }}" class="form-label">
+                     
+                    {{ wizard.form.effective_date.label }} </label>
+                {{ wizard.form.effective_date|addclass:"form-control"}} <!-- Input Field -->
+            </div>
 
-            {{ wizard.form.g11_firstSem_subjects.errors }} <!-- Field errors -->
-            <label for="{{ wizard.form.g11_firstSem_subjects.id_for_label }}" class="form-label"> {{ wizard.form.g11_firstSem_subjects.label }} </label>
-            {{ wizard.form.g11_firstSem_subjects|addclass:"form-control"}} <!-- Input Field -->
-
-        {% endif %}
+            <div class="form-outline mb-4">
+                {{ wizard.form.g11_firstSem_subjects.errors }} <!-- Field errors -->
+                <label for="{{ wizard.form.g11_firstSem_subjects.id_for_label }}" class="form-label"> 
+                    {{ wizard.form.g11_firstSem_subjects.label }} </label>
+                {{ wizard.form.g11_firstSem_subjects|addclass:"form-control"}} <!-- Input Field -->
+            </div>
+            {% endif %}
         </table>
 
         <input type="submit" name="wizard_goto_step" value="Next" class="btn btn-primary btn-sm">
 
     </form>
+
+
 </div>
 
-<p>Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+
 
 {% endblock content %}
