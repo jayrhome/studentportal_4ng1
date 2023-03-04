@@ -23,6 +23,7 @@ from studentportal.models import documentRequest
 from . forms import *
 from formtools.wizard.views import SessionWizardView
 from adminportal.models import curriculum, schoolSections, firstSemSchedule, secondSemSchedule
+from . emailSenders import enrollment_invitation_emails
 
 
 User = get_user_model()
@@ -39,6 +40,16 @@ def validate_latestSchoolYear(sy):
 
 def registrar_only(user):
     return user.is_registrar
+
+
+def check_admissionSched(user):
+    a = enrollment_admission_setup.objects.filter(
+        start_date__lte=date.today(), end_date__gte=date.today()).first()
+    if a:
+        if enrollment_admission_setup.objects.first() == a:
+            return True
+        return False
+    return False
 
 
 @method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(registrar_only, login_url="studentportal:index")], name="dispatch")
@@ -279,11 +290,11 @@ class get_admissions(ListView, DeletionMixin):
 
         if "batchId" in request.POST:
             if schoolSections.latestSections.filter(sy=self.get_batch.sy, yearLevel="11").exists():
-                studAdms = student_admission_details.objects.filter(
-                    admission_batch_member__id=self.get_batch.id, is_accepted=False).exclude(is_denied=True).values_list('id', flat=True)
-                student_admission_details.admit_this_students(studAdms)
-            messages.warning(
-                request, "School must have new sections for grade 11 admission.")
+                student_admission_details.admit_this_students(request, student_admission_details.objects.filter(
+                    admission_batch_member__id=self.get_batch.id, is_accepted=False).exclude(is_denied=True).values_list('id', flat=True))
+            else:
+                messages.warning(
+                    request, "School must have new sections for grade 11 admission.")
 
         return HttpResponseRedirect(self.success_url + f"?page={request.POST.get('page')}")
 
@@ -309,3 +320,27 @@ class get_admissions(ListView, DeletionMixin):
             self.get_batch = admission_batch.new_batches.filter(
                 id=int(request.POST["batchId"])).first()
         return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(registrar_only, login_url="studentportal:index"), user_passes_test(check_admissionSched, login_url="registrarportal:dashboard")], name="dispatch")
+class enrollment_invitation_oldStudents(View):
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        lst = [enrollment_invitations.objects.create(
+            invitation_to=obj) for obj in self.diff]
+        enrollment_invitation_emails(request, lst)
+        return HttpResponseRedirect(reverse("registrarportal:dashboard"))
+
+    def dispatch(self, request, *args, **kwargs):
+        adm_objs = student_admission_details.objects.filter(is_accepted=True, is_denied=False, with_enrollment=True).alias(count_g11=Count("enrollment", filter=Q(enrollment__year_level='11', enrollment__is_accepted=True, enrollment__is_denied=False)), count_g12=Count(
+            "enrollment", filter=Q(enrollment__year_level='12', enrollment__is_accepted=True, enrollment__is_denied=False))).exclude(Q(count_g11__lt=1) | Q(count_g11__gt=1), count_g12__gte=1)
+        adm_objs_with_inv = student_admission_details.objects.alias(
+            count_inv=Count("invitation")).exclude(count_inv=0)
+        self.diff = adm_objs.difference(adm_objs_with_inv)
+
+        if self.diff:
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            messages.warning(request, "No token receipents.")
+            return HttpResponseRedirect(reverse("registrarportal:dashboard"))
