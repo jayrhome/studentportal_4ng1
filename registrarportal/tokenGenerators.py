@@ -84,7 +84,7 @@ class re_enroll_token_generator(PasswordResetTokenGenerator):
         return True
 
     def _make_hash_value(self, inv_object, timestamp):
-        return (six.text_type(inv_object.pk) + six.text_type(timestamp) + six.text_type(inv_object.is_accepted) + six.text_type(inv_object.modified_on))
+        return (six.text_type(inv_object.pk) + six.text_type(timestamp) + six.text_type(inv_object.invitation_to.admission_owner.id) + six.text_type(inv_object.is_accepted) + six.text_type(inv_object.modified_on))
 
 
 generate_enrollment_token = enrollment_token_generator()

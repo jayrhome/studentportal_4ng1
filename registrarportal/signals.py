@@ -31,18 +31,7 @@ def admissionBatch(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=student_enrollment_details)
 def enrollmentBatch(sender, instance, created, **kwargs):
-    if instance.year_level == '11':
-        get_batches = enrollment_batch.objects.filter(sy=instance.enrolled_school_year, section__assignedStrand=instance.strand, section__yearLevel=instance.year_level).alias(
-            count_members=Count("members", filter=Q(members__is_denied=False))).exclude(count_members__gte=F("section__allowedPopulation")).first()
-
-        if get_batches:
-            get_batches.members.add(instance)
-            get_batches.save()
-
-        else:
-            full_batches(instance)
-
-    else:
+    if created or ("is_accepted" in kwargs["update_fields"] and "is_denied" in kwargs["update_fields"]):
         get_batches = enrollment_batch.objects.filter(sy=instance.enrolled_school_year, section__assignedStrand=instance.strand, section__yearLevel=instance.year_level).alias(
             count_members=Count("members", filter=Q(members__is_denied=False))).exclude(count_members__gte=F("section__allowedPopulation")).first()
 

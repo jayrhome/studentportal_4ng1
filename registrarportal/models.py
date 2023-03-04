@@ -1,4 +1,5 @@
 from django.db import models, transaction
+from django.db.models import Q, F, Count
 from datetime import date
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -44,6 +45,11 @@ class enrollment_admission_setup(models.Model):
 
     def __str__(self):
         return f"{self.ea_setup_sy.display_sy()}: {self.start_date} - {self.end_date}"
+
+
+class oldStudent_manager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().alias(g11=Count("enrollment", filter=Q(enrollment__year_level='11', enrollment__is_accepted=True, enrollment__is_denied=False, enrollment__enrolled_school_year__until__lte=date.today())), g12=Count("enrollment", filter=Q(enrollment__year_level='12'))).filter(is_accepted=True, is_denied=False).exclude(Q(g12__gte=1) | Q(g11__lt=1))
 
 
 class student_admission_details(models.Model):
@@ -108,6 +114,9 @@ class student_admission_details(models.Model):
     with_enrollment = models.BooleanField(default=False)
     modified_on = models.DateTimeField(auto_now=True)
     created_on = models.DateTimeField(auto_now_add=True)
+
+    objects = models.Manager()
+    oldStudents = oldStudent_manager()
 
     class Meta:
         ordering = ["-admission_sy__id", "created_on"]

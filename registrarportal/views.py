@@ -333,8 +333,7 @@ class enrollment_invitation_oldStudents(View):
         return HttpResponseRedirect(reverse("registrarportal:dashboard"))
 
     def dispatch(self, request, *args, **kwargs):
-        adm_objs = student_admission_details.objects.filter(is_accepted=True, is_denied=False, with_enrollment=True).alias(count_g11=Count("enrollment", filter=Q(enrollment__year_level='11', enrollment__is_accepted=True, enrollment__is_denied=False)), count_g12=Count(
-            "enrollment", filter=Q(enrollment__year_level='12', enrollment__is_accepted=True, enrollment__is_denied=False))).exclude(Q(count_g11__lt=1) | Q(count_g11__gt=1), count_g12__gte=1)
+        adm_objs = student_admission_details.oldStudents.all()
         adm_objs_with_inv = student_admission_details.objects.alias(
             count_inv=Count("invitation")).exclude(count_inv=0)
         self.diff = adm_objs.difference(adm_objs_with_inv)

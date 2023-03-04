@@ -34,7 +34,7 @@ from registrarportal.models import student_admission_details
 import cv2
 import pytesseract
 from PIL import Image
-from registrarportal.tokenGenerators import generate_enrollment_token
+from registrarportal.tokenGenerators import generate_enrollment_token, new_enrollment_token_for_old_students
 from usersPortal.models import user_profile
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -507,6 +507,75 @@ class enrollment_new_admission(FormView):
             admObj = None
 
         if admObj is not None and generate_enrollment_token.check_token(admObj, self.kwargs['token']):
+            # Return true if token is still valid
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            # if there's no user found, or the token is no longer valid, or both.
+            messages.error(request, "Enrollment link is no longer valid!")
+            return HttpResponseRedirect(reverse("studentportal:index"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class enrollment_old_students(FormView):
+    template_name = "studentportal/enrollmentForms/oldStudent_form.html"
+    form_class = enrollment_form2
+    success_url = "/"
+
+    def form_valid(self, form):
+        try:
+            get_age = user_profile.objects.get(user=self.request.user)
+            if get_age.user_age():
+                save_this = student_enrollment_details()
+                save_this.applicant = self.request.user
+                save_this.admission = student_admission_details.objects.get(
+                    admission_owner=self.request.user)
+                save_this.strand = shs_strand.objects.get(
+                    id=int(form.cleaned_data["select_strand"]))
+                save_this.full_name = form.cleaned_data["full_name"]
+
+                save_this.age = get_age.user_age()
+                save_this.enrolled_school_year = schoolYear.objects.first()
+                save_this.year_level = '12'
+                save_this.save()
+
+                student_home_address.objects.create(
+                    home_of=self.request.user, permanent_home_address=form.cleaned_data["home_address"])
+                student_contact_number.objects.create(
+                    own_by=self.request.user, cellphone_number=form.cleaned_data["contact_number"])
+                student_report_card.objects.create(
+                    card_from=save_this, report_card=form.cleaned_data["card"])
+                student_id_picture.objects.create(
+                    image_from=save_this, user_image=form.cleaned_data["profile_image"])
+
+                self.admObj.is_accepted = True
+                self.admObj.save()
+
+                messages.success(
+                    self.request, "We received your enrollment. Please wait us to validate it.")
+                return super().form_valid(form)
+            else:
+                messages.warning(
+                    self.request, "Enrollment Failed. Please complete your profile to continue.")
+                return self.form_invalid(form)
+        except Exception as e:
+            messages.error(
+                self.request, "Enrollment Failed. Nakapag-apply kana this school year.")
+            return self.form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Enrollment"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            uid = force_str(urlsafe_base64_decode(self.kwargs['uidb64']))
+            self.admObj = enrollment_invitations.objects.get(
+                pk=uid, invitation_to__admission_owner=request.user)
+        except(TypeError, ValueError, OverflowError, ObjectDoesNotExist):
+            self.admObj = None
+
+        if self.admObj is not None and new_enrollment_token_for_old_students.check_token(self.admObj, self.kwargs['token']):
             # Return true if token is still valid
             return super().dispatch(request, *args, **kwargs)
         else:

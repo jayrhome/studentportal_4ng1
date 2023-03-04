@@ -97,26 +97,23 @@ class g11_firstSem(forms.Form):
 class g11_secondSem(forms.Form):
     g11_secondSem_subjects = forms.TypedMultipleChoiceField(label="Grade 11 - Second Semester Subjects", choices=(
         (subject.id, f"{subject.code} - {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)
-    
 
 
 class g12_firstSem(forms.Form):
     g12_firstSem_subjects = forms.TypedMultipleChoiceField(label="Grade 12 - First Semester Subjects", choices=(
         (subject.id, f"{subject.code} - {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)
-    
 
 
 class g12_secondSem(forms.Form):
     g12_secondSem_subjects = forms.TypedMultipleChoiceField(label="Grade 12 - Second Semester Subjects", choices=(
         (subject.id, f"{subject.code} - {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)
-    
 
 
 class makeSectionForm(forms.Form):
-    # yearLevel = forms.TypedChoiceField(
-    #     label="Year Level", choices=schoolSections.year_levels.choices, coerce=str)
-    # strand = forms.TypedChoiceField(label="Strand", choices=(
-    #     (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str)
+    yearLevel = forms.TypedChoiceField(
+        label="Year Level", choices=schoolSections.year_levels.choices, coerce=str)
+    strand = forms.TypedChoiceField(label="Strand", choices=(
+        (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str)
     allowedPopulation = forms.CharField(label="Number of students per sections",
                                         help_text="Minimum of 15 students", widget=forms.NumberInput, validators=[validate_sectionPopulation, ], max_length=2)
     numberOfSection = forms.CharField(label="Number of sections to create for this strand",

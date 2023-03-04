@@ -1,0 +1,58 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+{% load std_portal %}
+{% include 'studentportal/messages/messages.html' %}
+
+
+<form id="postForm" method="post" class="p-3" enctype="multipart/form-data">
+    {% csrf_token %}
+    <!-- List of errors from forms.py -->
+    {{ form.non_field_errors }}
+
+    <div class="container col-md-8 mt-4 p-3 bg-light">
+        <h4> Enrollment Application </h4>
+
+        <div class="form-outline mb-4">
+            {{ form.full_name.errors }} <!-- Field errors -->
+            <label for="{{ form.full_name.id_for_label }}" class="form-label"> {{ form.full_name.label }}: </label>
+            {{ form.full_name|addclass:"form-control"}} <!-- Input Field -->
+        </div>
+
+        <div class="form-outline mb-4">
+            {{ form.select_strand.errors }} <!-- Field errors -->
+            <label for="{{ form.select_strand.id_for_label }}" class="form-label"> {{ form.select_strand.label }}: </label>
+            {{ form.select_strand|addclass:"form-control"}} <!-- Input Field -->
+        </div>
+
+        <div class="form-outline mb-4">
+            {{ form.home_address.errors }} <!-- Field errors -->
+            <label for="{{ form.home_address.id_for_label }}" class="form-label"> {{ form.home_address.label }}: </label>
+            {{ form.home_address|addclass:"form-control"}} <!-- Auto fill address -->
+        </div>
+
+        <div class="form-outline mb-4">
+            {{ form.contact_number.errors }} <!-- Field errors -->
+            <label for="{{ form.contact_number.id_for_label }}" class="form-label"> {{ form.contact_number.label }}: </label>
+            {{ form.contact_number|addclass:"form-control"}} <!-- Input Field -->
+        </div>
+
+        <div class="form-outline mb-4">
+            {{ form.card.errors }} <!-- Field errors -->
+            <label for="{{ form.card.id_for_label }}" class="form-label"> {{ form.card.label }}: </label>
+            {{ form.card|addclass:"form-control"}} <!-- Input Field -->
+            {{ form.card.help_text }}
+        </div>
+
+        <div class="form-outline mb-4">
+            {{ form.profile_image.errors }} <!-- Field errors -->
+            <label for="{{ form.profile_image.id_for_label }}" class="form-label"> {{ form.profile_image.label }}: </label>
+            {{ form.profile_image|addclass:"form-control"}} <!-- Input Field -->
+            {{ form.profile_image.help_text }}
+        </div>
+
+        <input type="submit" value="Submit" class="btn btn-primary btn-block mb-4">
+    </div>
+
+</form>
+
+{% endblock content %}
