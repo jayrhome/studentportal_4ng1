@@ -12,68 +12,32 @@
 
             </h3>
         </div>
-        <div class="tracks_strand_date">
-            <p> School Year {% firstof sy %} </p>
-            {% if enroll_now == "postpone" %}
-                <p> Enrollment and Admission are currently postponed. </p>
-    
-            {% elif enroll_now == "enroll" %}
-                <p> Enrollment and Admission will end on {{end_date_enrollment.end_date|date:"l, M d, o"}}. </p>
-                <a href="{% url 'studentportal:admission_application' %}" class="btn btn-primary btn-sm"> {% firstof sy %} Apply Now </a> <!-- Button to apply for admission and enrollment -->
-    
-            {% elif enroll_now == "start_soon" %}
-                <p> Enrollment and Admission will start on {{start_date_enrollment.start_date|date:"l, M d, o"}}. </p>
-    
-            {% endif %}
-        </div>
-    </div>
-</div>
-<div class="container-fluid">
-    <div class="container py-5">
-        <div class="row px-sm-0 px-md-5">
-            <div class="intro-p col-md-6" >
-                <div class="intro_p_p" data-aos="fade-up"
-                data-aos-anchor-placement="top-bottom" data-aos-duration="800">
-                    <h4>Leandro Integrated School</h4>
-                    <p>Leandro Integrated School's senior high school assists students in discovering and becoming the greatest versions of themselves and equips them with the skills necessary to succeed in life. The cutting-edge curriculum at Leandro Integrated School, the vibrant senior high school environment, and the college experience make this feasible.</p>
-
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="filter" data-aos="fade-up"
-                data-aos-anchor-placement="top-bottom" data-aos-duration="800" data-aos-delay="300">
-                    <div class="img-intro box"></div>
-
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
 
-<div class="container-fluid p-0" style="background: #fff;" id="courses">
-    <div class="tracks_strand_date container pt-5 text-center">
-        <!-- <h3> School Year {% firstof sy %} </h3> -->
-        {% if enroll_now == "postpone" %}
-            <p> Enrollment and Admission are currently postponed. </p>
-
-        {% elif enroll_now == "enroll" %}
-            <p> Enrollment and Admission will end on {{end_date_enrollment.end_date|date:"l, M d, o"}}. </p>
-            <a href="{% url 'studentportal:admission_application' %}" class="btn btn-primary btn-sm"> {% firstof sy %} Apply Now </a> <!-- Button to apply for admission and enrollment -->
-
-        {% elif enroll_now == "start_soon" %}
-            <p> Enrollment and Admission will start on {{start_date_enrollment.start_date|date:"l, M d, o"}}. </p>
-
-        {% endif %}
-    </div>
-</div>
 
     <!-- Offered Courses -->
-    <div class="container-fluid" style="background:#800000;">
-        <div class="track_and_strand_wrapper container py-5 ">
+    <div class="container-fluid" style="background:#800000; border-top: 3px solid #fff;">
+        <div class="track_and_strand_wrapper container py-5 position-relative">
+            <div class="tracks_strand_date">
+                <h3> School Year {% firstof sy %} </h3>
+                {% if enroll_now == "postpone" %}
+                    <p> Enrollment and Admission are currently postponed. </p>
+        
+                {% elif enroll_now == "enroll" %}
+                    <p> Enrollment and Admission will end on {{end_date_enrollment.end_date|date:"l, M d, o"}}. </p>
+                    <a href="{% url 'studentportal:admission_application' %}" class="btn btn-primary btn-sm"> {% firstof sy %} Apply Now </a> <!-- Button to apply for admission and enrollment -->
+        
+                {% elif enroll_now == "start_soon" %}
+                    <p> Enrollment and Admission will start on {{start_date_enrollment.start_date|date:"l, M d, o"}}. </p>
+        
+                {% endif %}
+            </div>
+
+
             <center> <h2 class="text-white"> Offered Courses </h2> </center>&nbsp;
             <div class="wrap pt-0">
-                <div class="row py-3 justify-content-sm-center justify-content-md-start" style="padding:20px; padding-top:0;">
+                <div class="row py-3 justify-content-sm-center justify-content-md-start" style="padding-top:0;">
                     {% for course in courses %}
                     <div class="col-sm-12 col-md-4">
                         <div class="track_strand mb-3 p-2 px-3">
