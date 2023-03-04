@@ -18,5 +18,7 @@
 
 12: Open directory studenportal/forms.py
     12.1: highlight line 79 - 82, and click ctrl + k + u
-    12.2: highlight line 166 - 169, and click ctrl + k + u
+    12.2: highlight line 71 - 72, and click ctrl + k + u
+    12.3: highlight line 166 - 169, and click ctrl + k + u
+    12.4: highlight line 259 - 260, and click ctrl + k + u
 

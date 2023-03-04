@@ -1,0 +1,31 @@
+{% extends 'registrarportal/admission/base1.html' %}
+{% block content %}
+{% load registrar_Tags %}
+{% include 'registrarportal/messages/messages.html' %}
+
+
+<div class="container col-md-12">
+    <p> Admission Period: {{start_date|date:"l, d F Y"}} until {{end_date|date:"l, d F Y"}} </p>
+    <form id="postForm" method="post">
+        {% csrf_token %}
+        <!-- List of errors from forms.py -->
+        {{ form.non_field_errors }}
+    
+        <h4> Reschedule </h4>
+
+        {% for field in form %}
+            <div class="form-outline mb-4">
+                <label for="{{ field.id_for_label }}" class="form-label"> {{ field.label }}: </label>
+                {{ field|addclass:"form-control"}} <!-- Input Field -->
+                {{ field.errors }} <!-- Field errors -->
+            </div>
+        {% endfor %}
+
+        <input type="submit" value="Save" class="btn btn-primary btn-block mb-4">
+    </form>
+
+    <a href="{% url 'registrarportal:schoolyear' %}" class="btn btn-primary"> Back </a>
+</div>
+
+
+{% endblock content %}

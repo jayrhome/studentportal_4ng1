@@ -24,6 +24,7 @@ from . forms import *
 from formtools.wizard.views import SessionWizardView
 from adminportal.models import curriculum, schoolSections, firstSemSchedule, secondSemSchedule
 from . emailSenders import enrollment_invitation_emails
+import re
 
 
 User = get_user_model()
@@ -289,7 +290,7 @@ class get_admissions(ListView, DeletionMixin):
             self.denied_this_admission.save()
 
         if "batchId" in request.POST:
-            if schoolSections.latestSections.filter(sy=self.get_batch.sy, yearLevel="11").exists():
+            if schoolSections.latestSections.filter(sy=self.get_batch.sy, yearLevel="11").exists() and schoolSections.latestSections.filter(sy=self.get_batch.sy, yearLevel="12").exists():
                 student_admission_details.admit_this_students(request, student_admission_details.objects.filter(
                     admission_batch_member__id=self.get_batch.id, is_accepted=False).exclude(is_denied=True).values_list('id', flat=True))
             else:
@@ -343,3 +344,235 @@ class enrollment_invitation_oldStudents(View):
         else:
             messages.warning(request, "No token receipents.")
             return HttpResponseRedirect(reverse("registrarportal:dashboard"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(registrar_only, login_url="studentportal:index")], name="dispatch")
+class update_admission_schedule(FormView):
+    template_name = "registrarportal/admission/rescheduling.html"
+    form_class = ea_setup_form
+    success_url = "/Registrar/Admission/"
+
+    def form_valid(self, form):
+        try:
+            if form.has_changed():
+
+                if "start_date" in form.changed_data and form.cleaned_data["start_date"] >= form.cleaned_data["end_date"]:
+                    messages.error(
+                        self.request, "Incorrect set of dates. Try again.")
+                    return self.form_invalid(form)
+
+                for field in form.changed_data:
+                    setattr(self.get_sched, field, form.cleaned_data[field])
+
+                self.get_sched.save()
+                return super().form_valid(form)
+            else:
+                return super().form_valid(form)
+        except Exception as e:
+            return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if self.get_sched.start_date > date.today():
+            initial["start_date"] = self.get_sched.start_date
+
+        initial["end_date"] = self.get_sched.end_date
+        initial["students_perBatch"] = self.get_sched.students_perBatch
+        return initial
+
+    def get_form_class(self):
+        if self.get_sched.start_date <= date.today():
+            return ea_setup_form2
+        return super().get_form_class()
+
+    def dispatch(self, request, *args, **kwargs):
+        self.sy = schoolYear.objects.first()
+        if self.sy and self.sy.until >= date.today():
+            self.get_sched = enrollment_admission_setup.objects.filter(
+                ea_setup_sy=self.sy).first()
+            if self.get_sched:
+                return super().dispatch(request, *args, **kwargs)
+            else:
+                messages.warning(request, "No schedule found.")
+                return HttpResponseRedirect(reverse("registrarportal:schoolyear"))
+        messages.warning(request, "Add school year first.")
+        return HttpResponseRedirect(reverse("registrarportal:schoolyear"))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Reschedule"
+        context["start_date"] = self.get_sched.start_date
+        context["end_date"] = self.get_sched.end_date
+        return context
+
+
+def enrollment_not_existing_kwarg(request, qs, val):
+    if not qs:
+        # if qs = walang laman, then:
+        messages.warning(request, "%s not found." % val)
+
+
+def search_regex_match(request, val):
+    rgx = re.compile("([a-zA-Z\d\s]+)")
+    if rgx.fullmatch(val):
+        return True
+    else:
+        messages.warning(request, "%s is invalid." % val)
+        return False
+
+
+def dts_to_list(val):
+    try:
+        if int(val):
+            # if val is int
+            return True
+    except:
+        # if val is string
+        return False
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(registrar_only, login_url="studentportal:index")], name="dispatch")
+class get_admitted_students(ListView):
+    allow_empty = True
+    context_object_name = "students"
+    paginate_by = 40
+    template_name = "registrarportal/admission/viewAdmittedStudents.html"
+
+    def post(self, request, *args, **kwargs):
+        try:
+            search_this = request.POST.get("search_this")
+            if search_this:
+                if search_regex_match(request, search_this):
+                    return HttpResponseRedirect(reverse("registrarportal:get_admitted_students", kwargs={"key": search_this}))
+                else:
+                    return HttpResponseRedirect(reverse("registrarportal:get_admitted_students"))
+            else:
+                messages.warning(
+                    request, "Enter the Student Name or ID to search.")
+                return HttpResponseRedirect(reverse("registrarportal:get_admitted_students"))
+        except Exception as e:
+            # messages.error(request, e)
+            return HttpResponseRedirect(reverse("registrarportal:get_admitted_students"))
+
+    def get_queryset(self):
+        try:
+            if "key" in self.kwargs:
+                # Convert to list
+                key = [ltr for ltr in self.kwargs["key"]]
+                map_func_res = map(dts_to_list, key)
+
+                if all(map_func_res):
+                    # if map_func_res are all integers
+                    qs = student_admission_details.objects.filter(is_accepted=True, is_denied=False, id=int(self.kwargs["key"])).prefetch_related(
+                        Prefetch("softCopy_admissionRequirements_phBorn",
+                                 queryset=ph_born.objects.all(), to_attr="phborndocx"),
+                        Prefetch("softCopy_admissionRequirements_foreigner",
+                                 queryset=foreign_citizen_documents.objects.all(), to_attr="fborndocx"),
+                        Prefetch("softCopy_admissionRequirements_dualCitizen",
+                                 queryset=dual_citizen_documents.objects.all(), to_attr="dborndocx")
+                    )
+                    enrollment_not_existing_kwarg(
+                        self.request, qs, self.kwargs["key"])
+
+                else:
+                    # If combination of str and int, or pure str
+                    qs = student_admission_details.objects.filter(is_accepted=True, is_denied=False, first_name__unaccent__icontains=str(self.kwargs["key"])).prefetch_related(
+                        Prefetch("softCopy_admissionRequirements_phBorn",
+                                 queryset=ph_born.objects.all(), to_attr="phborndocx"),
+                        Prefetch("softCopy_admissionRequirements_foreigner",
+                                 queryset=foreign_citizen_documents.objects.all(), to_attr="fborndocx"),
+                        Prefetch("softCopy_admissionRequirements_dualCitizen",
+                                 queryset=dual_citizen_documents.objects.all(), to_attr="dborndocx")
+                    )
+                    enrollment_not_existing_kwarg(
+                        self.request, qs, self.kwargs["key"])
+
+            else:
+                qs = student_admission_details.objects.filter(is_accepted=True, is_denied=False).prefetch_related(
+                    Prefetch("softCopy_admissionRequirements_phBorn",
+                             queryset=ph_born.objects.all(), to_attr="phborndocx"),
+                    Prefetch("softCopy_admissionRequirements_foreigner",
+                             queryset=foreign_citizen_documents.objects.all(), to_attr="fborndocx"),
+                    Prefetch("softCopy_admissionRequirements_dualCitizen",
+                             queryset=dual_citizen_documents.objects.all(), to_attr="dborndocx")
+                )
+        except Exception as e:
+            # messages.error(self.request, e)
+            qs = student_admission_details.objects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Admitted Students"
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(registrar_only, login_url="studentportal:index")], name="dispatch")
+class get_enrolled_students(ListView):
+    allow_empty = True
+    context_object_name = "students"
+    paginate_by = 40
+    template_name = "registrarportal/enrollment/get_enrolled_students.html"
+
+    def post(self, request, *args, **kwargs):
+        try:
+            search_this = request.POST.get("search_this")
+            if search_this:
+                if search_regex_match(request, search_this):
+                    return HttpResponseRedirect(reverse("registrarportal:get_enrolled_students", kwargs={"key": search_this}))
+                else:
+                    return HttpResponseRedirect(reverse("registrarportal:get_enrolled_students"))
+            else:
+                messages.warning(
+                    request, "Enter the Student Name or ID to search.")
+                return HttpResponseRedirect(reverse("registrarportal:get_enrolled_students"))
+        except Exception as e:
+            # messages.error(request, e)
+            return HttpResponseRedirect(reverse("registrarportal:get_enrolled_students"))
+
+    def get_queryset(self):
+        try:
+            if "key" in self.kwargs:
+                qs = student_enrollment_details.objects.filter()
+                # Convert to list
+                key = [ltr for ltr in self.kwargs["key"]]
+                map_func_res = map(dts_to_list, key)
+
+                if all(map_func_res):
+                    # if map_func_res are all integers
+                    qs = student_enrollment_details.objects.filter(is_accepted=True, is_denied=False, id=int(self.kwargs["key"])).prefetch_related(
+                        Prefetch("report_card",
+                                 queryset=student_report_card.objects.all(), to_attr="reportcard"),
+                        Prefetch("stud_pict",
+                                 queryset=student_id_picture.objects.all(), to_attr="studentpict")
+                    )
+                    enrollment_not_existing_kwarg(
+                        self.request, qs, self.kwargs["key"])
+
+                else:
+                    # If combination of str and int, or pure str
+                    qs = student_enrollment_details.objects.filter(is_accepted=True, is_denied=False, full_name__unaccent__icontains=str(self.kwargs["key"])).prefetch_related(
+                        Prefetch("report_card",
+                                 queryset=student_report_card.objects.all(), to_attr="reportcard"),
+                        Prefetch("stud_pict",
+                                 queryset=student_id_picture.objects.all(), to_attr="studentpict")
+                    )
+                    enrollment_not_existing_kwarg(
+                        self.request, qs, self.kwargs["key"])
+
+            else:
+                qs = student_enrollment_details.objects.filter(is_accepted=True, is_denied=False).prefetch_related(
+                    Prefetch("report_card",
+                             queryset=student_report_card.objects.all(), to_attr="reportcard"),
+                    Prefetch("stud_pict",
+                             queryset=student_id_picture.objects.all(), to_attr="studentpict")
+                )
+        except Exception as e:
+            # messages.error(self.request, e)
+            qs = student_enrollment_details.objects.none()
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Enrolled Students"
+        return context

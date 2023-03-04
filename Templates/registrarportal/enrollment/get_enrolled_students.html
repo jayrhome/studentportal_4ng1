@@ -1,0 +1,78 @@
+{% extends 'registrarportal/enrollment/base1.html' %}
+{% block content %}
+{% load registrar_Tags %}
+{% include 'registrarportal/messages/messages.html' %}
+
+
+<div class="container-fluid" style="background: #fff;">
+    <div class="container py-5">
+        <form method="post">
+            {% csrf_token %}
+            <div class="input-group">
+                <div class="form-outline">
+                    <input type="search" name="search_this" id="search_this" class="form-control" placeholder="Student Name or ID" required/>
+                </div>
+                <input type="submit" value="Search" class="btn btn-primary mb-3">
+            </div>
+        </form>
+
+        {% for student in students %}
+            {% for img in student.studentpict|slice:"1" %}
+                <h6> Student Picture: <img src="{{ img.user_image.url }}" alt=""> </h6>
+            {% endfor %}
+
+            <p> Name: {{student.full_name}} - {{student.admission.sex}} </p>
+            <p> Year: {{student.year_level}} </p>
+            <p> Age: {{student.age}} </p>
+            <p> Strand: {{student.strand}} </p>
+            <p> S.Y: {{student.enrolled_school_year}} </p>
+            <p> Applied On: {{student.created_on|date:"l, j M o"}} </p>
+
+            {% for img in student.reportcard|slice:"1" %}
+                <h6> Report Card: <img src="{{ img.report_card.url }}" alt=""> </h6>
+            {% endfor %}
+
+            <hr>
+
+        {% empty %}
+            <h6> No enrolled students... </h6>
+        {% endfor %}
+    </div>
+</div>
+
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm"> Prev </a>
+        {% endif %}
+
+        {% block pagination %}
+            {% for page_number in page_obj.paginator.get_elided_page_range %}
+                {% if page_number == page_obj.paginator.ELLIPSIS %}
+                    {{page_number}}
+                {% else %}
+                    <a href="?page={{page_number}}" class="btn btn-secondary btn-sm"> {{page_number}} </a>
+                {% endif %}
+            {% endfor %}
+        {% endblock %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm"> Next </a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+    </span>
+</div>
+
+
+<style>
+    .box{
+        box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+    }
+</style>
+
+
+{% endblock content %}

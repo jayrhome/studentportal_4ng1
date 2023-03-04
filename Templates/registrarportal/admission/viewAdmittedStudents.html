@@ -1,0 +1,99 @@
+{% extends 'registrarportal/admission/base1.html' %}
+{% block content %}
+{% load registrar_Tags %}
+{% include 'registrarportal/messages/messages.html' %}
+
+
+<div class="container-fluid" style="background: #fff;">
+
+    <div class="container py-5">
+        <form method="post">
+            {% csrf_token %}
+            <div class="input-group">
+                <div class="form-outline">
+                    <input type="search" name="search_this" id="search_this" class="form-control" placeholder="Student Name or ID" required/>
+                </div>
+                <input type="submit" value="Search" class="btn btn-primary mb-3">
+            </div>
+        </form>
+        {% for student in students %}
+
+            <p> Name: {{student.first_name}} {{student.middle_name}} {{student.last_name}} - {{student.sex}} </p>
+            <p> Date of Birth: {{student.date_of_birth|date:"l, j M o"}} </p>
+            <p> Birthplace: {{student.birthplace}} </p>
+            <p> Nationality: {{student.nationality}} </p>
+            <p> First strand: {{student.first_chosen_strand}} </p>
+            <p> Second strand: {{student.second_chosen_strand}} </p>
+            <p> Type of student: {{student.get_type_display}} </p>
+
+            {% if student.type == '1' %}
+                {% for img in student.phborndocx|slice:"1" %}
+                    <h6> Good Moral: <img src="{{ img.good_moral.url }}" alt=""> </h6>
+                    <h6> Report Card: <img src="{{ img.report_card.url }}" alt=""> </h6>
+                    <h6> PSA: <img src="{{ img.psa.url }}" alt=""> </h6>
+                {% endfor %}
+            {% elif student.type == '2' %}
+                {% for img in student.fborndocx|slice:"1" %}
+                    <h6> Good Moral: <img src="{{ img.good_moral.url }}" alt=""> </h6>
+                    <h6> Report Card: <img src="{{ img.report_card.url }}" alt=""> </h6>
+                    <h6> PSA: <img src="{{ img.psa.url }}" alt=""> </h6>
+                    <h6> Alien Certificate of Registration: <img src="{{ img.alien_certificate_of_registration.url }}" alt=""> </h6>
+                    <h6> Study Permit: <img src="{{ img.study_permit.url }}" alt=""> </h6>
+                    <h6> F137: <img src="{{ img.f137.url }}" alt=""> </h6>
+                {% endfor %}
+            {% else %}
+                {% for img in student.dborndocx|slice:"1" %}
+                    <h6> Good Moral: <img src="{{ img.good_moral.url }}" alt=""> </h6>
+                    <h6> Report Card: <img src="{{ img.report_card.url }}" alt=""> </h6>
+                    <h6> PSA: <img src="{{ img.psa.url }}" alt=""> </h6>
+                    <h6> Certificate of Dual Citizenship: <img src="{{ img.dual_citizenship.url }}" alt=""> </h6>
+                    <h6> Philippine Passport: <img src="{{ img.philippine_passport.url }}" alt=""> </h6>
+                    <h6> F137: <img src="{{ img.f137.url }}" alt=""> </h6>
+                {% endfor %}
+            {% endif %}
+
+            <hr>
+
+        {% empty %}
+            <h6> No admitted students... </h6>
+        {% endfor %}
+    </div>
+
+</div>
+
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm"> Prev </a>
+        {% endif %}
+
+        {% block pagination %}
+            {% for page_number in page_obj.paginator.get_elided_page_range %}
+                {% if page_number == page_obj.paginator.ELLIPSIS %}
+                    {{page_number}}
+                {% else %}
+                    <a href="?page={{page_number}}" class="btn btn-secondary btn-sm"> {{page_number}} </a>
+                {% endif %}
+            {% endfor %}
+        {% endblock %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm"> Next </a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+    </span>
+</div>
+
+
+<style>
+    .box{
+        box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+    }
+</style>
+
+
+{% endblock content %}

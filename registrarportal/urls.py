@@ -19,5 +19,14 @@ urlpatterns = [
         path("", get_admissions.as_view(), name="view_admissions"),
         path("enrollment_generate/", enrollment_invitation_oldStudents.as_view(),
              name="enrollment_invitation_oldStudents"),
-    ]))
+        path("Update_schedule/", update_admission_schedule.as_view(),
+             name="update_admission_schedule"),
+        re_path(r"admitted_students/(?:(?P<key>[a-zA-Z\d\s]+)/)?$",
+                get_admitted_students.as_view(), name="get_admitted_students"),
+    ])),
+
+    path("Enrollment/", include([
+        re_path(r"Enrolled_students/(?:(?P<key>[a-zA-Z\d\s]+)/)?$",
+                get_enrolled_students.as_view(), name="get_enrolled_students"),
+    ])),
 ]

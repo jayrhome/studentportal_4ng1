@@ -44,8 +44,7 @@
 <body>
 
     <a href="{% url 'registrarportal:dashboard' %}" class="btn btn-primary"> Dashboard </a>
-    <a href="{% url 'registrarportal:update_admission_schedule' %}" class="btn btn-primary"> Sched </a>
-    <a href="{% url 'registrarportal:get_admitted_students' %}" class="btn btn-primary"> Admitted Students </a>
+    <a href="{% url 'registrarportal:get_enrolled_students' %}" class="btn btn-primary"> Enrolled Students </a>
     <a href="{% url 'usersPortal:logout' %}" class="btn btn-primary"> Logout </a>
 
     {% block content %}{% endblock content %}
