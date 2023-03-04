@@ -25,6 +25,7 @@ from studentportal.views import student_access_only
 from . models import *
 from adminportal.views import superuser_only
 from registrarportal.views import registrar_only
+from django.core.exceptions import ObjectDoesNotExist
 
 
 User = get_user_model()
@@ -68,7 +69,7 @@ class create_useraccount(FormView):
                     display_name=display_name,
                     password=password
                 )
-                # createAccount_activationLink(self.request, user)
+                createAccount_activationLink(self.request, user)
                 return super().form_valid(form)
             else:
                 messages.warning(
@@ -105,7 +106,7 @@ def activate_account(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
-    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+    except(TypeError, ValueError, OverflowError, ObjectDoesNotExist):
         user = None
 
     if user is not None and account_activation_token.check_token(user, token):
@@ -191,8 +192,8 @@ class request_newAccountActivationToken(FormView):
                 if not User.update_lastUserTokenRequest(User.objects.get(email=email)):
                     pass
 
-                # createAccount_activationLink(
-                #     self.request, User.objects.get(email=email))
+                createAccount_activationLink(
+                    self.request, User.objects.get(email=email))
                 return super().form_valid(form)
             messages.warning(
                 self.request, "Incorrect email or password. Try again.")
@@ -230,7 +231,7 @@ class forgotPassword(FormView):
                     pass
 
                 user.refresh_from_db()
-                # forgotPassword_resetLink(self.request, user)
+                forgotPassword_resetLink(self.request, user)
                 return super().form_valid(form)
             else:
                 messages.warning(

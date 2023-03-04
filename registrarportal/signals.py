@@ -1,7 +1,18 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from . models import student_admission_details, admission_batch
-from django.db.models import Case, When, Value, Count, Q
+from . models import student_admission_details, admission_batch, student_enrollment_details, enrollment_batch
+from django.db.models import Case, When, Value, Count, Q, F, Min
+
+
+def full_batches(instance):
+    # get min member val, remove others
+    min_batch = enrollment_batch.objects.filter(sy=instance.enrolled_school_year, section__assignedStrand=instance.strand, section__yearLevel=instance.year_level).annotate(
+        count_members=Count("members", filter=Q(members__is_denied=False)))
+    if min_batch:
+        this_batch = min_batch.filter(
+            count_members__lte=min_batch.aggregate(val=Min('count_members'))['val']).first()
+        this_batch.members.add(instance)
+        this_batch.save()
 
 
 @receiver(post_save, sender=student_admission_details)
@@ -16,3 +27,29 @@ def admissionBatch(sender, instance, created, **kwargs):
 
         get_batch.members.add(instance)
         get_batch.save()
+
+
+@receiver(post_save, sender=student_enrollment_details)
+def enrollmentBatch(sender, instance, created, **kwargs):
+    if instance.year_level == '11':
+        get_batches = enrollment_batch.objects.filter(sy=instance.enrolled_school_year, section__assignedStrand=instance.strand, section__yearLevel=instance.year_level).alias(
+            count_members=Count("members", filter=Q(members__is_denied=False))).exclude(count_members__gte=F("section__allowedPopulation")).first()
+
+        if get_batches:
+            get_batches.members.add(instance)
+            get_batches.save()
+
+        else:
+            full_batches(instance)
+
+    else:
+        get_batches = enrollment_batch.objects.filter(sy=instance.enrolled_school_year, section__assignedStrand=instance.strand, section__yearLevel=instance.year_level).alias(
+            count_members=Count("members", filter=Q(members__is_denied=False))).exclude(count_members__gte=F("section__allowedPopulation")).first()
+
+        if get_batches:
+            get_batches.members.add(instance)
+            get_batches.save()
+
+        else:
+            # get min member val, remove others
+            full_batches(instance)
