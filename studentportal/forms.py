@@ -82,7 +82,6 @@ class admission_personal_details(forms.Form):
     #     (strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}") for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand')), coerce=str)
 
 
-
 class elementary_school_details(forms.Form):
     elem_name = forms.CharField(
         label="Elementary School Name", max_length=50, required=False)
