@@ -2,8 +2,12 @@
 {% block content %}
 {% include 'adminportal/messages/messages.html' %}
 
-
-<a href="{% url 'adminportal:add_curriculum' %}" class="btn btn-primary"> New Curriculum + </a>
+<div class="container pt-5 d-flex flex-column">
+<a href="{% url 'adminportal:add_curriculum' %}" class=" add_curriculum btn btn-success">
+<i class="bi bi-plus-lg">
+</i>
+New Curriculum
+</a>
 
 <div class="container-fluid" style="background: #fff;">
 
@@ -62,8 +66,9 @@
     </div>
 
 </div>
+</div>
 
-<a href="{% url 'adminportal:index' %}" class="btn btn-primary"> Back </a>
+
 
 <div class="pagination">
     <span class="step-links">
@@ -98,5 +103,6 @@
 </style>
 
 
+<a href="{% url 'adminportal:index' %}" class="btn btn-primary"> Back </a>
 
 {% endblock content %}

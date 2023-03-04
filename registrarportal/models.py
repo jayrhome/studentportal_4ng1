@@ -2,6 +2,8 @@ from django.db import models, transaction
 from datetime import date
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import RegexValidator
+from . emailSenders import send_enrollment_link
 
 
 def add_school_year(start_year, year):
@@ -103,6 +105,7 @@ class student_admission_details(models.Model):
     type = models.CharField(max_length=1, choices=applicant_type.choices)
 
     is_denied = models.BooleanField(default=False)  # if denied, for review
+    with_enrollment = models.BooleanField(default=False)
     modified_on = models.DateTimeField(auto_now=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
@@ -120,7 +123,8 @@ class student_admission_details(models.Model):
         return self.jhs_name
 
     @classmethod
-    def admit_this_students(cls, iDs):
+    def admit_this_students(cls, request, iDs):
+        lst = []
         for id in iDs:
             with transaction.atomic():
                 obj = cls.objects.select_for_update().get(id=id)
@@ -128,21 +132,9 @@ class student_admission_details(models.Model):
                 if obj.is_denied:
                     obj.is_denied = False
                 obj.save()
-
-    # def to_pendingList(self):
-    #     return reverse("adminportal:admission")
-
-    # def to_admittedList(self):
-    #     return reverse("adminportal:admitted_students")
-
-    # def to_reviewList(self):
-    #     return reverse("adminportal:forReviewAdmission")
-
-    # def to_deniedList(self):
-    #     return reverse("adminportal:denied_admissions")
-
-    # def to_holdList(self):
-    #     return reverse("adminportal:hold_admissions")
+                lst.append(obj)
+        else:
+            send_enrollment_link(request, lst)
 
 
 class admission_requirements(models.Model):
@@ -205,7 +197,7 @@ class dual_citizen_documents(admission_requirements):
         return str(self.id)
 
 
-class batch_manager(models.Manager):
+class admisssion_batch_manager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(sy__until__gte=date.today())
 
@@ -219,10 +211,138 @@ class admission_batch(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
 
     objects = models.Manager()
-    new_batches = batch_manager()
+    new_batches = admisssion_batch_manager()
 
     class Meta:
         ordering = ["-created_on"]
 
     def __str__(self):
         return str(self.id)
+
+
+class enrollment_manager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_accepted=True, is_denied=False)
+
+
+class student_enrollment_details(models.Model):
+    class year_levels(models.TextChoices):
+        grade_11 = '11', _('Grade 11')
+        grade_12 = '12', _('Grade 12')
+
+    applicant = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, related_name="stud_enrollment")
+    admission = models.ForeignKey(
+        student_admission_details, on_delete=models.RESTRICT, related_name="enrollment")
+    strand = models.ForeignKey(
+        "adminportal.shs_strand", on_delete=models.RESTRICT, related_name="strand_enrollment")
+    year_level = models.CharField(max_length=7, choices=year_levels.choices)
+    full_name = models.CharField(max_length=120)
+    age = models.IntegerField()
+    is_accepted = models.BooleanField(default=False)
+    is_denied = models.BooleanField(default=False)
+    enrolled_school_year = models.ForeignKey(
+        schoolYear, on_delete=models.RESTRICT, related_name="sy_enrollee")
+    modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    objects = models.Manager()
+    validatedObjects = enrollment_manager()
+
+    class Meta:
+        ordering = ["-enrolled_school_year__id", "created_on"]
+        unique_together = ["applicant", "admission", "enrolled_school_year"]
+
+
+class student_home_address(models.Model):
+    home_of = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, related_name="user_address")
+    permanent_home_address = models.CharField(max_length=50)
+    modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.permanent_home_address
+
+    class Meta:
+        ordering = ["-created_on"]
+
+
+class student_contact_number(models.Model):
+    own_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, related_name="user_contact")
+    cp_number_regex = RegexValidator(regex=r"^(09)([0-9]{9})$")
+    cellphone_number = models.CharField(
+        max_length=11, validators=[cp_number_regex])
+    modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.cellphone_number
+
+    class Meta:
+        ordering = ["-created_on"]
+
+
+class student_report_card(models.Model):
+    card_from = models.ForeignKey(
+        student_enrollment_details, on_delete=models.RESTRICT, related_name="report_card")
+    report_card = models.ImageField(upload_to="enrollment/report_cards/%Y")
+    modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.id)
+
+    class Meta:
+        ordering = ["-created_on"]
+
+
+class student_id_picture(models.Model):
+    image_from = models.ForeignKey(
+        student_enrollment_details, on_delete=models.RESTRICT, related_name="stud_pict")
+    user_image = models.ImageField(upload_to="enrollment/user_pic/%Y")
+    modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.id)
+
+    class Meta:
+        ordering = ["-created_on"]
+
+
+class enrollment_batch_manager(models.Model):
+    def get_queryset(self):
+        return super().get_queryset().filter(sy__until__gte=date.today())
+
+
+class enrollment_batch(models.Model):
+    sy = models.ForeignKey(
+        schoolYear, on_delete=models.RESTRICT, related_name="sy_enrollment_batches")
+    section = models.ForeignKey("adminportal.schoolSections",
+                                on_delete=models.RESTRICT, related_name="section_batch")
+    members = models.ManyToManyField(
+        student_enrollment_details, related_name="enrollment_batch_member")
+    modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    objects = models.Manager()
+    new_batches = enrollment_batch_manager()
+
+    class Meta:
+        ordering = ["created_on"]
+
+    def __str__(self):
+        return str(self.id)
+
+
+class enrollment_invitations(models.Model):
+    invitation_to = models.OneToOneField(
+        student_admission_details, on_delete=models.RESTRICT, related_name="invitation")
+    is_accepted = models.BooleanField(default=False)
+    modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_on"]

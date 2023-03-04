@@ -1,0 +1,22 @@
+1: Delete db4ng1 database
+2: Create db4ng1 database
+3: enter pip install -r requirements.txt
+4: run python manage.py makemigrations
+5: run python manage.py migrate
+6: run python manage.py makemigrations adminportal --empty
+7: open this directory adminportal/migrations, select yung last migration file.
+8: Sa line 1, enter mo ito from django.contrib.postgres.operations import UnaccentExtension
+9: Under ng class Migration, enter UnaccentExtension() inside the operations variable.
+10. Balik sa cmd, run python manage.py migrate
+11: Open directory adminportal/forms.py
+    11.1: highlight line 91 - 94, and click ctrl + k + u
+    11:2: highlight line 98 - 99, and click ctrl + k + u, then remove yung pass keyword
+    11.3: highlight line 104 - 105, and click ctrl + k + u, then remove yung pass keyword
+    11.4: highlight line 110 - 111, and click ctrl + k + u, then remove yung pass keyword
+    11.5: highlight line 116 - 119, and click ctrl + k + u
+    11.6: highlight line 127 - 128, and click ctrl + k + u
+
+12: Open directory studenportal/forms.py
+    12.1: highlight line 79 - 82, and click ctrl + k + u
+    12.2: highlight line 166 - 169, and click ctrl + k + u
+

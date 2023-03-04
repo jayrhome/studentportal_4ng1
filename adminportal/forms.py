@@ -113,10 +113,10 @@ class g12_secondSem(forms.Form):
 
 
 class makeSectionForm(forms.Form):
-    yearLevel = forms.TypedChoiceField(
-        label="Year Level", choices=schoolSections.year_levels.choices, coerce=str)
-    strand = forms.TypedChoiceField(label="Strand", choices=(
-        (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str)
+    # yearLevel = forms.TypedChoiceField(
+    #     label="Year Level", choices=schoolSections.year_levels.choices, coerce=str)
+    # strand = forms.TypedChoiceField(label="Strand", choices=(
+    #     (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str)
     allowedPopulation = forms.CharField(label="Number of students per sections",
                                         help_text="Minimum of 15 students", widget=forms.NumberInput, validators=[validate_sectionPopulation, ], max_length=2)
     numberOfSection = forms.CharField(label="Number of sections to create for this strand",
