@@ -34,4 +34,9 @@ urlpatterns = [
         re_path(r"type/(?:(?P<pk>[0-9]+)/)?$",
                 admission.as_view(), name="admission"),
     ])),
+
+    path("Enrollment/", include([
+        path("apply/<uidb64>/<token>/",
+             enrollment_new_admission.as_view(), name="enrollment_new_admission"),
+    ])),
 ]

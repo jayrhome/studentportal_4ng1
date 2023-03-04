@@ -17,5 +17,7 @@ urlpatterns = [
 
     path("Admission/", include([
         path("", get_admissions.as_view(), name="view_admissions"),
+        path("enrollment_generate/", enrollment_invitation_oldStudents.as_view(),
+             name="enrollment_invitation_oldStudents"),
     ]))
 ]

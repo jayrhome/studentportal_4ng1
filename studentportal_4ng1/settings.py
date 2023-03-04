@@ -75,7 +75,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'db4ng1',
         'USER': 'postgres',
-        'PASSWORD': '',
+        'PASSWORD': 'Sniper09',
         'HOST': 'localhost'
     }
 }
@@ -149,7 +149,8 @@ EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = ''  # App password
 
 
-PASSWORD_RESET_TIMEOUT = 1200  # 20 Minutes
+PASSWORD_RESET_TIMEOUT = 60  # 20 Minutes
+ENROLLMENT_TOKEN_TIMEOUT = 604800  # 7 Days
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
