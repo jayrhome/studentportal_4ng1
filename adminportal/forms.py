@@ -86,34 +86,71 @@ class addSubjectForm(forms.Form):
 
 
 class g11_firstSem(forms.Form):
+    def __init__(self, *args, **kwargs):
+        strand_choices = ((strand.id, f"{strand.track.track_name} - {strand.strand_name}")
+                          for strand in shs_strand.objects.filter(is_deleted=False))
+        subject_choices = ((subject.id, f"{subject.code}: {subject.title}")
+                           for subject in subjects.activeSubjects.only("id", "code", "title"))
+        super(g11_firstSem, self).__init__(*args, **kwargs)
+        self.fields["strand"] = forms.TypedChoiceField(choices=strand_choices)
+        self.fields["g11_firstSem_subjects"] = forms.TypedMultipleChoiceField(
+            choices=subject_choices)
+
     effective_date = forms.DateField(label="Effective Date", validators=[
                                      setup_form_DateValidation, ], widget=forms.DateInput(attrs={'type': 'date'}))
-    strand = forms.TypedChoiceField(label="Strand", choices=(
-        (strand.id, f"{strand.track.track_name} - {strand.strand_name}") for strand in shs_strand.objects.filter(is_deleted=False)), coerce=str)
-    g11_firstSem_subjects = forms.TypedMultipleChoiceField(label="Grade 11 - First Semester Subjects", choices=(
-        (subject.id, f"{subject.code}: {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)
+    strand = forms.TypedChoiceField(label="Strand", choices=(), coerce=str)
+    g11_firstSem_subjects = forms.TypedMultipleChoiceField(
+        label="Grade 11 - First Semester Subjects", choices=(), coerce=str)
 
 
 class g11_secondSem(forms.Form):
-    g11_secondSem_subjects = forms.TypedMultipleChoiceField(label="Grade 11 - Second Semester Subjects", choices=(
-        (subject.id, f"{subject.code} - {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)
+    def __init__(self, *args, **kwargs):
+        choices = ((subject.id, f"{subject.code} - {subject.title}")
+                   for subject in subjects.activeSubjects.only("id", "code", "title"))
+        super(g11_secondSem, self).__init__(*args, **kwargs)
+        self.fields["g11_secondSem_subjects"] = forms.TypedMultipleChoiceField(
+            choices=choices)
+
+    g11_secondSem_subjects = forms.TypedMultipleChoiceField(
+        label="Grade 11 - Second Semester Subjects", choices=(), coerce=str)
 
 
 class g12_firstSem(forms.Form):
-    g12_firstSem_subjects = forms.TypedMultipleChoiceField(label="Grade 12 - First Semester Subjects", choices=(
-        (subject.id, f"{subject.code} - {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)
+    def __init__(self, *args, **kwargs):
+        choices = ((subject.id, f"{subject.code} - {subject.title}")
+                   for subject in subjects.activeSubjects.only("id", "code", "title"))
+        super(g12_firstSem, self).__init__(*args, **kwargs)
+        self.fields["g12_firstSem_subjects"] = forms.TypedMultipleChoiceField(
+            choices=choices)
+
+    g12_firstSem_subjects = forms.TypedMultipleChoiceField(
+        label="Grade 12 - First Semester Subjects", choices=(), coerce=str)
 
 
 class g12_secondSem(forms.Form):
-    g12_secondSem_subjects = forms.TypedMultipleChoiceField(label="Grade 12 - Second Semester Subjects", choices=(
-        (subject.id, f"{subject.code} - {subject.title}") for subject in subjects.activeSubjects.only("id", "code", "title")), coerce=str)
+    def __init__(self, *args, **kwargs):
+        choices = ((subject.id, f"{subject.code} - {subject.title}")
+                   for subject in subjects.activeSubjects.only("id", "code", "title"))
+        super(g12_secondSem, self).__init__(*args, **kwargs)
+        self.fields["g12_secondSem_subjects"] = forms.TypedMultipleChoiceField(
+            choices=choices)
+
+    g12_secondSem_subjects = forms.TypedMultipleChoiceField(
+        label="Grade 12 - Second Semester Subjects", choices=(), coerce=str)
 
 
 class makeSectionForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        choices = ((strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}")
+                   for strand in curriculum.objects.order_by('strand').distinct('strand'))
+        super(makeSectionForm, self).__init__(*args, **kwargs)
+        self.fields["yearLevel"] = forms.TypedChoiceField(
+            choices=schoolSections.year_levels.choices)
+        self.fields["strand"] = forms.TypedChoiceField(choices=choices)
+
     yearLevel = forms.TypedChoiceField(
-        label="Year Level", choices=schoolSections.year_levels.choices, coerce=str)
-    strand = forms.TypedChoiceField(label="Strand", choices=(
-        (strand.strand.id, f"{strand.strand.track.track_name}: {strand.strand.strand_name}") for strand in curriculum.objects.order_by('strand').distinct('strand')), coerce=str)
+        label="Year Level", choices=(), coerce=str)
+    strand = forms.TypedChoiceField(label="Strand", choices=(), coerce=str)
     allowedPopulation = forms.CharField(label="Number of students per sections",
                                         help_text="Minimum of 15 students", widget=forms.NumberInput, validators=[validate_sectionPopulation, ], max_length=2)
     numberOfSection = forms.CharField(label="Number of sections to create for this strand",
@@ -121,8 +158,13 @@ class makeSectionForm(forms.Form):
 
 
 class generate_schedule(forms.Form):
-    strand = forms.TypedChoiceField(label="Strand", choices=(
-        ((strand.yearLevel, strand.assignedStrand.id), f"{strand.yearLevel}: {strand.assignedStrand.strand_name}") for strand in schoolSections.latestSections.order_by('yearLevel', 'assignedStrand').distinct('yearLevel', 'assignedStrand')), coerce=str)
+    def __init__(self, *args, **kwargs):
+        choices = (((strand.yearLevel, strand.assignedStrand.id), f"{strand.yearLevel}: {strand.assignedStrand.strand_name}")
+                   for strand in schoolSections.latestSections.order_by('yearLevel', 'assignedStrand').distinct('yearLevel', 'assignedStrand'))
+        super(generate_schedule, self).__init__(*args, **kwargs)
+        self.fields["strand"] = forms.TypedChoiceField(choices=choices)
+
+    strand = forms.TypedChoiceField(label="Strand", choices=(), coerce=str)
     class_hours = forms.CharField(
         label="Number of class hours", widget=forms.NumberInput)
     start_time = forms.TimeField(

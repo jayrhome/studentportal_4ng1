@@ -62,24 +62,34 @@ def validate_schedule(dt):
 
 
 class admission_personal_details(forms.Form):
+    def __init__(self, *args, **kwargs):
+        sex_choices = student_admission_details.SexChoices.choices
+        strand_choices = ((strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}")
+                          for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand'))
+        super(admission_personal_details, self).__init__(*args, **kwargs)
+        self.fields["sex"] = forms.ChoiceField(choices=sex_choices)
+        self.fields["first_chosen_strand"] = forms.TypedChoiceField(
+            choices=strand_choices)
+        self.fields["second_chosen_strand"] = forms.TypedChoiceField(
+            choices=strand_choices)
+
     first_name = forms.CharField(
         label="First Name", max_length=20, required=False)
     middle_name = forms.CharField(
         label="Middle Name", max_length=20, required=False)
     last_name = forms.CharField(
         label="Last Name", max_length=20, required=False)
-    sex = forms.ChoiceField(
-        label="Sex", choices=student_admission_details.SexChoices.choices, required=False)
+    sex = forms.ChoiceField(label="Sex", choices=(), required=False)
     date_of_birth = forms.DateField(label="Birthdate", validators=[
         birthdate_validator], widget=forms.DateInput(attrs={'type': 'date'}), required=False)
     birthplace = forms.CharField(
         label="Place of birth", max_length=200, required=False)
     nationality = forms.CharField(
         label="Nationality", max_length=50, required=False)
-    first_chosen_strand = forms.TypedChoiceField(label="Choose First Strand", choices=(
-        (strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}") for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand')), coerce=str)
-    second_chosen_strand = forms.TypedChoiceField(label="Choose Second Strand", choices=(
-        (strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}") for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand')), coerce=str)
+    first_chosen_strand = forms.TypedChoiceField(
+        label="Choose First Strand", choices=(), coerce=str)
+    second_chosen_strand = forms.TypedChoiceField(
+        label="Choose Second Strand", choices=(), coerce=str)
 
 
 class elementary_school_details(forms.Form):
@@ -160,13 +170,23 @@ class dummy_form(forms.Form):
 
 
 class enrollment_form1(forms.Form):
+    def __init__(self, *args, **kwargs):
+        yr_level_choices = student_enrollment_details.year_levels.choices
+        strand_choices = ((strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}")
+                          for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand'))
+        super(enrollment_form1, self).__init__(*args, **kwargs)
+        self.fields["year_level"] = forms.TypedChoiceField(
+            choices=yr_level_choices)
+        self.fields["select_strand"] = forms.TypedChoiceField(
+            choices=strand_choices)
+
     # Form for g11 and transferees
     full_name = forms.CharField(
         max_length=60, label='Full Name (Surname, First Name, Middle Name)')
     year_level = forms.TypedChoiceField(
-        label="Year Level (Now)", choices=student_enrollment_details.year_levels.choices, coerce=str)
-    select_strand = forms.TypedChoiceField(label="Select Strand", choices=(
-        (strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}") for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand')), coerce=str)
+        label="Year Level (Now)", choices=(), coerce=str)
+    select_strand = forms.TypedChoiceField(
+        label="Select Strand", choices=(), coerce=str)
     home_address = forms.CharField(
         max_length=50, label='Home address (Current)')
     contact_number = forms.CharField(
@@ -256,8 +276,14 @@ class enrollment_form1(forms.Form):
 
 
 class makeDocumentRequestForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        docx_choices = studentDocument.activeObjects.values_list(
+            "pk", "documentName")
+        super(makeDocumentRequestForm, self).__init__(*args, **kwargs)
+        self.fields["documents"] = forms.TypedChoiceField(choices=docx_choices)
+
     documents = forms.TypedChoiceField(
-        label="Document Type", choices=studentDocument.activeObjects.values_list("pk", "documentName"), coerce=str)
+        label="Document Type", choices=(), coerce=str)
     scheduled_date = forms.DateField(label="Schedule", validators=[
                                      validate_schedule], widget=forms.DateInput(attrs={'type': 'date'}))
 
@@ -269,11 +295,18 @@ class makeDocumentRequestForm(forms.Form):
 
 
 class enrollment_form2(forms.Form):
+    def __init__(self, *args, **kwargs):
+        strand_choices = ((strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}")
+                          for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand'))
+        super(enrollment_form2, self).__init__(*args, **kwargs)
+        self.fields["select_strand"] = forms.TypedChoiceField(
+            choices=strand_choices)
+
     # Form for g11 and transferees
     full_name = forms.CharField(
         max_length=60, label='Full Name (Surname, First Name, Middle Name)')
-    select_strand = forms.TypedChoiceField(label="Select Strand", choices=(
-        (strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}") for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand')), coerce=str)
+    select_strand = forms.TypedChoiceField(
+        label="Select Strand", choices=(), coerce=str)
     home_address = forms.CharField(
         max_length=50, label='Home address (Current)')
     contact_number = forms.CharField(
