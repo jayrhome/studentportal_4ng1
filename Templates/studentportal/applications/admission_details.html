@@ -1,7 +1,72 @@
 {% extends 'studentportal/base1.html' %}
 {% block content %}
+{% include 'studentportal/applications/menus.html' %}
 {% include 'studentportal/messages/messages.html' %}
 
+<div class="container col-md-8">
+    {% for detail in details|slice:"1" %}
+        {% if detail.can_resub %} <a href="{% url 'studentportal:resend_admission' %}" class="btn btn-primary btn-sm"> Resubmit </a> {% endif %}
 
+        <p> Name: {{detail.first_name}} {{detail.middle_name}} {{detail.last_name}} - {{detail.sex}} </p>
+        <p> Date of Birth: {{detail.date_of_birth|date:"l, j M o"}} </p>
+        <p> Birthplace: {{detail.birthplace}} </p>
+        <p> Nationality: {{detail.nationality}} </p>
+        <p> First strand: {{detail.first_chosen_strand}} </p>
+        <p> Second strand: {{detail.second_chosen_strand}} </p>
+        <p> Type of student: {{detail.get_type_display}} </p>
+
+        <h5> Primary School Details </h5>
+        <p> School Name: {{detail.elem_name}} </p>
+        <p> School Address: {{detail.elem_address}} </p>
+        <p> Region: {{detail.elem_region}} </p>
+        <p> Year Completed: {{detail.elem_year_completed | date:"Y"}} </p>
+        <p> Passer of Philippine Educational Placement Test (PEPT) for Elementary Level? {{ detail.elem_pept_passer|yesno:"Yes,No" }} </p>
+        <p> {% if detail.elem_pept_passer %} Year Completed: {{detail.elem_pept_date_completion | date:"Y"}} {% endif %} </p>
+        <p> Passer of Accreditation and Equivalency (A&E) Test for Elementary Level? {{ detail.elem_ae_passer|yesno:"Yes,No" }} </p>
+        <p> {% if detail.elem_ae_passer %} Year Completed: {{detail.elem_ae_date_completion | date:"Y"}} {% endif %} </p>
+        <p> Name of Community Learning Center: {{detail.elem_community_learning_center}} </p>
+        <p> CLC Address: {{detail.elem_clc_address}} </p>
+
+        <h5> Secondary School Details </h5>
+        <p> School Name: {{detail.jhs_name}} </p>
+        <p> School Address: {{detail.jhs_address}} </p>
+        <p> Region: {{detail.jhs_region}} </p>
+        <p> Year Completed: {{detail.jhs_year_completed | date:"Y"}} </p>
+        <p> Passer of Philippine Educational Placement Test (PEPT) for JHS Level? {{ detail.jhs_pept_passer|yesno:"Yes,No" }} </p>
+        <p> {% if detail.jhs_pept_passer %} Year Completed: {{detail.jhs_pept_date_completion | date:"Y"}} {% endif %} </p>
+        <p> Passer of Accreditation and Equivalency (A&E) Test for JHS Level? {{ detail.jhs_ae_passer|yesno:"Yes,No" }} </p>
+        <p> {% if detail.jhs_ae_passer %} Year Completed: {{detail.jhs_ae_date_completion | date:"Y"}} {% endif %} </p>
+        <p> Name of Community Learning Center: {{detail.jhs_community_learning_center}} </p>
+        <p> CLC Address: {{detail.jhs_clc_address}} </p>
+
+        {% if detail.type == '1' %}
+            {% for img in detail.phborndocx|slice:"1" %}
+                <h6> Good Moral: <img src="{{ img.good_moral.url }}" alt=""> </h6>
+                <h6> Report Card: <img src="{{ img.report_card.url }}" alt=""> </h6>
+                <h6> PSA: <img src="{{ img.psa.url }}" alt=""> </h6>
+            {% endfor %}
+        {% elif detail.type == '2' %}
+            {% for img in detail.fborndocx|slice:"1" %}
+                <h6> Good Moral: <img src="{{ img.good_moral.url }}" alt=""> </h6>
+                <h6> Report Card: <img src="{{ img.report_card.url }}" alt=""> </h6>
+                <h6> PSA: <img src="{{ img.psa.url }}" alt=""> </h6>
+                <h6> Alien Certificate of Registration: <img src="{{ img.alien_certificate_of_registration.url }}" alt=""> </h6>
+                <h6> Study Permit: <img src="{{ img.study_permit.url }}" alt=""> </h6>
+                <h6> F137: <img src="{{ img.f137.url }}" alt=""> </h6>
+            {% endfor %}
+        {% else %}
+            {% for img in detail.dborndocx|slice:"1" %}
+                <h6> Good Moral: <img src="{{ img.good_moral.url }}" alt=""> </h6>
+                <h6> Report Card: <img src="{{ img.report_card.url }}" alt=""> </h6>
+                <h6> PSA: <img src="{{ img.psa.url }}" alt=""> </h6>
+                <h6> Certificate of Dual Citizenship: <img src="{{ img.dual_citizenship.url }}" alt=""> </h6>
+                <h6> Philippine Passport: <img src="{{ img.philippine_passport.url }}" alt=""> </h6>
+                <h6> F137: <img src="{{ img.f137.url }}" alt=""> </h6>
+            {% endfor %}
+        {% endif %}
+    {% empty %}
+        <h6> No admission... </h6>
+    {% endfor %}
+</div>
 
 {% endblock content %}

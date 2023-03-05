@@ -7,19 +7,6 @@ app_name = "studentportal"
 urlpatterns = [
     path("", index.as_view(), name="index"),
 
-    #     path("Admission/", include([
-    #         path("", admission_application.as_view(), name="admission_application"),
-    #         path("Admission_details/", submitted_admission_details.as_view(),
-    #              name="admission_details")
-    #     ])),
-
-    #     path("Enrollment/", include([
-    #         path("", enrollment_application.as_view(),
-    #              name="enrollment_application"),
-    #         re_path(r"Enrollment_details/(?:(?P<pk>[0-9]+)/)?$",
-    #                 submitted_enrollment_details.as_view(), name="enrollment_details"),
-    #     ])),
-
     path("DocumentRequests/", include([
         path("", view_myDocumentRequest.as_view(),
              name="view_myDocumentRequest"),
@@ -40,5 +27,11 @@ urlpatterns = [
              enrollment_new_admission.as_view(), name="enrollment_new_admission"),
         path("Old_students/<uidb64>/<token>/",
              enrollment_old_students.as_view(), name="oldStudents_enrollment"),
+    ])),
+
+    path("Applications/", include([
+        path("", get_submitted_admission.as_view(),
+             name="get_submitted_admission"),
+        path("Resubmit/", resend_admission.as_view(), name="resend_admission"),
     ])),
 ]

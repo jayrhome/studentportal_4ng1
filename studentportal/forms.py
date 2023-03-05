@@ -64,14 +64,16 @@ def validate_schedule(dt):
 class admission_personal_details(forms.Form):
     def __init__(self, *args, **kwargs):
         sex_choices = student_admission_details.SexChoices.choices
-        strand_choices = ((strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}")
-                          for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand'))
+        first_strand_choices = ((strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}")
+                                for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand'))
+        second_strand_choices = ((strand.assignedStrand.id, f"{strand.assignedStrand.track.track_name}: {strand.assignedStrand.strand_name}")
+                                 for strand in schoolSections.latestSections.order_by('assignedStrand').distinct('assignedStrand'))
         super(admission_personal_details, self).__init__(*args, **kwargs)
         self.fields["sex"] = forms.ChoiceField(choices=sex_choices)
         self.fields["first_chosen_strand"] = forms.TypedChoiceField(
-            choices=strand_choices)
+            choices=first_strand_choices)
         self.fields["second_chosen_strand"] = forms.TypedChoiceField(
-            choices=strand_choices)
+            choices=second_strand_choices)
 
     first_name = forms.CharField(
         label="First Name", max_length=20, required=False)
@@ -315,3 +317,31 @@ class enrollment_form2(forms.Form):
         label="Report card", help_text="Report card from previous year or quarter")
     profile_image = forms.ImageField(
         label="Student Photo", help_text="White background with no filters")
+
+
+class admission_forms(jhs_details, elementary_school_details, admission_personal_details):
+    pass
+
+
+class phb_admForms(admissionRequirementsForm, admission_forms):
+    def __init__(self, *args, **kwargs):
+        super(phb_admForms, self).__init__(*args, **kwargs)
+        self.fields["good_moral"].required = False
+        self.fields["report_card"].required = False
+        self.fields["psa"].required = False
+
+
+class fa_admForms(foreignApplicantForm, phb_admForms):
+    def __init__(self, *args, **kwargs):
+        super(fa_admForms, self).__init__(*args, **kwargs)
+        self.fields["alien_certificate_of_registration"].required = False
+        self.fields["study_permit"].required = False
+        self.fields["f137"].required = False
+
+
+class dca_admForms(dualCitizenApplicantForm, phb_admForms):
+    def __init__(self, *args, **kwargs):
+        super(dca_admForms, self).__init__(*args, **kwargs)
+        self.fields["dual_citizenship"].required = False
+        self.fields["philippine_passport"].required = False
+        self.fields["f137"].required = False

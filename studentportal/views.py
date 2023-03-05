@@ -117,7 +117,7 @@ class index(TemplateView):
 
 def user_no_admission(user):
     # Return False if the user has validated admission or to_validate admission
-    return not student_admission_details.objects.filter(admission_owner=user).exclude(is_denied=True).exists()
+    return not student_admission_details.objects.filter(admission_owner=user).exclude(is_accepted=False, is_denied=True).exists()
 
 
 def check_for_admission_availability(user):
@@ -582,3 +582,81 @@ class enrollment_old_students(FormView):
             # if there's no user found, or the token is no longer valid, or both.
             messages.error(request, "Enrollment link is no longer valid!")
             return HttpResponseRedirect(reverse("studentportal:index"))
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class get_submitted_admission(TemplateView):
+    template_name = "studentportal/applications/admission_details.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Application"
+
+        context["details"] = student_admission_details.objects.filter(admission_owner=self.request.user).prefetch_related(
+            Prefetch("softCopy_admissionRequirements_phBorn",
+                     queryset=ph_born.objects.all(), to_attr="phborndocx"),
+            Prefetch("softCopy_admissionRequirements_foreigner",
+                     queryset=foreign_citizen_documents.objects.all(), to_attr="fborndocx"),
+            Prefetch("softCopy_admissionRequirements_dualCitizen",
+                     queryset=dual_citizen_documents.objects.all(), to_attr="dborndocx")
+        ).annotate(
+            can_resub=Case(
+                When(is_accepted=False, is_denied=True, admission_sy__until__gt=date.today(
+                ), admission_sy__e_a_setup__end_date__gte=date.today(), then=Value(True)),
+                default=Value(False)
+            )
+        )
+        context["user_profilePicture"] = load_userPic(
+            self.request.user) if self.request.user.is_authenticated else ""
+
+        return context
+
+
+@method_decorator([login_required(login_url="usersPortal:login"), user_passes_test(student_access_only, login_url="studentportal:index")], name="dispatch")
+class resend_admission(FormView):
+    template_name = "studentportal/applications/admissionForm.html"
+    form_class = phb_admForms
+    success_url = "/Applications/"
+
+    def form_valid(self, form):
+        return super().form_valid(form)
+
+    def get_form_class(self):
+        if self.get_adm.type == "1":
+            return super().get_form_class()
+        elif self.get_adm.type == "2":
+            return fa_admForms
+        elif self.get_adm.type == "3":
+            return dca_admForms
+        else:
+            pass
+
+    def get_initial(self):
+        initial = super().get_initial()
+
+        for index, fieldname in enumerate(list(self.get_form_class().declared_fields.keys())):
+            match fieldname:
+                case ("first_chosen_strand" | "second_chosen_strand"):
+                    initial[fieldname] = str(
+                        getattr(self.get_adm, fieldname, ""))
+                case ("good_moral" | "report_card" | "psa" | "alien_certificate_of_registration" | "study_permit" | "f137" | "dual_citizenship" | "philippine_passport"):
+                    pass
+                case _:
+                    initial[fieldname] = getattr(self.get_adm, fieldname, "")
+
+        return initial
+
+    def dispatch(self, request, *args, **kwargs):
+        self.get_adm = student_admission_details.objects.filter(admission_owner=request.user).annotate(
+            can_resub=Case(
+                When(is_accepted=False, is_denied=True, admission_sy__until__gt=date.today(
+                ), admission_sy__e_a_setup__end_date__gte=date.today(), then=Value(True)),
+                default=Value(False)
+            )
+        ).first()
+        if self.get_adm and self.get_adm.can_resub:
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            messages.warning(
+                request, "Application can no longer be resubmitted.")
+            return HttpResponseRedirect(reverse("studentportal:get_submitted_admission"))

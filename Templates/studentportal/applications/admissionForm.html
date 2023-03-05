@@ -1,0 +1,31 @@
+{% extends 'studentportal/base1.html' %}
+{% block content %}
+{% load std_portal %}
+{% include 'studentportal/applications/menus.html' %}
+{% include 'studentportal/messages/messages.html' %}
+
+<div class="container col-md-12">
+    <form id="postForm" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <!-- List of errors from forms.py -->
+        {{ form.non_field_errors }}
+    
+        <h4> Resubmission </h4>
+
+        {% for field in form %}
+            <div class="form-outline mb-4">
+                <label for="{{ field.id_for_label }}" class="form-label"> {{ field.label }}: </label>
+                {{ field|addclass:"form-control"}} <!-- Input Field -->
+                {{ field.help_text }} <!-- Input Field -->
+                {{ field.errors }} <!-- Field errors -->
+            </div>
+        {% endfor %}
+
+        <input type="submit" value="Resubmit" class="btn btn-primary btn-block mb-4">
+    </form>
+
+    <a href="{% url 'studentportal:get_submitted_admission' %}" class="btn btn-primary"> Back </a>
+</div>
+
+
+{% endblock content %}
